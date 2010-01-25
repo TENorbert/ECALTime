@@ -66,9 +66,10 @@ void setBranchAddresses(TTree* chain, EcalTimePi0TreeContent& treeVars)
     chain -> SetBranchAddress("xtalIndexInSuperCluster",    treeVars.xtalIndexInSuperCluster);
   
   
-    // cluster variables
+    // basic cluster variables
     chain -> SetBranchAddress("nClusters",              &treeVars.nClusters);
     chain -> SetBranchAddress("clusterEnergy",           treeVars.clusterEnergy);
+    chain -> SetBranchAddress("clusterTransverseEnergy", treeVars.clusterTransverseEnergy);
     chain -> SetBranchAddress("clusterE1",               treeVars.clusterE1);
     chain -> SetBranchAddress("clusterE2",               treeVars.clusterE2);
     chain -> SetBranchAddress("clusterTime",             treeVars.clusterTime);
@@ -538,9 +539,10 @@ void setBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
     chain -> Branch("xtalIndexInSuperCluster",    treeVars.xtalIndexInSuperCluster,       "xtalIndexInSuperCluster[nSuperClusters]/I");
     
     
-    // cluster variables
+    // basic cluster variables
     chain -> Branch("nClusters",              &treeVars.nClusters,                                        "nClusters/I");
     chain -> Branch("clusterEnergy",           treeVars.clusterEnergy,                     "clusterEnergy[nClusters]/F");
+    chain -> Branch("clusterTransverseEnergy", treeVars.clusterTransverseEnergy, "clusterTransverseEnergy[nClusters]/F");
     chain -> Branch("clusterE1",               treeVars.clusterE1,                             "clusterE1[nClusters]/F");
     chain -> Branch("clusterE2",               treeVars.clusterE2,                             "clusterE2[nClusters]/F");
     chain -> Branch("clusterTime",             treeVars.clusterTime,                         "clusterTime[nClusters]/F");
@@ -1027,11 +1029,12 @@ void initializeBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
     }
     
     
-    //cluster variables	
+    //basic cluster variables	
     treeVars.nClusters = 0;
     for(int i = 0; i < 100; ++i)
     {
     treeVars.clusterEnergy[i] = 0.;
+    treeVars.clusterTransverseEnergy[i] = 0.;
     treeVars.clusterE1[i] = 0.;
     treeVars.clusterE2[i] = 0.;
     treeVars.clusterTime[i] = 0.;
