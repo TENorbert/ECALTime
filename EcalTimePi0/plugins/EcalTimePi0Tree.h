@@ -17,7 +17,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.h,v 1.11 2009/08/31 16:35:59 abenagli Exp $
+// $Id: EcalTimePi0Tree.h,v 1.1 2010/01/25 09:45:55 franzoni Exp $
 //
 //
 
@@ -128,28 +128,6 @@ class EcalTimePi0Tree : public edm::EDAnalyzer
                             const std::map<int,float> & XtalMap,
                             const std::map<int,float> & XtalMapCurved,
                             EcalTimePi0TreeContent & myTreeVariables_) ;
-
-      // ! dump HcalRechits and CaloTowers info 	
-      void dumpHcalInfo(const CaloGeometry * theGeometry,
-			const edm::Event& iEvent, 
-			const edm::EventSetup& iSetup,
-			EcalTimePi0TreeContent & myTreeVariables_); 
-
-
-      //! dump MU information
-      //! has to run before dumpSCinfo, since it fills the XtalMap
-      void dumpMUinfo (const edm::Event& iEvent, const edm::EventSetup& iSetup,
-                       const CaloGeometry * theGeometry,
-                       const CaloTopology * theCaloTopology,
-                       const EcalRecHitCollection* theBarrelEcalRecHits,
-                       const reco::MuonCollection* theMuons,
-                       std::map<int,float>& XtalMap,
-                       std::map<int,float>& XtalMapCurved,
-                       std::map<int,float>& XtalMapCurved_high,
-                       std::map<int,float>& XtalMapCurved_low,
-                       std::map<int,float>& muonCrossedXtalMap,
-                       std::map<int,float>& muonCrossedXtalCurvedMap,
-                       EcalTimePi0TreeContent & myTreeVariables_) ;
 
       //! dump trigger information
       void dump3Ginfo (const edm::Event& iEvent, const edm::EventSetup& eventSetup,
