@@ -17,7 +17,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.h,v 1.1 2010/01/25 09:45:55 franzoni Exp $
+// $Id: EcalTimePi0Tree.h,v 1.2 2010/01/25 11:23:15 franzoni Exp $
 //
 //
 
@@ -56,6 +56,8 @@ Implementation:
 #include "DataFormats/MuonReco/interface/MuonFwd.h"
 
 #include "Geometry/EcalMapping/interface/EcalElectronicsMapping.h"
+
+#include "CondFormats/EcalObjects/interface/EcalIntercalibConstants.h"
 
 #include "TFile.h"
 #include "TH1F.h"
@@ -101,6 +103,7 @@ class EcalTimePi0Tree : public edm::EDAnalyzer
       virtual void beginJob (const edm::EventSetup&) {} ;
       virtual void analyze (const edm::Event&, const edm::EventSetup&) ;
       virtual void endJob () ;
+      virtual void beginRun(edm::Run const &, edm::EventSetup const &) ;
 
   private:
 
@@ -169,6 +172,8 @@ class EcalTimePi0Tree : public edm::EDAnalyzer
       std::vector<std::string> l1Names_ ;
 
       double hbTreshold_;
+      edm::ESHandle<EcalIntercalibConstants> ical;
+
 } ;
 
 #endif

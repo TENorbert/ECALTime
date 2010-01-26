@@ -14,7 +14,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.cc,v 1.2 2010/01/25 11:03:35 franzoni Exp $
+// $Id: EcalTimePi0Tree.cc,v 1.3 2010/01/25 11:23:15 franzoni Exp $
 //
 //
 
@@ -27,6 +27,7 @@ Implementation:
 
 #include "CondFormats/L1TObjects/interface/L1GtTriggerMenu.h"
 #include "CondFormats/DataRecord/interface/L1GtTriggerMenuRcd.h"
+#include "CondFormats/DataRecord/interface/EcalIntercalibConstantsRcd.h"
 #include "DataFormats/L1GlobalTrigger/interface/L1GlobalTriggerReadoutSetupFwd.h"
 #include "DataFormats/L1GlobalTrigger/interface/L1GlobalTriggerReadoutSetup.h"
 #include "DataFormats/L1GlobalTrigger/interface/L1GlobalTriggerReadoutRecord.h"
@@ -118,7 +119,6 @@ void EcalTimePi0Tree::analyze (const edm::Event& iEvent, const edm::EventSetup& 
   edm::ESHandle<CaloTopology> pCaloTopology ;
   iSetup.get<CaloTopologyRecord> ().get (pCaloTopology) ;
   const CaloTopology * theCaloTopology = pCaloTopology.product () ;
-  
   
 
   // Ecal barrel RecHits 
@@ -249,7 +249,13 @@ void EcalTimePi0Tree::endJob ()
 }
 
 
+// -----------------------------------------------------------------------------------------
 
+void EcalTimePi0Tree::beginRun(edm::Run const &, edm::EventSetup const & eventSetup)
+{
+  // IC's
+  eventSetup.get<EcalIntercalibConstantsRcd>().get(ical);
+}
 
 
 
@@ -284,6 +290,7 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
   int numberOfSuperClusters = myTreeVariables_.nSuperClusters;
   int numberOfClusters = myTreeVariables_.nClusters ;
   int numberOfXtals = myTreeVariables_.nXtals ;
+  const EcalIntercalibConstantMap& icalMap = ical->getMap();
   
   
   //number of superClusters in event (collection = vector!)
@@ -398,6 +405,16 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
 	      myTreeVariables_.xtalEnergy[numberOfXtals] = (float) thisamp ; //gf: add uncalRecHits here?
 	      myTreeVariables_.xtalTime[numberOfXtals] = (float) (myhit.time ()) ;
 	      myTreeVariables_.xtalHashedIndex[numberOfXtals] = EBDetId (detitr -> first).hashedIndex () ;
+              EcalIntercalibConstantMap::const_iterator icalit = icalMap.find(detitr->first);
+              EcalIntercalibConstant icalconst = 1;
+              if( icalit!=icalMap.end() ) {
+                icalconst = (*icalit);
+              } else {
+                edm::LogError("EcalTimePi0Tree") << "No intercalib const found for xtal "
+                  << (detitr->first).rawId();
+              }
+
+	      myTreeVariables_.xtalAmplitudeADC[numberOfXtals] = (float) thisamp / icalconst;
 
 	      // xtal variables inside a barrel basic cluster 
 	      myTreeVariables_.xtalInBCEnergy[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp;
@@ -408,6 +425,7 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
 	      myTreeVariables_.xtalInBCIx[numberOfClusters][numberOfXtalsInCluster]=          0; 
 	      myTreeVariables_.xtalInBCIy[numberOfClusters][numberOfXtalsInCluster]=          0; 
 	      myTreeVariables_.xtalInBCFlag[numberOfClusters][numberOfXtalsInCluster]=        myhit.recoFlag(); 
+	      myTreeVariables_.xtalInBCAmplitudeADC[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp / icalconst;
 
 	      energySum += (float) thisamp ; // GFdoc incrementing energy of SC
 	      
@@ -506,7 +524,7 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
   int numberOfSuperClusters = myTreeVariables_.nSuperClusters;
   int numberOfClusters = myTreeVariables_.nClusters ;
   int numberOfXtals = myTreeVariables_.nXtals ;
-  
+  const EcalIntercalibConstantMap& icalMap = ical->getMap();
   
   
   //number of superClusters in event (collection = vector!)
@@ -626,6 +644,17 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
              myTreeVariables_.xtalEnergy[numberOfXtals] = (float) thisamp ; //gf: add uncalRecHits here?
              myTreeVariables_.xtalTime[numberOfXtals] = (float) (myhit.time ()) ;
              myTreeVariables_.xtalHashedIndex[numberOfXtals] = EEDetId (detitr -> first).hashedIndex () ;
+             EcalIntercalibConstantMap::const_iterator icalit = icalMap.find(detitr->first);
+             EcalIntercalibConstant icalconst = 1;
+             if( icalit!=icalMap.end() ) {
+               icalconst = (*icalit);
+             } else {
+               edm::LogError("EcalTimePi0Tree") << "No intercalib const found for xtal "
+                 << (detitr->first).rawId();
+             }
+
+             myTreeVariables_.xtalAmplitudeADC[numberOfXtals] = (float) thisamp / icalconst;
+
 	     energySum += (float) thisamp ;
              //MF Lenght evaluation in XTals
              int raw = (detitr -> first).rawId () ;
@@ -639,6 +668,7 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
 	      myTreeVariables_.xtalInBCIx[numberOfClusters][numberOfXtalsInCluster]=          EEDetId((detitr -> first)).ix();
 	      myTreeVariables_.xtalInBCIy[numberOfClusters][numberOfXtalsInCluster]=          EEDetId((detitr -> first)).iy();
 	      myTreeVariables_.xtalInBCFlag[numberOfClusters][numberOfXtalsInCluster]=         myhit.recoFlag(); 
+	      myTreeVariables_.xtalInBCAmplitudeADC[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp / icalconst;
 
              if (XtalMap.find (raw) != XtalMap.end ())
                myTreeVariables_.xtalTkLength[numberOfXtals] = XtalMap.find (raw)->second ;

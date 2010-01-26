@@ -116,6 +116,7 @@ struct EcalTimePi0TreeContent
   float xtalTime[MAXXTAL];
   float xtalTkLength[MAXXTAL];
   float xtalTkLengthCurved[MAXXTAL];
+  float xtalAmplitudeADC[MAXXTAL];
   
  
   // xtal variables inside a cluster
@@ -127,6 +128,7 @@ struct EcalTimePi0TreeContent
   int   xtalInBCFlag[MAXC][MAXXTALINC];
   float xtalInBCEnergy[MAXC][MAXXTALINC];
   float xtalInBCTime[MAXC][MAXXTALINC];
+  float xtalInBCAmplitudeADC[MAXC][MAXXTALINC];
     
   
   // hcal variables
