@@ -39,7 +39,7 @@ process.gtDigis = EventFilter.L1GlobalTriggerRawToDigi.l1GtUnpack_cfi.l1GtUnpack
 process.load("Configuration.StandardSequences.RawToDigi_Data_cff")
 process.load("RecoLocalCalo.EcalRecProducers.ecalRatioUncalibRecHit_cfi")
 process.load("RecoLocalCalo.Configuration.ecalLocalRecoSequence_cff")
-process.ecalLocalRecoSequence = cms.Sequence(process.ecalRatioUncalibRecHit*process.ecalRecHit+process.ecalPreshowerRecHit)
+process.ecalLocalRecoSequence = cms.Sequence(process.ecalRatioUncalibRecHit*process.ecalDetIdToBeRecovered*process.ecalRecHit+process.ecalPreshowerRecHit)
 process.ecalRecHit.EEuncalibRecHitCollection = cms.InputTag("ecalRatioUncalibRecHit","EcalUncalibRecHitsEE")
 process.ecalRecHit.EBuncalibRecHitCollection = cms.InputTag("ecalRatioUncalibRecHit","EcalUncalibRecHitsEB")
 
@@ -120,7 +120,7 @@ process.multi5x5SuperClustersTimePi0Endcap =  RecoEcal.EgammaClusterProducers.mu
 
 # this is the ntuple producer
 process.load("ECALTime.EcalTimePi0.ecalTimePi0Tree_cfi")
-process.ecalTimePi0Tree.fileName = 'EcalTimePi0Tree'
+process.ecalTimePi0Tree.fileName = 'EcalTimePi0TreeRAW'
 process.ecalTimePi0Tree.muonCollection = cms.InputTag("muons")
 process.ecalTimePi0Tree.runNum = 108645
 # gfworks: replace these names
@@ -135,10 +135,11 @@ process.ecalTimePi0Tree.endcapClusterShapeAssociationCollection = cms.InputTag("
 
 process.dumpEvContent = cms.EDAnalyzer("EventContentAnalyzer")
 
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(1000))
 
 process.p = cms.Path(
     process.ecalDigis *
+    process.ecalPreshowerDigis *
     process.ecalLocalRecoSequence *
     process.multi5x5BasicClustersTimePi0Barrel *
     process.multi5x5BasicClustersTimePi0Endcap *
@@ -167,10 +168,8 @@ process.source = cms.Source(
     "PoolSource",
     skipEvents = cms.untracked.uint32(0),
 
-     fileNames = (cms.untracked.vstring("file:/data/franzoni/data/pi0TimeAnalysis/FE37D88F-D6E6-DE11-92D0-000423D9989E.root"
-    
-#     fileNames = (cms.untracked.vstring(
-#              "/store/express/BeamCommissioning09/ExpressPhysics/FEVT/v2/000/124/020/FE37D88F-D6E6-DE11-92D0-000423D9989E.root",
+     fileNames = (cms.untracked.vstring(
+              "/store/express/BeamCommissioning09/ExpressPhysics/FEVT/v2/000/124/020/FE37D88F-D6E6-DE11-92D0-000423D9989E.root"
 #              "/store/express/BeamCommissioning09/ExpressPhysics/FEVT/v2/000/124/020/FE2CF646-CBE6-DE11-A65B-001D09F251FE.root",
 #              "/store/express/BeamCommissioning09/ExpressPhysics/FEVT/v2/000/124/020/F2514441-D3E6-DE11-901C-000423D944F0.root",
 #              "/store/express/BeamCommissioning09/ExpressPhysics/FEVT/v2/000/124/020/F2487F56-CDE6-DE11-8D0F-001D09F2A690.root",
