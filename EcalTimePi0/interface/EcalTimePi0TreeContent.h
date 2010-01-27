@@ -70,7 +70,7 @@ struct EcalTimePi0TreeContent
   int xtalIndexInSuperCluster[MAXSC];
   
   
-  //cluster variables	
+  // basic cluster variables	
   int nClusters;
   float clusterEnergy[MAXC];
   float clusterTransverseEnergy[MAXC];
@@ -88,7 +88,7 @@ struct EcalTimePi0TreeContent
   int xtalIndexInCluster[MAXC];
   
   
-  //clustershape variables    
+  // clustershape variables for basic clusters
   float clusterE2x2[MAXC];
   float clusterE3x2[MAXC];
   float clusterE3x3[MAXC];
@@ -107,19 +107,8 @@ struct EcalTimePi0TreeContent
   float clusterEtaLat[MAXC];
   float clusterZernike20[MAXC];
   float clusterZernike42[MAXC];
-  
-  
-  // xtal variables
-  int nXtals;
-  int xtalHashedIndex[MAXXTAL];
-  float xtalEnergy[MAXXTAL];
-  float xtalTime[MAXXTAL];
-  float xtalTkLength[MAXXTAL];
-  float xtalTkLengthCurved[MAXXTAL];
-  float xtalAmplitudeADC[MAXXTAL];
-  
- 
-  // xtal variables inside a cluster
+
+  // xtal variables inside a basic cluster
   int   xtalInBCHashedIndex[MAXC][MAXXTALINC];
   int   xtalInBCIeta[MAXC][MAXXTALINC];
   int   xtalInBCIphi[MAXC][MAXXTALINC];
@@ -130,6 +119,15 @@ struct EcalTimePi0TreeContent
   float xtalInBCTime[MAXC][MAXXTALINC];
   float xtalInBCAmplitudeADC[MAXC][MAXXTALINC];
     
+  // crystal variables
+  int nXtals;
+  int xtalHashedIndex[MAXXTAL];
+  float xtalEnergy[MAXXTAL];
+  float xtalTime[MAXXTAL];
+  float xtalTkLength[MAXXTAL];
+  float xtalTkLengthCurved[MAXXTAL];
+  float xtalAmplitudeADC[MAXXTAL];
+
   
   // hcal variables
   int   hbNRecHits;
