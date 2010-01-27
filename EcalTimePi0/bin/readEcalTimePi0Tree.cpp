@@ -45,7 +45,7 @@ int main (int argc, char** argv)
     exit (1) ;  
   }
 
-  // loop over options
+  // loop over input options
   for (int v=1; v<argc; v++ )
     {
       //std::cout << "argv number " << v << " is: " << argv[v] << std::endl;
@@ -107,6 +107,9 @@ int main (int argc, char** argv)
       std::cout << "\t" << (*file_itr) << std::endl;
     }
   }
+  
+
+
 
 
   // Tree construction
@@ -126,7 +129,8 @@ int main (int argc, char** argv)
   setBranchAddresses (chain, treeVars) ;
 
 
-  //PG loop over entries
+
+  //loop over entries
   for (int entry = 0 ; (entry < nEntries && entry < numEvents); ++entry)
     {
       chain->GetEntry (entry) ;
@@ -162,6 +166,7 @@ int main (int argc, char** argv)
 				  << " eta: "                        << treeVars.clusterEta[bCluster]
 				  << "\n\t num crystals: "           << treeVars.nXtalsInCluster[bCluster]
 				  << "\n\t\tfirst crystal:  \tieta " << treeVars.xtalInBCIEta[bCluster][0] 
+				  << "\teta "                        << treeVars.xtalInBCEta[bCluster][0] 
 				  << " \t energy "                   << treeVars.xtalInBCEnergy[bCluster][0] 
 				  << " \t ADC "                      << treeVars.xtalInBCAmplitudeADC[bCluster][0] 
 				  << " \t time "                     << treeVars.xtalInBCTime[bCluster][0] 
