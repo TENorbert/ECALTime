@@ -589,15 +589,16 @@ void setBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
     chain -> Branch("xtalAmplitudeADC",   treeVars.xtalAmplitudeADC,     "xtalAmplitudeADC[nXtals]/F");
 
     // xtal variables inside a cluster
-    chain -> Branch("xtalInBCHashedIndex",  treeVars.xtalInBCHashedIndex,  "xtalInBCHashedIndex[nClusters][MAXXTALINC]/I");
-    chain -> Branch("xtalInBCIeta",         treeVars.xtalInBCIeta,         "xtalInBCIeta[nClusters][MAXXTALINC]/I");
-    chain -> Branch("xtalInBCIphi",         treeVars.xtalInBCIphi,         "xtalInBCIphi[nClusters][MAXXTALINC]/I");
-    chain -> Branch("xtalInBCIx",           treeVars.xtalInBCIx,           "xtalInBCIx[nClusters][MAXXTALINC]/I");
-    chain -> Branch("xtalInBCIy",           treeVars.xtalInBCIy,           "xtalInBCIy[nClusters][MAXXTALINC]/I");
-    chain -> Branch("xtalInBCFlag",         treeVars.xtalInBCFlag,         "xtalInBCFlag[nClusters][MAXXTALINC]/I");
-    chain -> Branch("xtalInBCEnergy",       treeVars.xtalInBCEnergy,       "xtalInBCEnergy[nClusters][MAXXTALINC]/F");
-    chain -> Branch("xtalInBCTime",         treeVars.xtalInBCTime,         "xtalInBCTime[nClusters][MAXXTALINC]/F");
-    chain -> Branch("xtalInBCAmplitudeADC", treeVars.xtalInBCAmplitudeADC, "xtalInBCAmplitudeADC[nClusters][MAXXTALINC]/F");
+    // strange: MAXXTALINC needs be replaced by explicit "9"; not understood gf
+    chain -> Branch("xtalInBCHashedIndex",  treeVars.xtalInBCHashedIndex,  "xtalInBCHashedIndex[nClusters][9]/I");
+    chain -> Branch("xtalInBCIeta",         treeVars.xtalInBCIeta,         "xtalInBCIeta[nClusters][9]/I");
+    chain -> Branch("xtalInBCIphi",         treeVars.xtalInBCIphi,         "xtalInBCIphi[nClusters][9]/I");
+    chain -> Branch("xtalInBCIx",           treeVars.xtalInBCIx,           "xtalInBCIx[nClusters][9]/I");
+    chain -> Branch("xtalInBCIy",           treeVars.xtalInBCIy,           "xtalInBCIy[nClusters][9]/I");
+    chain -> Branch("xtalInBCFlag",         treeVars.xtalInBCFlag,         "xtalInBCFlag[nClusters][9]/I");
+    chain -> Branch("xtalInBCEnergy",       treeVars.xtalInBCEnergy,       "xtalInBCEnergy[nClusters][9]/F");
+    chain -> Branch("xtalInBCTime",         treeVars.xtalInBCTime,         "xtalInBCTime[nClusters][9]/F");
+    chain -> Branch("xtalInBCAmplitudeADC", treeVars.xtalInBCAmplitudeADC, "xtalInBCAmplitudeADC[nClusters][9]/F");
 
   } // ECAL VARIABLES  
   //*/  
