@@ -36,8 +36,7 @@ int main (int argc, char** argv)
 
   //gf: support development
   //std::cout << "\nargc:       " << argc << std::endl;
-  //for (int v=0; v<argc; v++ )
-  //  {      std::cout << "argument: " << v << " argv: " << argv[v] << std::endl;    }
+  //for (int v=0; v<argc; v++ ){      std::cout << "argument: " << v << " argv: " << argv[v] << std::endl;    }
 
   
   // if no arguments are passed, suggest help
@@ -70,10 +69,8 @@ int main (int argc, char** argv)
       }
 
       // handle here the case of multiple arguments for input files
-      else if (argv[v] == stringInputFileName){// && v<(argc-1) ) {//fix // maybe unnecessary indeed
+      else if (argv[v] == stringInputFileName){// && v<(argc-1) ) {
 
-	// std::cout << "collecting list of input files" << std::endl;
-	
 	for (int u=v+1; u<argc; u++) {
 	  
 	  if ( 0==std::string(argv[u]).find( stringGenericOption ) ){
@@ -83,9 +80,7 @@ int main (int argc, char** argv)
 	  }
 
 	  else {  listOfFiles.push_back(argv[u]);
-	    //std::cout << "u is: " << u << " argv is " << argv[u]<<std::endl ;
 	    v++;
-	    //std::cout << "v is: " << v << " argv is " << argv[v]<<std::endl ;
 	  }
 
 	}// loop on arguments following --i
@@ -93,6 +88,7 @@ int main (int argc, char** argv)
 	continue;
 
       }//end 'if input files'
+
       
       else
 	{std::cout << "input format unrecognized" << std::endl; exit(1);}
@@ -106,28 +102,26 @@ int main (int argc, char** argv)
     return(1);
   }
   else{
-    std::cout << "found " << listOfFiles.size() << " input files" << std::endl;}
+    std::cout << "\tfound " << listOfFiles.size() << " input files: " << std::endl;
+    for(std::vector<std::string>::const_iterator  file_itr=listOfFiles.begin(); file_itr!=listOfFiles.end(); file_itr++){
+      std::cout << (*file_itr) << std::endl;
+    }
+  }
 
-  std::cout << "\tWill run on: " <<  numEvents << " events" << std::endl;
-  std::cout << "\tOutput file: " <<  outputRootName << "events" << std::endl;
 
-
-           
   // Tree construction
   TChain * chain = new TChain ("EcalTimePi0Analysis") ;
   std::vector<std::string>::const_iterator file_itr;
-  for(file_itr=listOfFiles.begin(); file_itr!=listOfFiles.end(); file_itr++)
-    {
-      chain->Add( (*file_itr).c_str() );
-    }
-
-
+  for(file_itr=listOfFiles.begin(); file_itr!=listOfFiles.end(); file_itr++){
+    chain->Add( (*file_itr).c_str() );
+  }
   int nEntries = chain->GetEntries () ;
-  if (numEvents==-1) numEvents=nEntries;
-  std::cout << "FOUND " << nEntries << " events" << std::endl ;    
-  std::cout << "WILL run on: " <<  numEvents << " events" << std::endl;
+  if (numEvents==-1) numEvents = nEntries;
+  std::cout << "\tFOUND " << nEntries << " events" << std::endl ;    
+  std::cout << "\tWILL run on: " <<  numEvents << " events" << std::endl;
+  std::cout << "\tOutput file: " <<  outputRootName << std::endl;
 
-
+           
   EcalTimePi0TreeContent treeVars ; 
   setBranchAddresses (chain, treeVars) ;
 
