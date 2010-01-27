@@ -8,9 +8,7 @@ process.load('Configuration/StandardSequences/GeometryExtended_cff')
 # Geometry
 process.load("Geometry.CaloEventSetup.CaloTopology_cfi")
 process.load("Geometry.CaloEventSetup.CaloGeometry_cff")
-# process.load("Geometry.CMSCommonData.cmsIdealGeometryXML_cfi") # gfwork: need this? 
 process.load("Geometry.CaloEventSetup.CaloGeometry_cfi")
-# process.load("Geometry.CommonDetUnit.globalTrackingGeometry_cfi") # gfwork: need this?
 process.load("Geometry.EcalMapping.EcalMapping_cfi")
 process.load("Geometry.EcalMapping.EcalMappingRecord_cfi")
 process.load("Geometry.MuonNumbering.muonNumberingInitialization_cfi") # gfwork: need this?
@@ -19,7 +17,6 @@ process.load("Geometry.MuonNumbering.muonNumberingInitialization_cfi") # gfwork:
 # Global Tag
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 #process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_noesprefer_cff")
-#process.GlobalTag.globaltag = 'CRAFT_ALL_V12::All'
 process.GlobalTag.globaltag = 'GR09_31X_V5P::All' # gfwork: update this? 
 
 
