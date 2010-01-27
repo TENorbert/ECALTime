@@ -165,7 +165,6 @@ int main (int argc, char** argv)
 				  << " \t energy "                   << treeVars.xtalInBCEnergy[bCluster][0] 
 				  << " \t ADC "                      << treeVars.xtalInBCAmplitudeADC[bCluster][0] 
 				  << " \t time "                     << treeVars.xtalInBCTime[bCluster][0] 
-				  << " \t time "                     << treeVars.xtalTime[0]
 				  << std::endl;
 	  }
 

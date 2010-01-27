@@ -14,7 +14,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.cc,v 1.4 2010/01/26 17:32:41 scooper Exp $
+// $Id: EcalTimePi0Tree.cc,v 1.5 2010/01/27 16:00:27 franzoni Exp $
 //
 //
 
@@ -383,9 +383,11 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
 	      // GFdoc this is one crystal in the basic cluster
 	      EcalRecHit myhit = (*thishit) ;
 	      
-	      // GFdoc do we want this cut here???/////////////////////////////////////////////////
-	      double thisamp = myhit.energy () ;
-	      if (thisamp > 0.027) //cut on energy->number of crystals in cluster above 3sigma noise
+
+	      // thisamp is the EB amplitude of the current rechit
+	      double thisamp  = myhit.energy () ;
+	      double thistime = myhit.time ();
+	      if (thisamp > 0.027) //cut on energy->number of crystals in cluster above 3sigma noise; gf: desirable?
 		{ 
 		  numXtalsinCluster++ ; 
 		}
@@ -402,9 +404,10 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
 		  std::swap (maxDet, secDet) ;
 		}
     
-	      myTreeVariables_.xtalEnergy[numberOfXtals] = (float) thisamp ; //gf: add uncalRecHits here?
-	      myTreeVariables_.xtalTime[numberOfXtals] = (float) (myhit.time ()) ;
-	      myTreeVariables_.xtalHashedIndex[numberOfXtals] = EBDetId (detitr -> first).hashedIndex () ;
+
+	      myTreeVariables_.xtalEnergy[numberOfXtals]       = (float) thisamp ;
+	      myTreeVariables_.xtalTime[numberOfXtals]         = (float) thistime ;
+	      myTreeVariables_.xtalHashedIndex[numberOfXtals]  = EBDetId (detitr -> first).hashedIndex () ;
               EcalIntercalibConstantMap::const_iterator icalit = icalMap.find(detitr->first);
 
               EcalIntercalibConstant icalconst = 1;
@@ -622,7 +625,9 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
              
              EcalRecHit myhit = (*thishit) ;
              
-             double thisamp = myhit.energy () ;
+	     // thisamp is the EE amplitude of the current rechit
+	     double thisamp  = myhit.energy () ;
+	     double thistime = myhit.time ();
              if (thisamp > 0.027) //cut on energy->number of crystals in cluster above 3sigma noise
                { 
                  numXtalsinCluster++ ; //xtals in cluster above 3sigma noise  
@@ -642,9 +647,9 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
                  std::swap (maxDet, secDet) ;
                }
     
-             myTreeVariables_.xtalEnergy[numberOfXtals] = (float) thisamp ; //gf: add uncalRecHits here?
-             myTreeVariables_.xtalTime[numberOfXtals] = (float) (myhit.time ()) ;
-             myTreeVariables_.xtalHashedIndex[numberOfXtals] = EEDetId (detitr -> first).hashedIndex () ;
+             myTreeVariables_.xtalEnergy[numberOfXtals]       = (float) thisamp ;
+	     myTreeVariables_.xtalTime[numberOfXtals]         = (float) thistime ;
+             myTreeVariables_.xtalHashedIndex[numberOfXtals]  = EEDetId (detitr -> first).hashedIndex () ;
              EcalIntercalibConstantMap::const_iterator icalit = icalMap.find(detitr->first);
              EcalIntercalibConstant icalconst = 1;
              if( icalit!=icalMap.end() ) {
@@ -662,7 +667,7 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
 
 	     // xtal variables inside an endcap basic cluster 
 	      myTreeVariables_.xtalInBCEnergy[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp;
-	      myTreeVariables_.xtalInBCTime[numberOfClusters][numberOfXtalsInCluster]=        (float) (myhit.time ()); 
+	      myTreeVariables_.xtalInBCTime[numberOfClusters][numberOfXtalsInCluster]=        (float) thistime;
 	      myTreeVariables_.xtalInBCHashedIndex[numberOfClusters][numberOfXtalsInCluster]= EEDetId (detitr -> first).hashedIndex () ; 
 	      myTreeVariables_.xtalInBCIEta[numberOfClusters][numberOfXtalsInCluster]=0;
 	      myTreeVariables_.xtalInBCIPhi[numberOfClusters][numberOfXtalsInCluster]=0;
