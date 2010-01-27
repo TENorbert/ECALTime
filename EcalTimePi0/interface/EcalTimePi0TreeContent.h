@@ -110,8 +110,8 @@ struct EcalTimePi0TreeContent
 
   // xtal variables inside a basic cluster
   int   xtalInBCHashedIndex[MAXC][MAXXTALINC];
-  int   xtalInBCIeta[MAXC][MAXXTALINC];
-  int   xtalInBCIphi[MAXC][MAXXTALINC];
+  int   xtalInBCIEta[MAXC][MAXXTALINC];
+  int   xtalInBCIPhi[MAXC][MAXXTALINC];
   int   xtalInBCIx[MAXC][MAXXTALINC];
   int   xtalInBCIy[MAXC][MAXXTALINC];
   int   xtalInBCFlag[MAXC][MAXXTALINC];
@@ -304,8 +304,8 @@ struct EcalTimePi0TreeContent
   
   // TPG variables
   int   tpgNTowers;
-  int   tpgIeta[MAXTOWERSINTPGSUMMARY];
-  int   tpgIphi[MAXTOWERSINTPGSUMMARY];
+  int   tpgIEta[MAXTOWERSINTPGSUMMARY];
+  int   tpgIPhi[MAXTOWERSINTPGSUMMARY];
   int   tpgNbOfXtals[MAXTOWERSINTPGSUMMARY];
   float tpgEnRec[MAXTOWERSINTPGSUMMARY];
   int   tpgADC[MAXTOWERSINTPGSUMMARY];
@@ -313,8 +313,8 @@ struct EcalTimePi0TreeContent
   int   tpgActiveTriggers[128];
 
   int tpEmulNTowers;
-  int tpEmulIeta[MAXTOWERSINTPGSUMMARY];
-  int tpEmulIphi[MAXTOWERSINTPGSUMMARY];
+  int tpEmulIEta[MAXTOWERSINTPGSUMMARY];
+  int tpEmulIPhi[MAXTOWERSINTPGSUMMARY];
   int tpEmulADC1[MAXTOWERSINTPGSUMMARY];
   int tpEmulADC2[MAXTOWERSINTPGSUMMARY];
   int tpEmulADC3[MAXTOWERSINTPGSUMMARY];

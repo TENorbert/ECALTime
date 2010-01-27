@@ -14,7 +14,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.cc,v 1.3 2010/01/25 11:23:15 franzoni Exp $
+// $Id: EcalTimePi0Tree.cc,v 1.4 2010/01/26 17:32:41 scooper Exp $
 //
 //
 
@@ -342,7 +342,7 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
 	  double secondMin = 0. ;
 	  double secondTime = -1000. ;
 	  int numberOfXtalsInCluster=0 ;//counter for all xtals in cluster
-	  int numXtalsinCluster = 0 ;//xtals in cluster above 3sigma noise  
+	  int numXtalsinCluster = 0 ;   //xtals in cluster above 3sigma noise  
 	  EBDetId maxDet ;
 	  EBDetId secDet ;
 	  
@@ -406,6 +406,7 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
 	      myTreeVariables_.xtalTime[numberOfXtals] = (float) (myhit.time ()) ;
 	      myTreeVariables_.xtalHashedIndex[numberOfXtals] = EBDetId (detitr -> first).hashedIndex () ;
               EcalIntercalibConstantMap::const_iterator icalit = icalMap.find(detitr->first);
+
               EcalIntercalibConstant icalconst = 1;
               if( icalit!=icalMap.end() ) {
                 icalconst = (*icalit);
@@ -420,8 +421,8 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
 	      myTreeVariables_.xtalInBCEnergy[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp;
 	      myTreeVariables_.xtalInBCTime[numberOfClusters][numberOfXtalsInCluster]=        (float) (myhit.time ()); 
 	      myTreeVariables_.xtalInBCHashedIndex[numberOfClusters][numberOfXtalsInCluster]= EBDetId (detitr -> first).hashedIndex () ; 
-	      myTreeVariables_.xtalInBCIeta[numberOfClusters][numberOfXtalsInCluster]=        EBDetId((detitr -> first)).ieta(); 
-	      myTreeVariables_.xtalInBCIphi[numberOfClusters][numberOfXtalsInCluster]=        EBDetId((detitr -> first)).iphi();
+	      myTreeVariables_.xtalInBCIEta[numberOfClusters][numberOfXtalsInCluster]=        EBDetId((detitr -> first)).ieta(); 
+	      myTreeVariables_.xtalInBCIPhi[numberOfClusters][numberOfXtalsInCluster]=        EBDetId((detitr -> first)).iphi();
 	      myTreeVariables_.xtalInBCIx[numberOfClusters][numberOfXtalsInCluster]=          0; 
 	      myTreeVariables_.xtalInBCIy[numberOfClusters][numberOfXtalsInCluster]=          0; 
 	      myTreeVariables_.xtalInBCFlag[numberOfClusters][numberOfXtalsInCluster]=        myhit.recoFlag(); 
@@ -448,7 +449,7 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
 	      numberOfXtalsInCluster++ ;
 	      numberOfXtalsInSuperCluster++ ;
 	      
-	    } //end loop on rechics of barrel basic clusters
+	    } //end loop on rechics within barrel basic clusters
 	  
 	  float E2 = (float)ampli + (float)secondMin ;
 	  
@@ -663,8 +664,8 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
 	      myTreeVariables_.xtalInBCEnergy[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp;
 	      myTreeVariables_.xtalInBCTime[numberOfClusters][numberOfXtalsInCluster]=        (float) (myhit.time ()); 
 	      myTreeVariables_.xtalInBCHashedIndex[numberOfClusters][numberOfXtalsInCluster]= EEDetId (detitr -> first).hashedIndex () ; 
-	      myTreeVariables_.xtalInBCIeta[numberOfClusters][numberOfXtalsInCluster]=0;
-	      myTreeVariables_.xtalInBCIphi[numberOfClusters][numberOfXtalsInCluster]=0;
+	      myTreeVariables_.xtalInBCIEta[numberOfClusters][numberOfXtalsInCluster]=0;
+	      myTreeVariables_.xtalInBCIPhi[numberOfClusters][numberOfXtalsInCluster]=0;
 	      myTreeVariables_.xtalInBCIx[numberOfClusters][numberOfXtalsInCluster]=          EEDetId((detitr -> first)).ix();
 	      myTreeVariables_.xtalInBCIy[numberOfClusters][numberOfXtalsInCluster]=          EEDetId((detitr -> first)).iy();
 	      myTreeVariables_.xtalInBCFlag[numberOfClusters][numberOfXtalsInCluster]=         myhit.recoFlag(); 
@@ -686,7 +687,7 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
              numberOfXtalsInCluster++ ;
              //numberOfXtalsInSuperCluster++ ;
     
-           } //end loop on rechics of endcap basic clusters
+           } //end loop on rechics within endcap basic clusters
          
          float E2 = (float)ampli + (float)secondMin ;
          
