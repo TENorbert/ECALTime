@@ -14,7 +14,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.cc,v 1.6 2010/01/27 16:24:22 franzoni Exp $
+// $Id: EcalTimePi0Tree.cc,v 1.7 2010/01/27 16:56:33 franzoni Exp $
 //
 //
 
@@ -255,6 +255,8 @@ void EcalTimePi0Tree::beginRun(edm::Run const &, edm::EventSetup const & eventSe
 {
   // IC's
   eventSetup.get<EcalIntercalibConstantsRcd>().get(ical);
+  // ADCtoGeV
+  eventSetup.get<EcalADCToGeVConstantRcd>().get(agc);
 }
 
 
@@ -291,6 +293,8 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
   int numberOfClusters = myTreeVariables_.nClusters ;
   int numberOfXtals = myTreeVariables_.nXtals ;
   const EcalIntercalibConstantMap& icalMap = ical->getMap();
+  float adcToGeV = float(agc->getEBValue());
+
   
   
   //number of superClusters in event (collection = vector!)
@@ -418,7 +422,7 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
                   << (detitr->first).rawId();
               }
 
-	      myTreeVariables_.xtalAmplitudeADC[numberOfXtals] = (float) thisamp / icalconst;
+	      myTreeVariables_.xtalAmplitudeADC[numberOfXtals] = (float) thisamp/(icalconst*adcToGeV);
 
 	      // xtal variables inside a barrel basic cluster 
 	      myTreeVariables_.xtalInBCEnergy[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp;
@@ -429,7 +433,7 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
 	      myTreeVariables_.xtalInBCIx[numberOfClusters][numberOfXtalsInCluster]=          0; 
 	      myTreeVariables_.xtalInBCIy[numberOfClusters][numberOfXtalsInCluster]=          0; 
 	      myTreeVariables_.xtalInBCFlag[numberOfClusters][numberOfXtalsInCluster]=        myhit.recoFlag(); 
-	      myTreeVariables_.xtalInBCAmplitudeADC[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp / icalconst;
+	      myTreeVariables_.xtalInBCAmplitudeADC[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp/(icalconst*adcToGeV);
 
 	      energySum += (float) thisamp ; // GFdoc incrementing energy of SC
 	      
@@ -458,7 +462,7 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
 	      numberOfXtalsInCluster++ ;
 	      numberOfXtalsInSuperCluster++ ;
 	      
-	    } //end loop on rechics within barrel basic clusters
+	    } //end loop on rechits within barrel basic clusters
 	  
 	  float E2 = (float)ampli + (float)secondMin ;
 	  
@@ -520,6 +524,7 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
 } // dumpBarrelClusterInfo  
 
 
+// -----------------------------------------------------------------------------------------
 
 void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
                                         const CaloTopology * theCaloTopology,
@@ -535,6 +540,7 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
   int numberOfClusters = myTreeVariables_.nClusters ;
   int numberOfXtals = myTreeVariables_.nXtals ;
   const EcalIntercalibConstantMap& icalMap = ical->getMap();
+  float adcToGeV = float(agc->getEEValue());
   
   
   //number of superClusters in event (collection = vector!)
@@ -608,7 +614,7 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
         //loop on xtals in cluster
          for (std::vector<std::pair<DetId, float> >::const_iterator detitr = clusterDetIds.begin () ; 
               detitr != clusterDetIds.end () ; 
-              ++detitr)// loop on rechics of endcap basic clusters
+              ++detitr)// loop on rechits of endcap basic clusters
            {
              //Here I use the "find" on a digi collection... I have been warned...
              if ( (detitr -> first).det () != DetId::Ecal) 
@@ -665,7 +671,7 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
                  << (detitr->first).rawId();
              }
 
-             myTreeVariables_.xtalAmplitudeADC[numberOfXtals] = (float) thisamp / icalconst;
+             myTreeVariables_.xtalAmplitudeADC[numberOfXtals] = (float) thisamp/(icalconst*adcToGeV);
 
 	     energySum += (float) thisamp ;
              //MF Lenght evaluation in XTals
@@ -680,7 +686,7 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
 	      myTreeVariables_.xtalInBCIx[numberOfClusters][numberOfXtalsInCluster]=          EEDetId((detitr -> first)).ix();
 	      myTreeVariables_.xtalInBCIy[numberOfClusters][numberOfXtalsInCluster]=          EEDetId((detitr -> first)).iy();
 	      myTreeVariables_.xtalInBCFlag[numberOfClusters][numberOfXtalsInCluster]=         myhit.recoFlag(); 
-	      myTreeVariables_.xtalInBCAmplitudeADC[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp / icalconst;
+	      myTreeVariables_.xtalInBCAmplitudeADC[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp/(icalconst*adcToGeV);
 
              if (XtalMap.find (raw) != XtalMap.end ())
                myTreeVariables_.xtalTkLength[numberOfXtals] = XtalMap.find (raw)->second ;

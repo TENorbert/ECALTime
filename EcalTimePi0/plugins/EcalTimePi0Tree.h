@@ -17,7 +17,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.h,v 1.2 2010/01/25 11:23:15 franzoni Exp $
+// $Id: EcalTimePi0Tree.h,v 1.3 2010/01/26 17:32:41 scooper Exp $
 //
 //
 
@@ -58,6 +58,7 @@ Implementation:
 #include "Geometry/EcalMapping/interface/EcalElectronicsMapping.h"
 
 #include "CondFormats/EcalObjects/interface/EcalIntercalibConstants.h"
+#include "CondFormats/EcalObjects/interface/EcalADCToGeVConstant.h"
 
 #include "TFile.h"
 #include "TH1F.h"
@@ -173,6 +174,7 @@ class EcalTimePi0Tree : public edm::EDAnalyzer
 
       double hbTreshold_;
       edm::ESHandle<EcalIntercalibConstants> ical;
+      edm::ESHandle<EcalADCToGeVConstant> agc;
 
 } ;
 
