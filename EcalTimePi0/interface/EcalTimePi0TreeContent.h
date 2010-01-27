@@ -112,6 +112,8 @@ struct EcalTimePi0TreeContent
   int   xtalInBCHashedIndex[MAXC][MAXXTALINC];
   int   xtalInBCIEta[MAXC][MAXXTALINC];
   int   xtalInBCIPhi[MAXC][MAXXTALINC];
+  int   xtalInBCEta[MAXC][MAXXTALINC];
+  int   xtalInBCPhi[MAXC][MAXXTALINC];
   int   xtalInBCIx[MAXC][MAXXTALINC];
   int   xtalInBCIy[MAXC][MAXXTALINC];
   int   xtalInBCFlag[MAXC][MAXXTALINC];

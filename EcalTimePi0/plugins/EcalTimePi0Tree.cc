@@ -14,7 +14,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.cc,v 1.5 2010/01/27 16:00:27 franzoni Exp $
+// $Id: EcalTimePi0Tree.cc,v 1.6 2010/01/27 16:24:22 franzoni Exp $
 //
 //
 
@@ -433,6 +433,12 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
 
 	      energySum += (float) thisamp ; // GFdoc incrementing energy of SC
 	      
+
+	      GlobalPoint pos = theGeometry->getPosition((myhit).detid());
+	      myTreeVariables_.xtalInBCEta[numberOfClusters][numberOfXtalsInCluster]=      pos.eta();
+	      myTreeVariables_.xtalInBCPhi[numberOfClusters][numberOfXtalsInCluster]=      pos.phi();
+
+
 	      //MF Lenght evaluation in XTals
 	      int raw = (detitr -> first).rawId () ;
 	      

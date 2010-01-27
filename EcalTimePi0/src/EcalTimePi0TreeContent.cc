@@ -119,6 +119,8 @@ void setBranchAddresses(TTree* chain, EcalTimePi0TreeContent& treeVars)
     chain -> SetBranchAddress("xtalInBCHashedIndex", treeVars.xtalInBCHashedIndex);
     chain -> SetBranchAddress("xtalInBCIEta", treeVars.xtalInBCIEta);
     chain -> SetBranchAddress("xtalInBCIPhi", treeVars.xtalInBCIPhi);
+    chain -> SetBranchAddress("xtalInBCEta", treeVars.xtalInBCEta);
+    chain -> SetBranchAddress("xtalInBCPhi", treeVars.xtalInBCPhi);
     chain -> SetBranchAddress("xtalInBCIx", treeVars.xtalInBCIx);
     chain -> SetBranchAddress("xtalInBCIy", treeVars.xtalInBCIy);
     chain -> SetBranchAddress("xtalInBCFlag", treeVars.xtalInBCFlag);
@@ -593,6 +595,8 @@ void setBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
     chain -> Branch("xtalInBCHashedIndex",  treeVars.xtalInBCHashedIndex,  "xtalInBCHashedIndex[nClusters][9]/I");
     chain -> Branch("xtalInBCIEta",         treeVars.xtalInBCIEta,         "xtalInBCIEta[nClusters][9]/I");
     chain -> Branch("xtalInBCIPhi",         treeVars.xtalInBCIPhi,         "xtalInBCIPhi[nClusters][9]/I");
+    chain -> Branch("xtalInBCEta",          treeVars.xtalInBCEta,          "xtalInBCEta[nClusters][9]/F");
+    chain -> Branch("xtalInBCPhi",          treeVars.xtalInBCPhi,          "xtalInBCPhi[nClusters][9]/F");
     chain -> Branch("xtalInBCIx",           treeVars.xtalInBCIx,           "xtalInBCIx[nClusters][9]/I");
     chain -> Branch("xtalInBCIy",           treeVars.xtalInBCIy,           "xtalInBCIy[nClusters][9]/I");
     chain -> Branch("xtalInBCFlag",         treeVars.xtalInBCFlag,         "xtalInBCFlag[nClusters][9]/I");
