@@ -117,8 +117,8 @@ void setBranchAddresses(TTree* chain, EcalTimePi0TreeContent& treeVars)
 
     // xtal variables inside a cluster
     chain -> SetBranchAddress("xtalInBCHashedIndex", treeVars.xtalInBCHashedIndex);
-    chain -> SetBranchAddress("xtalInBCIeta", treeVars.xtalInBCIeta);
-    chain -> SetBranchAddress("xtalInBCIphi", treeVars.xtalInBCIphi);
+    chain -> SetBranchAddress("xtalInBCIEta", treeVars.xtalInBCIEta);
+    chain -> SetBranchAddress("xtalInBCIPhi", treeVars.xtalInBCIPhi);
     chain -> SetBranchAddress("xtalInBCIx", treeVars.xtalInBCIx);
     chain -> SetBranchAddress("xtalInBCIy", treeVars.xtalInBCIy);
     chain -> SetBranchAddress("xtalInBCFlag", treeVars.xtalInBCFlag);
@@ -326,8 +326,8 @@ void setBranchAddresses(TTree* chain, EcalTimePi0TreeContent& treeVars)
   if(EcalTimePi0TreeContent::tpgVariables)
   {
     chain -> SetBranchAddress("tpgNTowers",         &treeVars.tpgNTowers);
-    chain -> SetBranchAddress("tpgIeta",             treeVars.tpgIeta);
-    chain -> SetBranchAddress("tpgIphi",             treeVars.tpgIphi);
+    chain -> SetBranchAddress("tpgIEta",             treeVars.tpgIEta);
+    chain -> SetBranchAddress("tpgIPhi",             treeVars.tpgIPhi);
     chain -> SetBranchAddress("tpgNbOfXtals",        treeVars.tpgNbOfXtals);
     chain -> SetBranchAddress("tpgEnRec",            treeVars.tpgEnRec);
     chain -> SetBranchAddress("tpgADC",              treeVars.tpgADC);
@@ -335,8 +335,8 @@ void setBranchAddresses(TTree* chain, EcalTimePi0TreeContent& treeVars)
     chain -> SetBranchAddress("tpgActiveTriggers",   treeVars.tpgActiveTriggers);
     
     chain -> SetBranchAddress("tpEmulNTowers", &treeVars.tpEmulNTowers);
-    chain -> SetBranchAddress("tpEmulIeta",     treeVars.tpEmulIeta);
-    chain -> SetBranchAddress("tpEmulIphi",     treeVars.tpEmulIphi);
+    chain -> SetBranchAddress("tpEmulIEta",     treeVars.tpEmulIEta);
+    chain -> SetBranchAddress("tpEmulIPhi",     treeVars.tpEmulIPhi);
     chain -> SetBranchAddress("tpEmulADC1",     treeVars.tpEmulADC1);
     chain -> SetBranchAddress("tpEmulADC2",     treeVars.tpEmulADC2);
     chain -> SetBranchAddress("tpEmulADC3",     treeVars.tpEmulADC3);
@@ -591,8 +591,8 @@ void setBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
     // xtal variables inside a cluster
     // strange: MAXXTALINC needs be replaced by explicit "9"; not understood gf
     chain -> Branch("xtalInBCHashedIndex",  treeVars.xtalInBCHashedIndex,  "xtalInBCHashedIndex[nClusters][9]/I");
-    chain -> Branch("xtalInBCIeta",         treeVars.xtalInBCIeta,         "xtalInBCIeta[nClusters][9]/I");
-    chain -> Branch("xtalInBCIphi",         treeVars.xtalInBCIphi,         "xtalInBCIphi[nClusters][9]/I");
+    chain -> Branch("xtalInBCIEta",         treeVars.xtalInBCIEta,         "xtalInBCIEta[nClusters][9]/I");
+    chain -> Branch("xtalInBCIPhi",         treeVars.xtalInBCIPhi,         "xtalInBCIPhi[nClusters][9]/I");
     chain -> Branch("xtalInBCIx",           treeVars.xtalInBCIx,           "xtalInBCIx[nClusters][9]/I");
     chain -> Branch("xtalInBCIy",           treeVars.xtalInBCIy,           "xtalInBCIy[nClusters][9]/I");
     chain -> Branch("xtalInBCFlag",         treeVars.xtalInBCFlag,         "xtalInBCFlag[nClusters][9]/I");
@@ -800,8 +800,8 @@ void setBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
   if(EcalTimePi0TreeContent::tpgVariables)
   {
     chain->Branch("tpgNTowers",         &treeVars.tpgNTowers,                                   "tpgNTowers/I");
-    chain->Branch("tpgIeta",             treeVars.tpgIeta,                             "tpgIeta[tpgNTowers]/I");
-    chain->Branch("tpgIphi",             treeVars.tpgIphi,                             "tpgIphi[tpgNTowers]/I");
+    chain->Branch("tpgIEta",             treeVars.tpgIEta,                             "tpgIEta[tpgNTowers]/I");
+    chain->Branch("tpgIPhi",             treeVars.tpgIPhi,                             "tpgIPhi[tpgNTowers]/I");
     chain->Branch("tpgNbOfXtals",        treeVars.tpgNbOfXtals,                   "tpgNbOfXtals[tpgNTowers]/I");
     chain->Branch("tpgEnRec",            treeVars.tpgEnRec,                           "tpgEnRec[tpgNTowers]/F");
     chain->Branch("tpgADC",              treeVars.tpgADC,                               "tpgADC[tpgNTowers]/I");
@@ -809,8 +809,8 @@ void setBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
     chain->Branch("tpgActiveTriggers",   treeVars.tpgActiveTriggers, "tpgActiveTriggers[tpgNActiveTriggers]/I");
 
     chain->Branch("tpEmulNTowers", &treeVars.tpEmulNTowers,          "tpEmulNTowers/I");
-    chain->Branch("tpEmulIeta",     treeVars.tpEmulIeta, "tpEmulIeta[tpEmulNTowers]/I");
-    chain->Branch("tpEmulIphi",     treeVars.tpEmulIphi, "tpEmulIphi[tpEmulNTowers]/I");
+    chain->Branch("tpEmulIEta",     treeVars.tpEmulIEta, "tpEmulIEta[tpEmulNTowers]/I");
+    chain->Branch("tpEmulIPhi",     treeVars.tpEmulIPhi, "tpEmulIPhi[tpEmulNTowers]/I");
     chain->Branch("tpEmulADC1",     treeVars.tpEmulADC1, "tpEmulADC1[tpEmulNTowers]/I");
     chain->Branch("tpEmulADC2",     treeVars.tpEmulADC2, "tpEmulADC2[tpEmulNTowers]/I");
     chain->Branch("tpEmulADC3",     treeVars.tpEmulADC3, "tpEmulADC3[tpEmulNTowers]/I");
@@ -1096,8 +1096,8 @@ void initializeBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
     for(int cl=0; cl<MAXC; cl++ ){
       for(int cryInClu=0; cryInClu<MAXXTALINC; cryInClu++){
 	treeVars.xtalInBCHashedIndex[cl][cryInClu]=0;
-	treeVars.xtalInBCIeta[cl][cryInClu]=0;
-	treeVars.xtalInBCIphi[cl][cryInClu]=0;
+	treeVars.xtalInBCIEta[cl][cryInClu]=0;
+	treeVars.xtalInBCIPhi[cl][cryInClu]=0;
 	treeVars.xtalInBCIx[cl][cryInClu]=0;
 	treeVars.xtalInBCIy[cl][cryInClu]=0;
 	treeVars.xtalInBCFlag[cl][cryInClu]=0;
