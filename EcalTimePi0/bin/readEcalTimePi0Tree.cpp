@@ -41,7 +41,7 @@ int main (int argc, char** argv)
   
   // if no arguments are passed, suggest help
   if (argc < 2){
-    std::cerr << "ERROR: specify arguments, e.g. --help\n" << std::endl ;
+    std::cerr << "\n\tERROR: specify arguments, e.g. --help\n" << std::endl ;
     exit (1) ;  
   }
 
@@ -104,7 +104,7 @@ int main (int argc, char** argv)
   else{
     std::cout << "\tfound " << listOfFiles.size() << " input files: " << std::endl;
     for(std::vector<std::string>::const_iterator  file_itr=listOfFiles.begin(); file_itr!=listOfFiles.end(); file_itr++){
-      std::cout << (*file_itr) << std::endl;
+      std::cout << "\t" << (*file_itr) << std::endl;
     }
   }
 
@@ -117,7 +117,7 @@ int main (int argc, char** argv)
   }
   int nEntries = chain->GetEntries () ;
   if (numEvents==-1) numEvents = nEntries;
-  std::cout << "\tFOUND " << nEntries << " events" << std::endl ;    
+  std::cout << "\n\tFOUND " << nEntries << " events" << std::endl ;    
   std::cout << "\tWILL run on: " <<  numEvents << " events" << std::endl;
   std::cout << "\tOutput file: " <<  outputRootName << std::endl;
 
@@ -130,70 +130,95 @@ int main (int argc, char** argv)
   for (int entry = 0 ; (entry < nEntries && entry < numEvents); ++entry)
     {
       chain->GetEntry (entry) ;
-      std::cout << "------> reading entry " << entry << " <------\n" ; 
 
-      //PG loop on calorimetric quantities
-      //PG -------------------------------
+      bool speak=false;
+      if (entry<10 || entry%100==0  || true) speak=true;
 
-      std::cout << "  found " << treeVars.nSuperClusters << " superclusters\n" ;
-             
-      //PG loop on superclusters
+      if (speak) std::cout << "------> reading entry " << entry << " <------\n" ; 
+
+
+      // loop on calorimetric quantities
+
+      if (speak)  std::cout << "  found " << treeVars.nSuperClusters << " superclusters" << std::endl ;
+      if (speak)  std::cout << "  found " << treeVars.nClusters << " basic clusters" << std::endl ;
+
+
+        /////////////////////////////////////////////////////
+	//loop on basic cluster
+
+	for (int bCluster=0; bCluster < treeVars.nClusters; bCluster++)
+	  {
+	    if (speak)  std::cout << "\tbCluster " << bCluster << " out of: " << treeVars.nClusters 
+				  << " e: " << treeVars.clusterEnergy[bCluster]
+				  << "     et: " << treeVars.clusterTransverseEnergy[bCluster]
+				  << ", predicted et: " << treeVars.clusterEnergy[bCluster]*sin(2*atan(exp(-1* treeVars.clusterEta[bCluster] )) )
+				  << " eta: " << treeVars.clusterEta[bCluster]
+				  << std::endl;
+	  }
+
+
+
+
+
+
+      /////////////////////////////////////////////////////
+      //loop on superclusters
       for (int SCindex = 0 ; SCindex < treeVars.nSuperClusters ; ++SCindex)
-        {
-	  std::cout << " SC n  = " << SCindex << std::endl;
-	  std::cout << " --->  Sup X = " << treeVars.superClusterX[SCindex] << " Sup Y = " << treeVars.superClusterY[SCindex] << " Sup Z = " << treeVars.superClusterZ[SCindex] << "\n" ;
-	  std::cout << "    found " << treeVars.nClustersInSuperCluster[SCindex] 
-                    << " clusters in supercluster\n" ;    
-          //PG loop over clusters in supercluster
-          for (int BCindex = treeVars.clusterIndexInSuperCluster[SCindex] ; 
-               BCindex < treeVars.clusterIndexInSuperCluster[SCindex] + 
-		 treeVars.nClustersInSuperCluster[SCindex] ; 
-               ++BCindex)
-            { 
-                
-	      std::cout << "      found " << treeVars.nXtalsInCluster[SCindex] 
-                        << " crystals in cluster\n" ;    
-
-              //PG loop over crystals in cluster
-              for (int XTLindex = treeVars.xtalIndexInCluster[BCindex] ; 
-                   XTLindex < treeVars.xtalIndexInCluster[BCindex] + 
-		     treeVars.nXtalsInCluster[BCindex] ; 
-                   ++XTLindex)
-                {
-                  if (!EBDetId::validHashIndex (treeVars.xtalHashedIndex[XTLindex]))
-                    {
-		      std::cerr << "ERROR crystal " 
-                                << treeVars.xtalHashedIndex[XTLindex] 
-                                << " has invalid DetId" << std::endl ;
-                      continue ;
-                    }          
-                  EBDetId dummy = EBDetId::unhashIndex (treeVars.xtalHashedIndex[XTLindex]) ;   
-		  std::cout << "        found crystal " 
-                            << treeVars.xtalHashedIndex[XTLindex]
-                            << " at (" << dummy.ieta () << "," << dummy.iphi ()
-                            << ") with energy " 
-                            << treeVars.xtalEnergy[XTLindex] 
-                            << " GeV \n" ;       
-                } //PG loop over crystals in cluster
-
-            } //PG loop over clusters in supercluster
-
-	  std::cout << "    found " << treeVars.nXtalsInSuperCluster[SCindex] 
-                    << " crystals in supercluster\n" ;    
-          //PG loop over crystals in SUPERcluster
-          for (int XTLindex = treeVars.xtalIndexInSuperCluster[SCindex] ; 
-               XTLindex < treeVars.xtalIndexInSuperCluster[SCindex] + 
-		 treeVars.nXtalsInSuperCluster[SCindex] ; 
-               ++XTLindex)
-            {
-	      std::cout << "      found crystal " 
-                        << treeVars.xtalHashedIndex[XTLindex]
-                        << " with energy " 
-                        << treeVars.xtalEnergy[XTLindex] 
-                        << " GeV \n" ;    
-            
-            } //PG loop over crystals in SUPERcluster
-        } //PG loop on superclusters
+//        {
+//	  if (speak) std::cout << " SC n  = " << SCindex << std::endl;
+//	  if (speak) std::cout << " --->  Sup X = " << treeVars.superClusterX[SCindex] << " Sup Y = " << treeVars.superClusterY[SCindex] << " Sup Z = " << treeVars.superClusterZ[SCindex] << "\n" ;
+//	  std::cout << "    found " << treeVars.nClustersInSuperCluster[SCindex] 
+//                    << " clusters in supercluster\n" ;    
+//          //PG loop over clusters in supercluster
+//          for (int BCindex = treeVars.clusterIndexInSuperCluster[SCindex] ; 
+//               BCindex < treeVars.clusterIndexInSuperCluster[SCindex] + 
+//		 treeVars.nClustersInSuperCluster[SCindex] ; 
+//               ++BCindex)
+//            { 
+//                
+//	      std::cout << "      found " << treeVars.nXtalsInCluster[SCindex] 
+//                        << " crystals in cluster\n" ;    
+//
+//              //PG loop over crystals in cluster
+//              for (int XTLindex = treeVars.xtalIndexInCluster[BCindex] ; 
+//                   XTLindex < treeVars.xtalIndexInCluster[BCindex] + 
+//		     treeVars.nXtalsInCluster[BCindex] ; 
+//                   ++XTLindex)
+//                {
+//                  if (!EBDetId::validHashIndex (treeVars.xtalHashedIndex[XTLindex]))
+//                    {
+//		      std::cerr << "ERROR crystal " 
+//                                << treeVars.xtalHashedIndex[XTLindex] 
+//                                << " has invalid DetId" << std::endl ;
+//                      continue ;
+//                    }          
+//                  EBDetId dummy = EBDetId::unhashIndex (treeVars.xtalHashedIndex[XTLindex]) ;   
+//		  std::cout << "        found crystal " 
+//                            << treeVars.xtalHashedIndex[XTLindex]
+//                            << " at (" << dummy.ieta () << "," << dummy.iphi ()
+//                            << ") with energy " 
+//                            << treeVars.xtalEnergy[XTLindex] 
+//                            << " GeV \n" ;       
+//                } //PG loop over crystals in cluster
+//
+//            } // loop over clusters in supercluster
+//
+//	  std::cout << "    found " << treeVars.nXtalsInSuperCluster[SCindex] 
+//                    << " crystals in supercluster\n" ;    
+//          //PG loop over crystals in SUPERcluster
+//          for (int XTLindex = treeVars.xtalIndexInSuperCluster[SCindex] ; 
+//               XTLindex < treeVars.xtalIndexInSuperCluster[SCindex] + 
+//		 treeVars.nXtalsInSuperCluster[SCindex] ; 
+//               ++XTLindex)
+//            {
+//	      std::cout << "      found crystal " 
+//                        << treeVars.xtalHashedIndex[XTLindex]
+//                        << " with energy " 
+//                        << treeVars.xtalEnergy[XTLindex] 
+//                        << " GeV \n" ;    
+//            
+//            } //loop over crystals in SUPERcluster
+//        } //loop on superclusters
 
       std::cout << "  found " << treeVars.nXtals << " crystals\n" ;    
       //PG loop over crystals
@@ -201,76 +226,14 @@ int main (int argc, char** argv)
         {
           EBDetId dummy = EBDetId::unhashIndex (treeVars.xtalHashedIndex[XTLindex]) ;   
         } //PG loop over crystals
+
       
-      //PG loop on muons
-      //PG -------------
 
     } //PG loop over entries
 
 
   TFile saving (outputRootName.c_str (),"recreate") ;
   saving.cd () ;
-  
-  //occupancy.Write () ;
-  
-  //  occupancyEnergy.Write () ;
-  
-//  muondzd0OutEcalBarrel.GetXaxis()->SetTitle("dz");
-//  muondzd0OutEcalBarrel.GetYaxis()->SetTitle("d0");
-//  muondzd0InEcalBarrel.GetXaxis()->SetTitle("dz");
-//  muondzd0InEcalBarrel.GetYaxis()->SetTitle("d0");
-//  muondzd0HalfEcalBarrel.GetXaxis()->SetTitle("dz");
-//  muondzd0HalfEcalBarrel.GetYaxis()->SetTitle("d0");
-//  muondzd0OutEcalBarrel.Write();
-//  muondzd0InEcalBarrel.Write();
-//  muondzd0HalfEcalBarrel.Write();
-//
-//  
-//  muondzd0OutEcalBarrelOuter.GetXaxis()->SetTitle("dz");
-//  muondzd0OutEcalBarrelOuter.GetYaxis()->SetTitle("d0");
-//  muondzd0InEcalBarrelOuter.GetXaxis()->SetTitle("dz");
-//  muondzd0InEcalBarrelOuter.GetYaxis()->SetTitle("d0");
-//  muondzd0HalfEcalBarrelOuter.GetXaxis()->SetTitle("dz");
-//  muondzd0HalfEcalBarrelOuter.GetYaxis()->SetTitle("d0");
-//  muondzd0OutEcalBarrelOuter.Write();
-//  muondzd0InEcalBarrelOuter.Write();
-//  muondzd0HalfEcalBarrelOuter.Write();
-//  
-//  
-//  
-//  muonInEtaPhiInAndOutEcalBarrel.GetXaxis()->SetTitle("#eta");
-//  muonInEtaPhiInAndOutEcalBarrel.GetYaxis()->SetTitle("#phi");
-//  muonInEtaPhiInAndOutEcalBarrel.Write();
-//  
-//  muonOutEtaPhiInAndOutEcalBarrel.GetXaxis()->SetTitle("#eta");
-//  muonOutEtaPhiInAndOutEcalBarrel.GetYaxis()->SetTitle("#phi");
-//  muonOutEtaPhiInAndOutEcalBarrel.Write();
-//  
-//  muonEtaPhiOnlyOutEcalBarrel.GetXaxis()->SetTitle("#eta");
-//  muonEtaPhiOnlyOutEcalBarrel.GetYaxis()->SetTitle("#phi");
-//  muonEtaPhiOnlyOutEcalBarrel.Write();
-//  
-//  
-//  muonEtaPhiInEcalBarrel.GetXaxis()->SetTitle("#eta");
-//  muonEtaPhiInEcalBarrel.GetYaxis()->SetTitle("#phi");
-//  muonEtaPhiInEcalBarrel.Write();
-//  
-//  muonEtaPhiOutEcalBarrel.GetXaxis()->SetTitle("#eta");
-//  muonEtaPhiOutEcalBarrel.GetYaxis()->SetTitle("#phi");
-//  muonEtaPhiOutEcalBarrel.Write();
-//  
-//  SCEtaPhiAssociated.GetXaxis()->SetTitle("#eta");
-//  SCEtaPhiAssociated.GetYaxis()->SetTitle("#phi");
-//  SCEtaPhiAssociated.Write();
-//          
-//  muonEtaPhiAssociated.GetXaxis()->SetTitle("#eta");
-//  muonEtaPhiAssociated.GetYaxis()->SetTitle("#phi");
-//  muonEtaPhiAssociated.Write();
-//  
-//  muonInnerHitYOuterHitY.GetXaxis()->SetTitle("InnerHitY");
-//  muonInnerHitYOuterHitY.GetYaxis()->SetTitle("OuterHitY");
-//  muonInnerHitYOuterHitY.Write();
-//          
           
   saving.Close () ;
 
