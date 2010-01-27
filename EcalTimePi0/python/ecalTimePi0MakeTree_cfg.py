@@ -132,7 +132,7 @@ process.p = cms.Path(
     process.multi5x5BasicClustersTimePi0Endcap *
     process.multi5x5SuperClustersTimePi0Barrel *
     process.multi5x5SuperClustersTimePi0Endcap *
-    process.dumpEvContent  *
+    # process.dumpEvContent  *
     process.ecalTimePi0Tree
     )
 
