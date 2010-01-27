@@ -128,6 +128,22 @@ int main (int argc, char** argv)
   EcalTimePi0TreeContent treeVars ; 
   setBranchAddresses (chain, treeVars) ;
 
+  // Initialize output root file
+  TFile saving (outputRootName.c_str (),"recreate") ;
+  saving.cd () ;
+  // Initialize histograms -- BasicClusters
+  TH1F* BCNumPerEventHist_ = new TH1F("BCNumPerEvent","Number of BC per event",50,0,49);
+  TH1F* BCEnergyHist_ = new TH1F("BCEnergy","Energy of BCs;GeV",100,0,24);
+  TH1F* BCEtHist_ = new TH1F("BCEt","E_{T} of BCs;GeV",100,0,24);
+  TH1F* BCNumCrysHist_ = new TH1F("BCNumCrys","Number of crystals per BC",10,0,9);
+  TH2F* BCOccupancyHistEB_ = new TH2F("BCOccupancyEB","BC occupancy;i#phi;i#eta",360,1.,361.,172,-86,86);
+  // Initialize histograms -- xtals
+  TH1F* xtalEnergyHist_ = new TH1F("XtalEnergy","Crystal energy;GeV",110,-1,10);
+  TH1F* xtalTimeHist_ = new TH1F("XtalTime","CrystalTime;ns",60,-25,35);
+  TH1F* xtalStatusHist_ = new TH1F("XtalStatus","Crystal status flag",16,0,15);
+  TH2F* xtalOccupancyHistEB_ = new TH2F("XtalOccupancyEB","Crystal occupancy;i#phi;i#eta",360,1.,361.,172,-86,86);
+  
+
 
 
   //loop over entries
@@ -145,6 +161,7 @@ int main (int argc, char** argv)
 
       if (speak)  std::cout << "  found " << treeVars.nSuperClusters << " superclusters" << std::endl ;
       if (speak)  std::cout << "  found " << treeVars.nClusters << " basic clusters" << std::endl ;
+      BCNumPerEventHist_->Fill(treeVars.nClusters);
 
 
         /////////////////////////////////////////////////////
@@ -157,6 +174,11 @@ int main (int argc, char** argv)
 	    for (int cryInBC=0; cryInBC < treeVars.nXtalsInCluster[bCluster]; cryInBC++){
 	      eBC+= treeVars.xtalInBCEnergy[bCluster][cryInBC];}
 
+            BCEnergyHist_->Fill(treeVars.clusterEnergy[bCluster]);
+            BCEtHist_->Fill(treeVars.clusterTransverseEnergy[bCluster]);
+            BCNumCrysHist_->Fill(treeVars.nXtalsInCluster[bCluster]);
+            if(treeVars.xtalInBCIEta[bCluster][0] != 0)
+              BCOccupancyHistEB_->Fill(treeVars.xtalInBCIPhi[bCluster][0],treeVars.xtalInBCIEta[bCluster][0]);  // first cry for now
 
 	    if (speak)  std::cout << "\tbCluster: num"               << bCluster 
 				  << "\t eBC: "                      << treeVars.clusterEnergy[bCluster]
@@ -241,7 +263,18 @@ int main (int argc, char** argv)
       //PG loop over crystals
       for (int XTLindex = 0 ; XTLindex < treeVars.nXtals ; ++XTLindex)
         {
-          EBDetId dummy = EBDetId::unhashIndex (treeVars.xtalHashedIndex[XTLindex]) ;   
+          if(!EBDetId::validHashIndex(treeVars.xtalHashedIndex[XTLindex]))
+            EEDetId eeDet = EEDetId::unhashIndex(treeVars.xtalHashedIndex[XTLindex]);
+          else
+          {
+            EBDetId ebDet = EBDetId::unhashIndex(treeVars.xtalHashedIndex[XTLindex]);   
+            xtalOccupancyHistEB_->Fill(ebDet.iphi(),ebDet.ieta());
+          }
+          xtalEnergyHist_->Fill(treeVars.xtalEnergy[XTLindex]);
+          xtalTimeHist_->Fill(treeVars.xtalTime[XTLindex]);
+          //TODO
+          //xtalStatusHist_->Fill
+
         } //PG loop over crystals
 
       
@@ -249,12 +282,28 @@ int main (int argc, char** argv)
     } //PG loop over entries
 
 
-  TFile saving (outputRootName.c_str (),"recreate") ;
-  saving.cd () ;
+  BCNumPerEventHist_->Write();
+  BCEnergyHist_->Write();
+  BCEtHist_->Write();
+  BCNumCrysHist_->Write();
+  BCOccupancyHistEB_->Write();
+  xtalEnergyHist_->Write(); 
+  xtalTimeHist_->Write();
+  xtalStatusHist_->Write();
+  xtalOccupancyHistEB_->Write();
           
   saving.Close () ;
 
   delete chain ;
+  //delete BCNumPerEventHist_;
+  //delete BCEnergyHist_;
+  //delete BCEtHist_;
+  //delete BCNumCrysHist_;
+  //delete BCOccupancyHistEB_;
+  //delete xtalEnergyHist_; 
+  //delete xtalTimeHist_;
+  //delete xtalStatusHist_;
+  //delete xtalOccupancyHistEB_;
+  
   return 0 ;
-
 }
