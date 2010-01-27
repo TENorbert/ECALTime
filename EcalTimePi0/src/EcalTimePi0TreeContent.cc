@@ -881,7 +881,7 @@ void setBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
     // chain->Branch("l1GctCandIsoBx",           treeVars.l1GctCandIsoBx,                     "l1GctCandIsoBx[l1NGctCandIso]/i");
     // chain->Branch("l1GctCandIsoCaloRegIndex", treeVars.l1GctCandIsoCaloRegIndex, "l1GctCandIsoCaloRegIndex[l1NGctCandIso]/I");
     
-    chain->Branch("l1NGctCandIso",           &treeVars.l1NGctCandIso,                                        "l1NGctCandIso");
+    chain->Branch("l1NGctCandIso",           &treeVars.l1NGctCandIso,                                        "l1NGctCandIso/I");
     chain->Branch("l1GctCandIsoIEta",         treeVars.l1GctCandIsoIEta,                 "l1GctCandIsoIEta[l1NGctCandIso]/I");
     chain->Branch("l1GctCandIsoIPhi",         treeVars.l1GctCandIsoIPhi,                 "l1GctCandIsoIPhi[l1NGctCandIso]/I");
     chain->Branch("l1GctCandIsoRank",         treeVars.l1GctCandIsoRank,                 "l1GctCandIsoRank[l1NGctCandIso]/i");
@@ -891,7 +891,7 @@ void setBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
     chain->Branch("l1GctCandIsoBx",           treeVars.l1GctCandIsoBx,                     "l1GctCandIsoBx[l1NGctCandIso]/i");	  
     chain->Branch("l1GctCandIsoCaloRegIndex", treeVars.l1GctCandIsoCaloRegIndex, "l1GctCandIsoCaloRegIndex[l1NGctCandIso]/I");
     
-    chain->Branch("l1NGctCandNonIso",           &treeVars.l1NGctCandNonIso,                                           "l1NGctCandNonIso");
+    chain->Branch("l1NGctCandNonIso",           &treeVars.l1NGctCandNonIso,                                           "l1NGctCandNonIso/I");
     chain->Branch("l1GctCandNonIsoIEta",         treeVars.l1GctCandNonIsoIEta,                 "l1GctCandNonIsoIEta[l1NGctCandNonIso]/I");
     chain->Branch("l1GctCandNonIsoIPhi",         treeVars.l1GctCandNonIsoIPhi,                 "l1GctCandNonIsoIPhi[l1NGctCandNonIso]/I");
     chain->Branch("l1GctCandNonIsoRank",         treeVars.l1GctCandNonIsoRank,                 "l1GctCandNonIsoRank[l1NGctCandNonIso]/i");
@@ -901,7 +901,7 @@ void setBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
     chain->Branch("l1GctCandNonIsoBx",           treeVars.l1GctCandNonIsoBx,                     "l1GctCandNonIsoBx[l1NGctCandNonIso]/i");
     chain->Branch("l1GctCandNonIsoCaloRegIndex", treeVars.l1GctCandNonIsoCaloRegIndex, "l1GctCandNonIsoCaloRegIndex[l1NGctCandNonIso]/I");
     
-    chain->Branch("l1NCaloCand",         &treeVars.l1NCaloCand,                                  "l1NCaloCand");
+    chain->Branch("l1NCaloCand",         &treeVars.l1NCaloCand,                                  "l1NCaloCand/I");
     chain->Branch("l1CaloCandIEta",       treeVars.l1CaloCandIEta,             "l1CaloCandIEta[l1NCaloCand]/I");
     chain->Branch("l1CaloCandIPhi",       treeVars.l1CaloCandIPhi,             "l1CaloCandIPhi[l1NCaloCand]/I");
     chain->Branch("l1CaloCandRctCard",    treeVars.l1CaloCandRctCard,       "l1CaloCandRctCard[l1NCaloCand]/I");
@@ -911,11 +911,11 @@ void setBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
     chain->Branch("l1CaloCandIsIsolated", treeVars.l1CaloCandIsIsolated, "l1CaloCandIsIsolated[l1NCaloCand]/O");
     chain->Branch("l1CaloCandBx",         treeVars.l1CaloCandBx,                 "l1CaloCandBx[l1NCaloCand]/i");
     
-    chain->Branch("l1NCaloReg",         &treeVars.l1NCaloReg,                                 "l1NCaloReg");
+    chain->Branch("l1NCaloReg",         &treeVars.l1NCaloReg,                                 "l1NCaloReg/I");
     chain->Branch("l1CaloRegIEta",       treeVars.l1CaloRegIEta,             "l1CaloRegIEta[l1NCaloReg]/I");
     chain->Branch("l1CaloRegIPhi",       treeVars.l1CaloRegIPhi,             "l1CaloRegIPhi[l1NCaloReg]/I");
-    chain->Branch("l1CaloRegCapBlock",   treeVars.l1CaloRegCapBlock,     "l1CaloRegCapBlock[l1NCaloReg]/i");
-    chain->Branch("l1CaloRegCapIndex",   treeVars.l1CaloRegCapIndex,     "l1CaloRegCapIndex[l1NCaloReg]/i");
+    chain->Branch("l1CaloRegCapBlock",   treeVars.l1CaloRegCapBlock,     "l1CaloRegCapBlock[l1NCaloReg]/I");
+    chain->Branch("l1CaloRegCapIndex",   treeVars.l1CaloRegCapIndex,     "l1CaloRegCapIndex[l1NCaloReg]/I");
     chain->Branch("l1CaloRegRctCard",    treeVars.l1CaloRegRctCard,       "l1CaloRegRctCard[l1NCaloReg]/I");
     chain->Branch("l1CaloRegRctReg",     treeVars.l1CaloRegRctReg,         "l1CaloRegRctReg[l1NCaloReg]/I");
     chain->Branch("l1CaloRegRctCrate",   treeVars.l1CaloRegRctCrate,     "l1CaloRegRctCrate[l1NCaloReg]/I");
@@ -937,7 +937,7 @@ void setBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
     chain->Branch("l1MuonPz",         treeVars.l1MuonPz,                 "l1MuonPz[l1NMuons]/F");
     chain->Branch("l1MuonE",          treeVars.l1MuonE,                   "l1MuonE[l1NMuons]/F");
     chain->Branch("l1MuonPt",         treeVars.l1MuonPt,                 "l1MuonPt[l1NMuons]/F");
-    chain->Branch("l1MuonBx",         treeVars.l1MuonBx,                 "l1MuonBx[l1NMuons]/F");
+    chain->Branch("l1MuonBx",         treeVars.l1MuonBx,                 "l1MuonBx[l1NMuons]/i");
     chain->Branch("l1MuonIsIsolated", treeVars.l1MuonIsIsolated, "l1MuonIsIsolated[l1NMuons]/O");
     chain->Branch("l1MuonIsMip",      treeVars.l1MuonIsMip,           "l1MuonIsMip[l1NMuons]/O");
     chain->Branch("l1MuonIsForward",  treeVars.l1MuonIsForward,   "l1MuonIsForward[l1NMuons]/O");
