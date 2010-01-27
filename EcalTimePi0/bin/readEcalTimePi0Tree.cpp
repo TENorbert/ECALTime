@@ -148,11 +148,24 @@ int main (int argc, char** argv)
 
 	for (int bCluster=0; bCluster < treeVars.nClusters; bCluster++)
 	  {
-	    if (speak)  std::cout << "\tbCluster " << bCluster << " out of: " << treeVars.nClusters 
-				  << " e: " << treeVars.clusterEnergy[bCluster]
-				  << "     et: " << treeVars.clusterTransverseEnergy[bCluster]
-				  << ", predicted et: " << treeVars.clusterEnergy[bCluster]*sin(2*atan(exp(-1* treeVars.clusterEta[bCluster] )) )
-				  << " eta: " << treeVars.clusterEta[bCluster]
+
+	    float eBC=0; // calculate energy of BC for validation
+	    for (int cryInBC=0; cryInBC < treeVars.nXtalsInCluster[bCluster]; cryInBC++){
+	      eBC+= treeVars.xtalInBCEnergy[bCluster][cryInBC];}
+
+
+	    if (speak)  std::cout << "\tbCluster: num"               << bCluster 
+				  << "\t eBC: "                      << treeVars.clusterEnergy[bCluster]
+				  << "\t eBC_predicted: "            << eBC
+				  << "\n\t et: "                     << treeVars.clusterTransverseEnergy[bCluster]
+				  << "\t predicted et: "             << treeVars.clusterEnergy[bCluster]*sin(2*atan(exp(-1* treeVars.clusterEta[bCluster] )) )
+				  << " eta: "                        << treeVars.clusterEta[bCluster]
+				  << "\n\t num crystals: "           << treeVars.nXtalsInCluster[bCluster]
+				  << "\n\t\tfirst crystal:  \tieta " << treeVars.xtalInBCIEta[bCluster][0] 
+				  << " \t energy "                   << treeVars.xtalInBCEnergy[bCluster][0] 
+				  << " \t ADC "                      << treeVars.xtalInBCAmplitudeADC[bCluster][0] 
+				  << " \t time "                     << treeVars.xtalInBCTime[bCluster][0] 
+				  << " \t time "                     << treeVars.xtalTime[0]
 				  << std::endl;
 	  }
 
