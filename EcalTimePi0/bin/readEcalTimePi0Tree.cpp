@@ -263,13 +263,18 @@ int main (int argc, char** argv)
       //PG loop over crystals
       for (int XTLindex = 0 ; XTLindex < treeVars.nXtals ; ++XTLindex)
         {
-          if(!EBDetId::validHashIndex(treeVars.xtalHashedIndex[XTLindex]))
-            EEDetId eeDet = EEDetId::unhashIndex(treeVars.xtalHashedIndex[XTLindex]);
-          else
-          {
-            EBDetId ebDet = EBDetId::unhashIndex(treeVars.xtalHashedIndex[XTLindex]);   
-            xtalOccupancyHistEB_->Fill(ebDet.iphi(),ebDet.ieta());
-          }
+          //TODO: For this to work, we need another way to tell EB from EE,
+          //      as hashedIndex itself is not enough!
+          //if(EBDetId::validHashIndex(treeVars.xtalHashedIndex[XTLindex]))
+          //{
+          //  EBDetId ebDet = EBDetId::unhashIndex(treeVars.xtalHashedIndex[XTLindex]);   
+          //  xtalOccupancyHistEB_->Fill(ebDet.iphi(),ebDet.ieta());
+          //}
+          //else if(EEDetId::validHashIndex(treeVars.xtalHashedIndex[XTLindex]))
+          //  EEDetId eeDet = EEDetId::unhashIndex(treeVars.xtalHashedIndex[XTLindex]);
+          //else
+          //  std::cout << "Crystal with hash: " << 
+
           xtalEnergyHist_->Fill(treeVars.xtalEnergy[XTLindex]);
           xtalTimeHist_->Fill(treeVars.xtalTime[XTLindex]);
           //TODO
