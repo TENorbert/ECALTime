@@ -14,7 +14,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.cc,v 1.7 2010/01/27 16:56:33 franzoni Exp $
+// $Id: EcalTimePi0Tree.cc,v 1.8 2010/01/27 17:52:23 scooper Exp $
 //
 //
 
@@ -304,7 +304,7 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
   /////////////////////////////////////////////////////////////////////////////////////////
   //loop on all superclusters in event
   for (reco::SuperClusterCollection::const_iterator sclus = theBarrelSuperClusters->begin () ; 
-       sclus != theBarrelSuperClusters->end () ; 
+       sclus != theBarrelSuperClusters->end ()  && numberOfSuperClusters<MAXSC;
        ++sclus) 
     {
   
@@ -333,7 +333,7 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
       float & energySum = myTreeVariables_.superClusterEnergySum[numberOfSuperClusters];
       energySum = 0.;
       for (reco::BasicClusterCollection::const_iterator clus = theBarrelBasicClusters->begin () ; 
-	   clus != theBarrelBasicClusters->end () ;  
+	   clus != theBarrelBasicClusters->end ()  && numberOfClusters<MAXC;  
 	   ++clus) // loop on barrel Bclusters
 	{        
 	  double energy = (clus)->energy () ;
@@ -359,7 +359,7 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
 	  //////////////////////////////////////////////////////////////////////////////////////
 	  //loop on xtals in cluster
 	  for (std::vector<std::pair<DetId, float> >::const_iterator detitr = clusterDetIds.begin () ; 
-	       detitr != clusterDetIds.end () ; 
+	       detitr != clusterDetIds.end ()  && numberOfXtalsInCluster<MAXXTALINC && numberOfXtals<MAXXTAL ; 
 	       ++detitr)// loop on rechics of barrel basic clusters
 	    {
 	      //Here I use the "find" on a digi collection... I have been warned...   (GFdoc: ??)
@@ -549,7 +549,7 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
   
   //loop on all endcap superclusters in event
   for (reco::SuperClusterCollection::const_iterator sclus = theEndcapSuperClusters->begin () ; 
-       sclus != theEndcapSuperClusters->end () ; 
+       sclus != theEndcapSuperClusters->end ()  && numberOfSuperClusters<MAXSC; 
        ++sclus) 
     {
   
@@ -588,7 +588,7 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
   float & energySum = myTreeVariables_.superClusterEnergySum[numberOfSuperClusters];
   energySum = 0.;
   for (reco::BasicClusterCollection::const_iterator clus = theEndcapBasicClusters->begin () ; 
-       clus != theEndcapBasicClusters->end () ;  
+       clus != theEndcapBasicClusters->end () && numberOfClusters<MAXC;
        ++clus) // loop on endcap Bclusters
     {        
 
@@ -613,7 +613,7 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
 
         //loop on xtals in cluster
          for (std::vector<std::pair<DetId, float> >::const_iterator detitr = clusterDetIds.begin () ; 
-              detitr != clusterDetIds.end () ; 
+              detitr != clusterDetIds.end () && numberOfXtalsInCluster<MAXXTALINC && numberOfXtals<MAXXTAL ; 
               ++detitr)// loop on rechits of endcap basic clusters
            {
              //Here I use the "find" on a digi collection... I have been warned...
