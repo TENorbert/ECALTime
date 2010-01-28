@@ -10,11 +10,13 @@
 #include "DataFormats/DetId/interface/DetId.h"
 #include "DataFormats/EcalDetId/interface/EBDetId.h"
 #include "DataFormats/EcalDetId/interface/EEDetId.h"
+#include "DataFormats/Math/interface/LorentzVector.h"
 
 #include "TChain.h"
 #include "TH1.h"
 #include "TH2.h"
 #include "TFile.h"
+
 
 // initial authors P. Govoni et al
 // authors: S. Cooper and G. Franzoni (UMN)
@@ -29,10 +31,16 @@ int main (int argc, char** argv)
   std::string stringHelp             = "--help";
   std::string stringInputFileName    = "--i";
   std::string stringOutFileName      = "--o";
+  std::string stringETGammaMin       = "--eTGammaMin";
+  std::string strings4s9GammaMin     = "--s4s9GammaMin";
+  std::string stringeTPi0Min         = "--stringeTPi0Min";
   std::string stringNumEvents        = "--n";
 
   std::vector<std::string> listOfFiles;
-  int numEvents=-1;
+  int   numEvents    =-1;
+  float	eTGammaMin   =0.2;
+  float s4s9GammaMin = 0.85;
+  float eTPi0Min     = 0.65;
 
   //gf: support development
   //std::cout << "\nargc:       " << argc << std::endl;
@@ -52,14 +60,34 @@ int main (int argc, char** argv)
       
       if (argv[v] == stringHelp) { // help message
 	std::cout << " --help : display help" << std::endl ;
-	std::cout << " -o : set name of output root file name (e.g. histograms.root)" << std::endl ;
-	std::cout << " name of input file : list name of input files ntuples" << std::endl ;     
+	std::cout << " --o : set name of output root file name (e.g. histograms.root)" << std::endl ;
+	std::cout << " --n : number of events" << std::endl ;
+	std::cout << " --eTGammaMin: min eT for gammas" << std::endl;
+	std::cout << " --s4s9GammaMin: min shower shape" << std::endl;
+	std::cout << " --eTPi0Min min eT for pi0 candidate" << std::endl;
+	std::cout << " --i <list of strings> list of input files" << std::endl ;     
 	exit(1);      }
 
       
-      if (argv[v] == stringNumEvents) { // set number of events
-	std::cout << "argument " << v << " is " << argv[v]  << std::endl ;
+      else if (argv[v] == stringNumEvents) { // set number of events
+	std::cout << "events number" << std::endl;
 	numEvents=atoi(argv[v+1]);
+	v++;
+      }
+
+      
+      else if (argv[v] == stringETGammaMin) { // choose et cut for single cluster
+	eTGammaMin = atof(argv[v+1]);
+	v++;
+      }
+      
+      else if (argv[v] == strings4s9GammaMin) { // choose cut for shower shape
+	s4s9GammaMin = atof(argv[v+1]);
+	v++;
+      }
+      
+      else if (argv[v] == stringeTPi0Min) { // choose et cut for pi0 candidate
+	eTPi0Min = atof(argv[v+1]);
 	v++;
       }
 
@@ -123,8 +151,9 @@ int main (int argc, char** argv)
   std::cout << "\n\tFOUND " << nEntries << " events" << std::endl ;    
   std::cout << "\tWILL run on: " <<  numEvents << " events" << std::endl;
   std::cout << "\tOutput file: " <<  outputRootName << std::endl;
+  std::cout << "\teTGammaMin: "  <<  eTGammaMin << std::endl;
+  std::cout << "\ts4s9GammaMin: "  <<  s4s9GammaMin << std::endl;
 
-           
   EcalTimePi0TreeContent treeVars ; 
   setBranchAddresses (chain, treeVars) ;
 
@@ -135,13 +164,15 @@ int main (int argc, char** argv)
   TH1F* BCNumPerEventHist_ = new TH1F("BCNumPerEvent","Number of BC per event",50,0,49);
   TH1F* BCEnergyHist_ = new TH1F("BCEnergy","Energy of BCs;GeV",100,0,24);
   TH1F* BCEtHist_ = new TH1F("BCEt","E_{T} of BCs;GeV",100,0,24);
-  TH1F* BCNumCrysHist_ = new TH1F("BCNumCrys","Number of crystals per BC",10,0,9);
+  TH1F* BCNumCrysHist_ = new TH1F("BCNumCrys","Number of crystals per BC",10,0,10);
   TH2F* BCOccupancyHistEB_ = new TH2F("BCOccupancyEB","BC occupancy;i#phi;i#eta",360,1.,361.,172,-86,86);
   // Initialize histograms -- xtals
   TH1F* xtalEnergyHist_ = new TH1F("XtalEnergy","Crystal energy;GeV",110,-1,10);
   TH1F* xtalTimeHist_ = new TH1F("XtalTime","CrystalTime;ns",60,-25,35);
-  TH1F* xtalStatusHist_ = new TH1F("XtalStatus","Crystal status flag",16,0,15);
-  TH2F* xtalOccupancyHistEB_ = new TH2F("XtalOccupancyEB","Crystal occupancy;i#phi;i#eta",360,1.,361.,172,-86,86);
+  // TH1F* xtalStatusHist_ = new TH1F("XtalStatus","Crystal status flag",16,0,15);
+  // TH2F* xtalOccupancyHistEB_ = new TH2F("XtalOccupancyEB","Crystal occupancy;i#phi;i#eta",360,1.,361.,172,-86,86);
+  // Initialize histograms -- diphotons
+  TH1F* massDiGammaHist_ = new TH1F("massDiGamma","m(#gamma#gamma)",50,0,0.500);
   
 
 
@@ -152,7 +183,7 @@ int main (int argc, char** argv)
       chain->GetEntry (entry) ;
 
       bool speak=false;
-      if (entry<10 || entry%100==0  || true) speak=true;
+      if (entry<10 || entry%100==0) speak=true;
 
       if (speak) std::cout << "------> reading entry " << entry << " <------\n" ; 
 
@@ -195,71 +226,7 @@ int main (int argc, char** argv)
 				  << std::endl;
 	  }
 
-
-
-
-
-
-      /////////////////////////////////////////////////////
-      //loop on superclusters
-      for (int SCindex = 0 ; SCindex < treeVars.nSuperClusters ; ++SCindex)
-//        {
-//	  if (speak) std::cout << " SC n  = " << SCindex << std::endl;
-//	  if (speak) std::cout << " --->  Sup X = " << treeVars.superClusterX[SCindex] << " Sup Y = " << treeVars.superClusterY[SCindex] << " Sup Z = " << treeVars.superClusterZ[SCindex] << "\n" ;
-//	  std::cout << "    found " << treeVars.nClustersInSuperCluster[SCindex] 
-//                    << " clusters in supercluster\n" ;    
-//          //PG loop over clusters in supercluster
-//          for (int BCindex = treeVars.clusterIndexInSuperCluster[SCindex] ; 
-//               BCindex < treeVars.clusterIndexInSuperCluster[SCindex] + 
-//		 treeVars.nClustersInSuperCluster[SCindex] ; 
-//               ++BCindex)
-//            { 
-//                
-//	      std::cout << "      found " << treeVars.nXtalsInCluster[SCindex] 
-//                        << " crystals in cluster\n" ;    
-//
-//              //PG loop over crystals in cluster
-//              for (int XTLindex = treeVars.xtalIndexInCluster[BCindex] ; 
-//                   XTLindex < treeVars.xtalIndexInCluster[BCindex] + 
-//		     treeVars.nXtalsInCluster[BCindex] ; 
-//                   ++XTLindex)
-//                {
-//                  if (!EBDetId::validHashIndex (treeVars.xtalHashedIndex[XTLindex]))
-//                    {
-//		      std::cerr << "ERROR crystal " 
-//                                << treeVars.xtalHashedIndex[XTLindex] 
-//                                << " has invalid DetId" << std::endl ;
-//                      continue ;
-//                    }          
-//                  EBDetId dummy = EBDetId::unhashIndex (treeVars.xtalHashedIndex[XTLindex]) ;   
-//		  std::cout << "        found crystal " 
-//                            << treeVars.xtalHashedIndex[XTLindex]
-//                            << " at (" << dummy.ieta () << "," << dummy.iphi ()
-//                            << ") with energy " 
-//                            << treeVars.xtalEnergy[XTLindex] 
-//                            << " GeV \n" ;       
-//                } //PG loop over crystals in cluster
-//
-//            } // loop over clusters in supercluster
-//
-//	  std::cout << "    found " << treeVars.nXtalsInSuperCluster[SCindex] 
-//                    << " crystals in supercluster\n" ;    
-//          //PG loop over crystals in SUPERcluster
-//          for (int XTLindex = treeVars.xtalIndexInSuperCluster[SCindex] ; 
-//               XTLindex < treeVars.xtalIndexInSuperCluster[SCindex] + 
-//		 treeVars.nXtalsInSuperCluster[SCindex] ; 
-//               ++XTLindex)
-//            {
-//	      std::cout << "      found crystal " 
-//                        << treeVars.xtalHashedIndex[XTLindex]
-//                        << " with energy " 
-//                        << treeVars.xtalEnergy[XTLindex] 
-//                        << " GeV \n" ;    
-//            
-//            } //loop over crystals in SUPERcluster
-//        } //loop on superclusters
-
-      std::cout << "  found " << treeVars.nXtals << " crystals\n" ;    
+	if (speak) std::cout << "  found " << treeVars.nXtals << " crystals\n" ;    
       //PG loop over crystals
       for (int XTLindex = 0 ; XTLindex < treeVars.nXtals ; ++XTLindex)
         {
@@ -282,7 +249,49 @@ int main (int argc, char** argv)
 
         } //PG loop over crystals
 
-      
+
+
+
+
+
+      for (int bClusterA=0; bClusterA < treeVars.nClusters; bClusterA++)
+	{
+
+	  float eTA = treeVars.clusterTransverseEnergy[bClusterA];
+	  if( eTA < eTGammaMin ) continue;
+	  
+	  float e22A = treeVars.clusterE2x2[bClusterA];
+	  float e33A = treeVars.clusterE3x3[bClusterA];
+	  if ( e22A/e33A < s4s9GammaMin ) continue;
+        
+	  for (int bClusterB=(bClusterA+1); bClusterB < treeVars.nClusters; bClusterB++)
+	    {
+
+	      float eTB = treeVars.clusterTransverseEnergy[bClusterB];
+	      if( eTB < eTGammaMin) continue;
+
+	      float e22B = treeVars.clusterE2x2[bClusterB];
+	      float e33B = treeVars.clusterE3x3[bClusterB];
+	      if ( e22B/e33B < s4s9GammaMin ) continue;
+	      
+	      math::PtEtaPhiMLorentzVectorD gammaA (eTA, treeVars.clusterEta[bClusterA], treeVars.clusterPhi[bClusterA], 0);
+	      math::PtEtaPhiMLorentzVectorD gammaB (eTB, treeVars.clusterEta[bClusterB], treeVars.clusterPhi[bClusterB], 0);
+	      
+	      math::PtEtaPhiMLorentzVectorD pi0Candidate = gammaA + gammaB;
+
+	      std::cout << gammaA << " " << gammaA.M() << std::endl;
+	      std::cout << gammaB << " " << gammaB.M() << std::endl;
+	      std::cout << pi0Candidate << " " << pi0Candidate.M() << std::endl;
+	      
+	      if(pi0Candidate.Et() < eTPi0Min) continue;
+
+	      massDiGammaHist_ -> Fill(pi0Candidate.M());
+
+	    }//loop on candidateB
+	}//loop on candidateA
+
+
+
 
     } //PG loop over entries
 
@@ -294,9 +303,10 @@ int main (int argc, char** argv)
   BCOccupancyHistEB_->Write();
   xtalEnergyHist_->Write(); 
   xtalTimeHist_->Write();
-  xtalStatusHist_->Write();
-  xtalOccupancyHistEB_->Write();
-          
+  // xtalStatusHist_->Write();
+  // xtalOccupancyHistEB_->Write();
+  massDiGammaHist_-> Write(); 
+
   saving.Close () ;
 
   delete chain ;
