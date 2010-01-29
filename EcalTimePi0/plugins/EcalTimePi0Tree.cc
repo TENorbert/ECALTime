@@ -14,7 +14,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.cc,v 1.9 2010/01/28 20:18:56 franzoni Exp $
+// $Id: EcalTimePi0Tree.cc,v 1.10 2010/01/29 19:33:41 franzoni Exp $
 //
 //
 
@@ -560,7 +560,8 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
 {
   int numberOfSuperClusters = myTreeVariables_.nSuperClusters;
   int numberOfClusters = myTreeVariables_.nClusters ;
-  std::cout << "dumpEndcapClusterInfo starts: numberOfClusters = " << numberOfClusters << "\t" << myTreeVariables_.nClusters << std::endl;//gf debug
+  // to be removed, keep for xtra checks today
+  //std::cout << "dumpEndcapClusterInfo starts: numberOfClusters = " << numberOfClusters << "\t" << myTreeVariables_.nClusters << std::endl;//gf debug
   int numberOfXtals = myTreeVariables_.nXtals ; // this is number of crystals associated to any cluster
   const EcalIntercalibConstantMap& icalMap = ical->getMap();
   float adcToGeV = float(agc->getEEValue());
