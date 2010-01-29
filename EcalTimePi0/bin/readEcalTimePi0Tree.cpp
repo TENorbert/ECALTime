@@ -15,7 +15,9 @@
 #include "TChain.h"
 #include "TH1.h"
 #include "TH2.h"
+#include "TMath.h"
 #include "TFile.h"
+
 
 
 // initial authors P. Govoni et al
@@ -160,21 +162,36 @@ int main (int argc, char** argv)
   // Initialize output root file
   TFile saving (outputRootName.c_str (),"recreate") ;
   saving.cd () ;
-  // Initialize histograms -- BasicClusters
-  TH1F* BCNumPerEventHist_ = new TH1F("BCNumPerEvent","Number of BC per event",50,0,49);
-  TH1F* BCEnergyHist_ = new TH1F("BCEnergy","Energy of BCs;GeV",100,0,24);
-  TH1F* BCEtHist_ = new TH1F("BCEt","E_{T} of BCs;GeV",100,0,24);
-  TH1F* BCNumCrysHist_ = new TH1F("BCNumCrys","Number of crystals per BC",10,0,10);
-  TH2F* BCOccupancyHistEB_ = new TH2F("BCOccupancyEB","BC occupancy;i#phi;i#eta",360,1.,361.,172,-86,86);
   // Initialize histograms -- xtals
   TH1F* xtalEnergyHist_ = new TH1F("XtalEnergy","Crystal energy;GeV",110,-1,10);
-  TH1F* xtalTimeHist_ = new TH1F("XtalTime","CrystalTime;ns",60,-25,35);
+  TH1F* xtalTimeHist_ = new TH1F("XtalTime","Time of all crystals;ns",150,-75,75);
+  TH1F* xtalIEtaHist_ = new TH1F("xtalIEta","i#eta of crystal",171,-85,86);
+  TH1F* xtalIPhiHist_ = new TH1F("xtalIPhi","i#phi of crystal",361,1,361);
+  TH1F* xtalIXHist_ = new TH1F("xtalIX","ix of crystal",101,1,101);
+  TH1F* xtalIYHist_ = new TH1F("xtalIY","iy of crystal",101,1,101);
   // TH1F* xtalStatusHist_ = new TH1F("XtalStatus","Crystal status flag",16,0,15);
   // TH2F* xtalOccupancyHistEB_ = new TH2F("XtalOccupancyEB","Crystal occupancy;i#phi;i#eta",360,1.,361.,172,-86,86);
+
+  // Initialize histograms -- BasicClusters
+  TH1F* BCNumPerEventHist_ = new TH1F("BCNumPerEvent","Number of BC per event",100,0,100);
+  TH1F* BCNumCrysHist_ = new TH1F("BCNumCrys","Number of crystals per BC",10,0,10);
+  TH1F* BCEnergyHist_ = new TH1F("BCEnergy","Energy of BCs;GeV",100,0,25);
+  TH1F* BCEtHist_ = new TH1F("BCEt","E_{T} of BCs;GeV",100,0,25);
+  TH2F* BCOccupancyEBHist_  = new TH2F("BCOccupancyEB","BC occupancy;i#eta;i#phi",171,-85,86,361,1.,361.);
+  TH2F* BCOccupancyEEPHist_  = new TH2F("BCOccupancyEEP","BC occupancy;ix;iy",101,1.,101.,101,1,101);
+  TH2F* BCOccupancyEEMHist_  = new TH2F("BCOccupancyEEM","BC occupancy;ix;iy",101,1.,101.,101,1,101);
+  TH2F* BCOccupancyHistAny_ = new TH2F("BCOccupancyAny","BC occupancy;#eta;#phi",50,-3.5,3.5,50,-1*TMath::Pi(),TMath::Pi());
+  TH1F* BCEtaHist_ = new TH1F("Cluster #eta","#eta of cluster",171,-3.5,3.5);
+  TH1F* BCPhiHist_ = new TH1F("Cluster #phi","#phi of cluster",50,-1*TMath::Pi(),TMath::Pi());
+  TH1F* BCClusterShapeEEPHist_ = new TH1F("EEP cluster shape","e2x2 / e3x3",65,-0.1,1.2);
+  TH1F* BCClusterShapeEEMHist_ = new TH1F("EEM cluster shape","e2x2 / e3x3",65,-0.1,1.2);
+  TH1F* BCClusterShapeEBHist_  = new TH1F("EB cluster shape","e2x2 / e3x3",65,-0.1,1.2);
+
   // Initialize histograms -- diphotons
   TH1F* massDiGammaHist_ = new TH1F("massDiGamma","m(#gamma#gamma)",50,0,0.500);
-  
-
+  TH1F* massDiGammaEBHist_ = new TH1F("massDiGamma EB","m(#gamma#gamma) EB",50,0,0.500);
+  TH1F* massDiGammaEEPHist_ = new TH1F("massDiGamma EEP","m(#gamma#gamma) EEP",50,0,0.500);
+  TH1F* massDiGammaEEMHist_ = new TH1F("massDiGamma EEM","m(#gamma#gamma) EEM",50,0,0.500);
 
 
   //loop over entries
@@ -208,8 +225,21 @@ int main (int argc, char** argv)
             BCEnergyHist_->Fill(treeVars.clusterEnergy[bCluster]);
             BCEtHist_->Fill(treeVars.clusterTransverseEnergy[bCluster]);
             BCNumCrysHist_->Fill(treeVars.nXtalsInCluster[bCluster]);
-            if(treeVars.xtalInBCIEta[bCluster][0] != 0)
-              BCOccupancyHistEB_->Fill(treeVars.xtalInBCIPhi[bCluster][0],treeVars.xtalInBCIEta[bCluster][0]);  // first cry for now
+
+	    // basic cluster occupancy in physics coordinates
+	    BCOccupancyHistAny_ -> Fill(treeVars.clusterEta[bCluster],treeVars.clusterPhi[bCluster]);
+	    BCEtaHist_ -> Fill(treeVars.clusterEta[bCluster]);
+	    BCPhiHist_ -> Fill(treeVars.clusterPhi[bCluster]);
+
+	    //  basic cluster occupancy in detector coordinates, using first cry of BC as a representative
+            if(treeVars.xtalInBCIEta[bCluster][0] != -999999)                                        // ieta=-999999 tags EE
+              BCOccupancyEBHist_->Fill(treeVars.xtalInBCIEta[bCluster][0],treeVars.xtalInBCIPhi[bCluster][0]);
+
+            else if (treeVars.xtalInBCIx[bCluster][0] != -999999 && treeVars.clusterEta[bCluster]>0) // ix=-999999 tags EB
+              BCOccupancyEEPHist_->Fill(treeVars.xtalInBCIx[bCluster][0],treeVars.xtalInBCIy[bCluster][0]);
+
+            else if (treeVars.xtalInBCIx[bCluster][0] != -999999 && treeVars.clusterEta[bCluster]<0) // ix=-999999 tags EB
+              BCOccupancyEEMHist_->Fill(treeVars.xtalInBCIx[bCluster][0],treeVars.xtalInBCIy[bCluster][0]);
 
 	    if (speak)  std::cout << "\tbCluster: num"               << bCluster 
 				  << "\t eBC: "                      << treeVars.clusterEnergy[bCluster]
@@ -224,8 +254,17 @@ int main (int argc, char** argv)
 				  << " \t ADC "                      << treeVars.xtalInBCAmplitudeADC[bCluster][0] 
 				  << " \t time "                     << treeVars.xtalInBCTime[bCluster][0] 
 				  << std::endl;
-	  }
 
+	    for(int thisCry=0; thisCry<treeVars.nXtalsInCluster[bCluster]; thisCry++)
+	      {
+		if (treeVars.xtalInBCIEta[bCluster][thisCry]!=-999999)  xtalIEtaHist_ -> Fill (treeVars.xtalInBCIEta[bCluster][thisCry]);
+		if (treeVars.xtalInBCIPhi[bCluster][thisCry]!=-999999)  xtalIPhiHist_ -> Fill (treeVars.xtalInBCIPhi[bCluster][thisCry]);
+		if (treeVars.xtalInBCIx[bCluster][thisCry]  !=-999999)  xtalIXHist_   -> Fill (treeVars.xtalInBCIx[bCluster][thisCry]);
+		if (treeVars.xtalInBCIy[bCluster][thisCry]  !=-999999)  xtalIYHist_   -> Fill (treeVars.xtalInBCIy[bCluster][thisCry]);
+	      }
+	    
+	  }
+	
 	if (speak) std::cout << "  found " << treeVars.nXtals << " crystals\n" ;    
       //PG loop over crystals
       for (int XTLindex = 0 ; XTLindex < treeVars.nXtals ; ++XTLindex)
@@ -257,19 +296,29 @@ int main (int argc, char** argv)
       for (int bClusterA=0; bClusterA < treeVars.nClusters; bClusterA++)
 	{
 
+	  // first selecton cut: photon candidate Et
 	  float eTA = treeVars.clusterTransverseEnergy[bClusterA];
 	  if( eTA < eTGammaMin ) continue;
 	  
 	  float e22A = treeVars.clusterE2x2[bClusterA];
 	  float e33A = treeVars.clusterE3x3[bClusterA];
+
+	  
+	  if(treeVars.clusterEta[bClusterA]<-1.4)     BCClusterShapeEEMHist_ -> Fill(e22A/e33A);
+	  else if(treeVars.clusterEta[bClusterA]>1.4) BCClusterShapeEEPHist_ -> Fill(e22A/e33A);
+	  else	                                      BCClusterShapeEBHist_  -> Fill(e22A/e33A);
+
+	  // second selection cut: cluster shape
 	  if ( e22A/e33A < s4s9GammaMin ) continue;
-        
+	  
 	  for (int bClusterB=(bClusterA+1); bClusterB < treeVars.nClusters; bClusterB++)
 	    {
 
+	      // first selecton cut: photon candidate Et
 	      float eTB = treeVars.clusterTransverseEnergy[bClusterB];
 	      if( eTB < eTGammaMin) continue;
 
+	      // second selection cut: cluster shape
 	      float e22B = treeVars.clusterE2x2[bClusterB];
 	      float e33B = treeVars.clusterE3x3[bClusterB];
 	      if ( e22B/e33B < s4s9GammaMin ) continue;
@@ -278,14 +327,19 @@ int main (int argc, char** argv)
 	      math::PtEtaPhiMLorentzVectorD gammaB (eTB, treeVars.clusterEta[bClusterB], treeVars.clusterPhi[bClusterB], 0);
 	      
 	      math::PtEtaPhiMLorentzVectorD pi0Candidate = gammaA + gammaB;
-
-	      std::cout << gammaA << " " << gammaA.M() << std::endl;
-	      std::cout << gammaB << " " << gammaB.M() << std::endl;
-	      std::cout << pi0Candidate << " " << pi0Candidate.M() << std::endl;
 	      
+	      // std::cout << "gammaA: " << gammaA << " " << gammaA.M() << "\t\t gammaB: " << gammaB << " " << gammaB.M() << std::endl;
+	      // std::cout << "pi0Candidate: " << pi0Candidate << " " << pi0Candidate.M() << std::endl;
+	      
+	      // third selection cut: pi0 candidate Et
 	      if(pi0Candidate.Et() < eTPi0Min) continue;
 
 	      massDiGammaHist_ -> Fill(pi0Candidate.M());
+
+	  if(treeVars.clusterEta[bClusterA]<-1.4)     massDiGammaEEMHist_ -> Fill(pi0Candidate.M());
+	  else if(treeVars.clusterEta[bClusterA]>1.4) massDiGammaEEPHist_ -> Fill(pi0Candidate.M());
+	  else	                                      massDiGammaEBHist_  -> Fill(pi0Candidate.M());
+
 
 	    }//loop on candidateB
 	}//loop on candidateA
@@ -300,12 +354,29 @@ int main (int argc, char** argv)
   BCEnergyHist_->Write();
   BCEtHist_->Write();
   BCNumCrysHist_->Write();
-  BCOccupancyHistEB_->Write();
+  BCOccupancyEBHist_->Write();
+  BCOccupancyEEPHist_->Write();
+  BCOccupancyEEMHist_->Write();
+  BCOccupancyHistAny_->Write();
+  BCEtaHist_->Write();
+  BCPhiHist_->Write();
+  BCClusterShapeEEPHist_->Write();
+  BCClusterShapeEEMHist_->Write();
+  BCClusterShapeEBHist_->Write();
+
   xtalEnergyHist_->Write(); 
   xtalTimeHist_->Write();
+  xtalIEtaHist_->Write();
+  xtalIPhiHist_->Write();
+  xtalIXHist_ ->Write();
+  xtalIYHist_ ->Write();
+
   // xtalStatusHist_->Write();
   // xtalOccupancyHistEB_->Write();
   massDiGammaHist_-> Write(); 
+  massDiGammaEBHist_-> Write(); 
+  massDiGammaEEPHist_-> Write(); 
+  massDiGammaEEMHist_-> Write(); 
 
   saving.Close () ;
 
