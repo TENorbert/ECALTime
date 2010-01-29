@@ -1102,6 +1102,8 @@ void initializeBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
 	treeVars.xtalInBCHashedIndex[cl][cryInClu]=0;
 	treeVars.xtalInBCIEta[cl][cryInClu]=0;
 	treeVars.xtalInBCIPhi[cl][cryInClu]=0;
+	treeVars.xtalInBCEta[cl][cryInClu]=0;
+	treeVars.xtalInBCPhi[cl][cryInClu]=0;
 	treeVars.xtalInBCIx[cl][cryInClu]=0;
 	treeVars.xtalInBCIy[cl][cryInClu]=0;
 	treeVars.xtalInBCFlag[cl][cryInClu]=0;
@@ -1109,7 +1111,6 @@ void initializeBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
 	treeVars.xtalInBCTime[cl][cryInClu]=0;
 	treeVars.xtalInBCAmplitudeADC[cl][cryInClu]=0;
       }}
-
 
   } // ECAL VARIABLES
   //*/  
