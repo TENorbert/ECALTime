@@ -18,7 +18,8 @@
 #include "TMath.h"
 #include "TFile.h"
 
-
+#define BarrelLimit 1.479
+#define EndcapLimit 3.0
 
 // initial authors P. Govoni et al
 // authors: S. Cooper and G. Franzoni (UMN)
@@ -33,16 +34,22 @@ int main (int argc, char** argv)
   std::string stringHelp             = "--help";
   std::string stringInputFileName    = "--i";
   std::string stringOutFileName      = "--o";
-  std::string stringETGammaMin       = "--eTGammaMin";
-  std::string strings4s9GammaMin     = "--s4s9GammaMin";
-  std::string stringeTPi0Min         = "--stringeTPi0Min";
+  std::string stringETGammaMinEB     = "--eTGammaMinEB";
+  std::string strings4s9GammaMinEB   = "--s4s9GammaMinEB";
+  std::string stringeTPi0MinEB       = "--stringeTPi0MinEB";
+  std::string stringETGammaMinEE     = "--eTGammaMinEE";
+  std::string strings4s9GammaMinEE   = "--s4s9GammaMinEE";
+  std::string stringeTPi0MinEE       = "--stringeTPi0MinEE";
   std::string stringNumEvents        = "--n";
 
   std::vector<std::string> listOfFiles;
   int   numEvents    =-1;
-  float	eTGammaMin   =0.2;
-  float s4s9GammaMin = 0.85;
-  float eTPi0Min     = 0.65;
+  float	eTGammaMinEB   = 0.2;
+  float s4s9GammaMinEB = 0.85;
+  float eTPi0MinEB     = 0.65;
+  float	eTGammaMinEE   = 0.250;
+  float s4s9GammaMinEE = 0.85;
+  float eTPi0MinEE     = 0.800;
 
   //gf: support development
   //std::cout << "\nargc:       " << argc << std::endl;
@@ -64,9 +71,12 @@ int main (int argc, char** argv)
 	std::cout << " --help : display help" << std::endl ;
 	std::cout << " --o : set name of output root file name (e.g. histograms.root)" << std::endl ;
 	std::cout << " --n : number of events" << std::endl ;
-	std::cout << " --eTGammaMin: min eT for gammas" << std::endl;
-	std::cout << " --s4s9GammaMin: min shower shape" << std::endl;
-	std::cout << " --eTPi0Min min eT for pi0 candidate" << std::endl;
+	std::cout << " --eTGammaMinEB: min eT for EB gammas" << std::endl;
+	std::cout << " --s4s9GammaMinEB: min EB shower shape" << std::endl;
+	std::cout << " --eTPi0MinEB min eT for EB pi0 candidate" << std::endl;
+	std::cout << " --eTGammaMinEE: min eT for EE gammas" << std::endl;
+	std::cout << " --s4s9GammaMinEE: min EE shower shape" << std::endl;
+	std::cout << " --eTPi0MinEE min eT for EE pi0 candidate" << std::endl;
 	std::cout << " --i <list of strings> list of input files" << std::endl ;     
 	exit(1);      }
 
@@ -78,18 +88,34 @@ int main (int argc, char** argv)
       }
 
       
-      else if (argv[v] == stringETGammaMin) { // choose et cut for single cluster
-	eTGammaMin = atof(argv[v+1]);
+      else if (argv[v] == stringETGammaMinEB) { // choose et cut for EB single cluster
+	eTGammaMinEB = atof(argv[v+1]);
 	v++;
       }
       
-      else if (argv[v] == strings4s9GammaMin) { // choose cut for shower shape
-	s4s9GammaMin = atof(argv[v+1]);
+      else if (argv[v] == strings4s9GammaMinEB) { // choose cut for EB shower shape
+	s4s9GammaMinEB = atof(argv[v+1]);
 	v++;
       }
       
-      else if (argv[v] == stringeTPi0Min) { // choose et cut for pi0 candidate
-	eTPi0Min = atof(argv[v+1]);
+      else if (argv[v] == stringeTPi0MinEB) { // choose et cut for EB pi0 candidate
+	eTPi0MinEB = atof(argv[v+1]);
+	v++;
+      }
+
+      
+      else if (argv[v] == stringETGammaMinEE) { // choose et cut for EE single cluster
+	eTGammaMinEE = atof(argv[v+1]);
+	v++;
+      }
+      
+      else if (argv[v] == strings4s9GammaMinEE) { // choose cut for EE shower shape
+	s4s9GammaMinEE = atof(argv[v+1]);
+	v++;
+      }
+      
+      else if (argv[v] == stringeTPi0MinEE) { // choose et cut for EE pi0 candidate
+	eTPi0MinEE = atof(argv[v+1]);
 	v++;
       }
 
@@ -150,18 +176,23 @@ int main (int argc, char** argv)
   }
   int nEntries = chain->GetEntries () ;
   if (numEvents==-1) numEvents = nEntries;
-  std::cout << "\n\tFOUND " << nEntries << " events" << std::endl ;    
-  std::cout << "\tWILL run on: " <<  numEvents << " events" << std::endl;
-  std::cout << "\tOutput file: " <<  outputRootName << std::endl;
-  std::cout << "\teTGammaMin: "  <<  eTGammaMin << std::endl;
-  std::cout << "\ts4s9GammaMin: "  <<  s4s9GammaMin << std::endl;
-
+  std::cout << "\n\tFOUND "         << nEntries << " events" << std::endl ;    
+  std::cout << "\tWILL run on: "    <<  numEvents << " events" << std::endl;
+  std::cout << "\tOutput file: "    <<  outputRootName << std::endl;
+  std::cout << "\teTGammaMinEB: "   <<  eTGammaMinEB << std::endl;
+  std::cout << "\ts4s9GammaMinEB: " <<  s4s9GammaMinEB << std::endl;
+  std::cout << "\teTPi0MinEB: "     <<  eTPi0MinEB << std::endl;
+  std::cout << "\teTGammaMinEE: "   <<  eTGammaMinEE << std::endl;
+  std::cout << "\ts4s9GammaMinEE: " <<  s4s9GammaMinEE << std::endl;
+  std::cout << "\teTPi0MinEE: "     <<  eTPi0MinEE << std::endl;
+	
   EcalTimePi0TreeContent treeVars ; 
   setBranchAddresses (chain, treeVars) ;
 
   // Initialize output root file
   TFile saving (outputRootName.c_str (),"recreate") ;
   saving.cd () ;
+
   // Initialize histograms -- xtals
   TH1F* xtalEnergyHist_ = new TH1F("XtalEnergy","Crystal energy;GeV",110,-1,10);
   TH1F* xtalTimeHist_ = new TH1F("XtalTime","Time of all crystals;ns",150,-75,75);
@@ -291,37 +322,70 @@ int main (int argc, char** argv)
 
 
 
-
+      float eTA, eTB ;
+      float e22A, e33A,    e22B, e33B;
+      float eTGammaMinA,   eTGammaMinB;
+      float s4s9GammaMinA, s4s9GammaMinB;
+      bool  AisEB,         BisEB;
+      float eTPi0Min;
 
       for (int bClusterA=0; bClusterA < treeVars.nClusters; bClusterA++)
 	{
+	  eTA = treeVars.clusterTransverseEnergy[bClusterA];
 
-	  // first selecton cut: photon candidate Et
-	  float eTA = treeVars.clusterTransverseEnergy[bClusterA];
-	  if( eTA < eTGammaMin ) continue;
-	  
-	  float e22A = treeVars.clusterE2x2[bClusterA];
-	  float e33A = treeVars.clusterE3x3[bClusterA];
+	  e22A = treeVars.clusterE2x2[bClusterA];
+	  e33A = treeVars.clusterE3x3[bClusterA];
 
-	  
+	  // discriminate between EE and EB and set thresholds accordingly
+	  if ( fabs(treeVars.clusterEta[bClusterA]) < BarrelLimit) {
+	    AisEB         = true;
+	    eTGammaMinA   = eTGammaMinEB;
+	    s4s9GammaMinA = s4s9GammaMinEB;
+	  }
+	  else{
+	    AisEB         = false;
+	    eTGammaMinA   = eTGammaMinEE;
+	    s4s9GammaMinA = s4s9GammaMinEB;
+	  }
+
+
 	  if(treeVars.clusterEta[bClusterA]<-1.4)     BCClusterShapeEEMHist_ -> Fill(e22A/e33A);
 	  else if(treeVars.clusterEta[bClusterA]>1.4) BCClusterShapeEEPHist_ -> Fill(e22A/e33A);
 	  else	                                      BCClusterShapeEBHist_  -> Fill(e22A/e33A);
 
+
+	  // first selecton cut: photon candidate Et
+	  if( eTA < eTGammaMinA ) continue;
+	  
 	  // second selection cut: cluster shape
-	  if ( e22A/e33A < s4s9GammaMin ) continue;
+	  if ( e22A/e33A < s4s9GammaMinA ) continue;
 	  
 	  for (int bClusterB=(bClusterA+1); bClusterB < treeVars.nClusters; bClusterB++)
 	    {
 
+	      eTB = treeVars.clusterTransverseEnergy[bClusterB];
+	      
+	      e22B = treeVars.clusterE2x2[bClusterB];
+	      e33B = treeVars.clusterE3x3[bClusterB];
+	      
+	      // discriminate between EE and EB and set thresholds accordingly
+	      if ( fabs(treeVars.clusterEta[bClusterB]) < BarrelLimit) {
+		BisEB         = true;
+		eTGammaMinB   = eTGammaMinEB;
+		s4s9GammaMinB = s4s9GammaMinEB;
+	      }
+	      else{
+		BisEB         = false;
+		eTGammaMinB   = eTGammaMinEE;
+		s4s9GammaMinB = s4s9GammaMinEB;
+	      }
+	      
+
 	      // first selecton cut: photon candidate Et
-	      float eTB = treeVars.clusterTransverseEnergy[bClusterB];
-	      if( eTB < eTGammaMin) continue;
+	      if( eTB < eTGammaMinB ) continue;
 
 	      // second selection cut: cluster shape
-	      float e22B = treeVars.clusterE2x2[bClusterB];
-	      float e33B = treeVars.clusterE3x3[bClusterB];
-	      if ( e22B/e33B < s4s9GammaMin ) continue;
+	      if ( e22B/e33B < s4s9GammaMinB ) continue;
 	      
 	      math::PtEtaPhiMLorentzVectorD gammaA (eTA, treeVars.clusterEta[bClusterA], treeVars.clusterPhi[bClusterA], 0);
 	      math::PtEtaPhiMLorentzVectorD gammaB (eTB, treeVars.clusterEta[bClusterB], treeVars.clusterPhi[bClusterB], 0);
@@ -330,22 +394,29 @@ int main (int argc, char** argv)
 	      
 	      // std::cout << "gammaA: " << gammaA << " " << gammaA.M() << "\t\t gammaB: " << gammaB << " " << gammaB.M() << std::endl;
 	      // std::cout << "pi0Candidate: " << pi0Candidate << " " << pi0Candidate.M() << std::endl;
-	      
+
+
+	      if ( fabs(pi0Candidate.Eta()) < BarrelLimit) {
+		eTPi0Min = eTPi0MinEB;	      }
+	      else{		eTPi0Min = eTPi0MinEE;
+	      }
+
+
 	      // third selection cut: pi0 candidate Et
-	      if(pi0Candidate.Et() < eTPi0Min) continue;
-
+	      if(pi0Candidate.Et() < eTPi0Min ) continue;
+	      
 	      massDiGammaHist_ -> Fill(pi0Candidate.M());
-
-	  if(treeVars.clusterEta[bClusterA]<-1.4)     massDiGammaEEMHist_ -> Fill(pi0Candidate.M());
-	  else if(treeVars.clusterEta[bClusterA]>1.4) massDiGammaEEPHist_ -> Fill(pi0Candidate.M());
-	  else	                                      massDiGammaEBHist_  -> Fill(pi0Candidate.M());
-
-
+	      
+	      if(treeVars.clusterEta[bClusterA]<-1.4)     massDiGammaEEMHist_ -> Fill(pi0Candidate.M());
+	      else if(treeVars.clusterEta[bClusterA]>1.4) massDiGammaEEPHist_ -> Fill(pi0Candidate.M());
+	      else	                                  massDiGammaEBHist_  -> Fill(pi0Candidate.M());
+	      
+	      
 	    }//loop on candidateB
 	}//loop on candidateA
-
-
-
+      
+      
+      
 
     } //PG loop over entries
 
