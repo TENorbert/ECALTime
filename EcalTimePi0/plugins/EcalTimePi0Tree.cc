@@ -14,7 +14,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.cc,v 1.10 2010/01/29 19:33:41 franzoni Exp $
+// $Id: EcalTimePi0Tree.cc,v 1.11 2010/01/29 22:45:22 franzoni Exp $
 //
 //
 
@@ -288,12 +288,14 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
                                         const std::map<int,float> & XtalMapCurved, //GFdoc unclear
                                         EcalTimePi0TreeContent & myTreeVariables_)
 {            
-  // get number of of objects already present in the tree
+  // get number of of objects already present in the tree (none if dumpBarrelClusterInfo is called first)
   int numberOfSuperClusters = myTreeVariables_.nSuperClusters;
-  int numberOfClusters = myTreeVariables_.nClusters ;
+  int numberOfClusters      = myTreeVariables_.nClusters ;
+  int numberOfXtals         = myTreeVariables_.nXtals ;
+
   // to be removed, keep for xtra checks today
   //std::cout << "\ndumpBarrelClusterInfo starts: numberOfClusters = " << numberOfClusters << "\t" << myTreeVariables_.nClusters << std::endl;//gf debug
-  int numberOfXtals = myTreeVariables_.nXtals ;
+
   const EcalIntercalibConstantMap& icalMap = ical->getMap();
   float adcToGeV = float(agc->getEBValue());
  
@@ -530,20 +532,19 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
        myTreeVariables_.clusterZernike42[numberOfClusters] = lazyTools -> zernike42(*(clus));
        
        
-       
        numberOfClusters++ ;
        
      } //end (BASIC)cluster loop
    
    
    //number of clusters / xtals for the whole event
-   myTreeVariables_.nClusters += numberOfClusters ;
-   myTreeVariables_.nXtals    += numberOfXtals ;
+   myTreeVariables_.nClusters = numberOfClusters ;
+   myTreeVariables_.nXtals    = numberOfXtals ;
 
    // to be removed, keep for xtra checks today
    //   std::cout << "dumpBarrelClusterInfo ends: numberOfClusters = " << numberOfClusters << "\t" << myTreeVariables_.nClusters << std::endl;//gf debug
    return ;
-} // dumpBarrelClusterInfo  
+} // end dumpBarrelClusterInfo  
 
 
 // -----------------------------------------------------------------------------------------
@@ -558,11 +559,14 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
                                         const std::map<int,float> & XtalMapCurved,
                                         EcalTimePi0TreeContent & myTreeVariables_)
 {
+  // counters come from the ntuple are to account for what was added in dumpBarrelClusterInfo
   int numberOfSuperClusters = myTreeVariables_.nSuperClusters;
-  int numberOfClusters = myTreeVariables_.nClusters ;
+  int numberOfClusters      = myTreeVariables_.nClusters;
+  int numberOfXtals         = myTreeVariables_.nXtals ; // this is number of crystals associated to any cluster
+
   // to be removed, keep for xtra checks today
-  //std::cout << "dumpEndcapClusterInfo starts: numberOfClusters = " << numberOfClusters << "\t" << myTreeVariables_.nClusters << std::endl;//gf debug
-  int numberOfXtals = myTreeVariables_.nXtals ; // this is number of crystals associated to any cluster
+  // std::cout << "dumpEndcapClusterInfo starts: numberOfClusters = " << numberOfClusters << "\t" << myTreeVariables_.nClusters << std::endl;//gf debug
+
   const EcalIntercalibConstantMap& icalMap = ical->getMap();
   float adcToGeV = float(agc->getEEValue());
   
@@ -606,10 +610,14 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
     } //end endcap supercluster loop
   
 
-  ///////////////////////////////////////////////////////////////////////////////////////
-  // independent loop on endcap basic clusters
   float & energySum = myTreeVariables_.superClusterEnergySum[numberOfSuperClusters];
   energySum = 0.;
+
+
+  ///////////////////////////////////////////////////////////////////////////////////////
+  // independent loop on endcap basic clusters
+  // numberOfClusters takes into account for what was added in dumpBarrelClusterInfo
+
   for (reco::BasicClusterCollection::const_iterator clus = theEndcapBasicClusters->begin () ; 
        clus != theEndcapBasicClusters->end () && numberOfClusters<MAXC;
        ++clus) // loop on endcap Bclusters
@@ -726,10 +734,10 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
              numberOfXtals++ ;
              numberOfXtalsInCluster++ ;
              //numberOfXtalsInSuperCluster++ ;
-    
+	     
            } //end loop on rechics within endcap basic clusters
          //////////////////////////////////////////////////////
-
+	 
          float E2 = (float)ampli + (float)secondMin ;
          
          //Set some more values for this cluster
@@ -780,18 +788,18 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
     
          numberOfClusters++ ;
 
-       } //end endcap basic cluster loop
+    }//end endcap basic cluster loop
      
 
   //number of clusters / xtals for the whole event
-  myTreeVariables_.nClusters += numberOfClusters ;
-  myTreeVariables_.nXtals += numberOfXtals ;
+  myTreeVariables_.nClusters  = numberOfClusters ;
+  myTreeVariables_.nXtals     = numberOfXtals ;
 
   // to be removed, keep for xtra checks today
-  //  std::cout << "dumpEndcapClusterInfo ends: numberOfClusters = " << numberOfClusters << "\t" << myTreeVariables_.nClusters << std::endl;//gf debug
+  // std::cout << "dumpEndcapClusterInfo ends: numberOfClusters = " << numberOfClusters << "\t" << myTreeVariables_.nClusters << std::endl;//gf debug
 
   return ;
-} // dumpEndcapClusterInfo  
+} // end dumpEndcapClusterInfo  
 
 
 // GFdoc GT information, at present anf +-1 bx
