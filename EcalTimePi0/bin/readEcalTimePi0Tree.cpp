@@ -36,10 +36,10 @@ int main (int argc, char** argv)
   std::string stringOutFileName      = "--o";
   std::string stringETGammaMinEB     = "--eTGammaMinEB";
   std::string strings4s9GammaMinEB   = "--s4s9GammaMinEB";
-  std::string stringeTPi0MinEB       = "--stringeTPi0MinEB";
+  std::string stringeTPi0MinEB       = "--eTPi0MinEB";
   std::string stringETGammaMinEE     = "--eTGammaMinEE";
   std::string strings4s9GammaMinEE   = "--s4s9GammaMinEE";
-  std::string stringeTPi0MinEE       = "--stringeTPi0MinEE";
+  std::string stringeTPi0MinEE       = "--eTPi0MinEE";
   std::string stringNumEvents        = "--n";
 
   std::vector<std::string> listOfFiles;
