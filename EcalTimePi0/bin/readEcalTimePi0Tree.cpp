@@ -3,6 +3,7 @@
 
 #include <map>
 #include <vector>
+#include <algorithm> 
 #include <functional>
 
 #include "ECALTime/EcalTimePi0/interface/EcalTimePi0TreeContent.h"
@@ -17,11 +18,16 @@
 #include "TH2.h"
 #include "TProfile.h"
 #include "TF1.h"
+
 #include "TMath.h"
 #include "TFile.h"
 
+
+
 #define BarrelLimit 1.479
 #define EndcapLimit 3.0
+#define ADCtoGeVEB 0.039
+#define ADCtoGeVEE 0.063
 
 // initial authors P. Govoni et al
 // authors: S. Cooper and G. Franzoni (UMN)
@@ -53,9 +59,9 @@ int main (int argc, char** argv)
   float s4s9GammaMinEE = 0.85;
   float eTPi0MinEE     = 0.800;
 
-  float sigmaNoiseEB     = 1.06; // ADC 
-  float sigmaNoiseEE     = 2.10; // ADC
-  float minApliOverSigma = 7;    // dimensionless
+  float sigmaNoiseEB      = 1.06; // ADC 
+  float sigmaNoiseEE      = 2.10; // ADC
+  float minAmpliOverSigma = 7;    // dimensionless
   
   //gf: support development
   //std::cout << "\nargc:       " << argc << std::endl;
@@ -182,7 +188,8 @@ int main (int argc, char** argv)
   }
   int nEntries = chain->GetEntries () ;
   if (numEvents==-1) numEvents = nEntries;
-  std::cout << "\n\tFOUND "         << nEntries << " events" << std::endl ;    
+  std::cout << "\n\tFOUND "         <<  listOfFiles.size() << " input files" << std::endl ;    
+  std::cout << "\n\tFOUND "         <<  nEntries << " events" << std::endl ;    
   std::cout << "\tWILL run on: "    <<  numEvents << " events" << std::endl;
   std::cout << "\tOutput file: "    <<  outputRootName << std::endl;
   std::cout << "\teTGammaMinEB: "   <<  eTGammaMinEB << std::endl;
@@ -226,21 +233,60 @@ int main (int argc, char** argv)
   TH1F* BCClusterShapeEEMHist_ = new TH1F("EEM cluster shape","e2x2 / e3x3",65,-0.1,1.2);
   TH1F* BCClusterShapeEBHist_  = new TH1F("EB cluster shape","e2x2 / e3x3",65,-0.1,1.2);
 
-  // Initialize histograms -- diphotons
-  TH1F* massDiGammaHist_ = new TH1F("massDiGamma","m(#gamma#gamma)",50,0,0.500);
-  TH1F* massDiGammaEBHist_ = new TH1F("massDiGamma EB","m(#gamma#gamma) EB",50,0,0.500);
-  TH1F* massDiGammaEEHist_ = new TH1F("massDiGamma EE","m(#gamma#gamma) EE",50,0,0.500);
-  TH1F* massDiGammaEEPHist_ = new TH1F("massDiGamma EEP","m(#gamma#gamma) EEP",50,0,0.500);
-  TH1F* massDiGammaEEMHist_ = new TH1F("massDiGamma EEM","m(#gamma#gamma) EEM",50,0,0.500);
+  // Initialize histograms -- diphotons control plots
+  TH1F* massDiGammaHist_      = new TH1F("massDiGamma","m(#gamma#gamma)",50,0,0.500);
+  TH1F* massDiGammaEBHist_    = new TH1F("massDiGamma EB","m(#gamma#gamma) EB",50,0,0.500);
+  TH1F* massDiGammaEEHist_    = new TH1F("massDiGamma EE","m(#gamma#gamma) EE",50,0,0.500);
+  TH1F* massDiGammaEEPHist_   = new TH1F("massDiGamma EEP","m(#gamma#gamma) EEP",50,0,0.500);
+  TH1F* massDiGammaEEMHist_   = new TH1F("massDiGamma EEM","m(#gamma#gamma) EEM",50,0,0.500);
+  TH2F* diPhotonOccupancyAny_ = new TH2F("di-photon occupancy","di-photon occupancy;#eta;#phi",50,-3.5,3.5,50,-1*TMath::Pi(),TMath::Pi());
 
   // Initialize histograms -- single cluster resolution
-  TH2F* dtVSAeffHistAny_ = new TH2F("#delta(t) VS A_{eff}","#delta(t) VS A_{eff}",250,0.,250,100,0,10);
-  TH2F* dtVSAeffHistEB_  = new TH2F("EB: #delta(t) VS A_{eff}","EB #delta(t) VS A_{eff}",250,0.,250,100,0,10);
-  TH2F* dtVSAeffHistEE_  = new TH2F("EE: E#delta(t) VS A_{eff}","EE: #delta(t) VS A_{eff}",250,0.,250,100,0,10);
-  TProfile* dtVSAeffProfAny_ = new TProfile("#delta(t) VS A_{eff} prof","#delta(t) VS A_{eff} prof",250,0.,250,0,10);
-  TProfile* dtVSAeffProfEB_  = new TProfile("EB: #delta(t) VS A_{eff} prof","EB #delta(t) VS A_{eff} prof",250,0.,250,0,10);
-  TProfile* dtVSAeffProfEE_  = new TProfile("EE: E#delta(t) VS A_{eff} prof","EE: #delta(t) VS A_{eff} prof",250,0.,250,0,10);
 
+  TH1F*     dtUpToQuarterGeVEB   = new TH1F("EB #delta(t),   A_{eff} up to 1/4 GeV", "EB #delta(t),   ~5<A_{eff}/#sigma_{N}<6", 400, -20, 20); 
+  TH1F*     dtUpToHalfGeVEB      = new TH1F("EB #delta(t),   A_{eff} up to half GeV", "EB #delta(t),   6<A_{eff}/#sigma_{N}<12", 400, -20, 20); 
+  TH1F*     dtUpToOneGeVEB       = new TH1F("EB #delta(t),   A_{eff} up to one GeV", "EB #delta(t),   12<A_{eff}/#sigma_{N}<24", 200, -10, 10); 
+  TH1F*     dtUpToTwoGeVEB       = new TH1F("EB #delta(t),   A_{eff} up to two GeV", "EB #delta(t),   24<A_{eff}/#sigma_{N}<48", 200, -10, 10); 
+  TH1F*     dtUpOverTwoGeVEB     = new TH1F("EB #delta(t),   A_{eff} over two GeV", "EB #delta(t),   A_{eff}/#sigma_{N}>48", 200, -10, 10); 
+          				    
+  TH1F*     dtUpToThreeQuarterGeVEE = new TH1F("EE #delta(t),   A_{eff} up to 3/4 GeV", "EE #delta(t),   A_{eff}/#sigma_{N}<6", 200, -10, 10); 
+  TH1F*     dtUpToOneAndHalfGeVEE   = new TH1F("EE #delta(t),   A_{eff} up to one&1/2 GeV", "EE #delta(t),   6<A_{eff}/#sigma_{N}<12", 200, -10, 10); 
+  TH1F*     dtUpToThreeGeVEE        = new TH1F("EE #delta(t),   A_{eff} up to three GeV", "EE #delta(t),   12<A_{eff}/#sigma_{N}<24", 200, -10, 10); 
+  TH1F*     dtUpToSixGeVEE          = new TH1F("EE #delta(t),   A_{eff} up to six GeV", "EE #delta(t),   24<A_{eff}/#sigma_{N}<48", 200, -10, 10); 
+  TH1F*     dtUpOverSixGeVEE        = new TH1F("EE #delta(t),   A_{eff} over six GeV", "EE #delta(t),   A_{eff}/#sigma_{N}>48", 200, -10, 10); 
+
+  TH2F*     dtVSAeffHistAny_ = new TH2F("#delta(t) VS A_{eff}/#sigma_{N}","#delta(t) VS A_{eff}/#sigma_{N}",250,0.,250,100,0,10);
+  TH2F*     dtVSAeffHistEB_  = new TH2F("EB:  #delta(t)  VS  A_{eff}/#sigma_{N}","EB:  #delta(t)  VS  A_{eff}/#sigma_{N}",250,0.,250,100,0,10);
+  TH2F*     dtVSAeffHistEE_  = new TH2F("EE:  #delta(t)  VS  A_{eff}/#sigma_{N}","EE:  #delta(t)  VS  A_{eff}/#sigma_{N}",250,0.,250,100,0,10);
+  TProfile* dtVSAeffProfAny_ = new TProfile("#delta(t)  VS  A_{eff}/#sigma_{N} prof","#delta(t) VS A_{eff}/#sigma_{N} prof",125,0.,250,0,10);
+  TProfile* dtVSAeffProfEB_  = new TProfile("EB:  #delta(t)   VS  A_{eff}/#sigma_{N} prof","EB:  #delta(t)  VS  A_{eff}/#sigma_{N} prof",125,0.,250,0,10);
+  TProfile* dtVSAeffProfEE_  = new TProfile("EE:  #delta(t)   VS  A_{eff}/#sigma_{N} prof","EE:  #delta(t)  VS  A_{eff}/#sigma_{N} prof",125,0.,250,0,10);
+
+  // Initialize histograms -- selection on pi0 candidates 
+  TH2F* diPhotonPeakOccupancyAny_     = new TH2F("#pi_{0} occupancy","di-photon peak;#eta;#phi",50,-3.5,3.5,50,-1*TMath::Pi(),TMath::Pi());
+  TH2F* diPhotonSidesOccupancyAny_    = new TH2F("di-photon side-bands","di-photon side-bands;#eta;#phi",50,-3.5,3.5,50,-1*TMath::Pi(),TMath::Pi());
+
+
+  // Initialize histograms -- single cluster resolution in pi0 peak
+
+  TH1F*     dtUpToQuarterGeVEBPeak   = new TH1F("EBPeak: #delta(t) A_{eff} up to 1/4 GeV", "EBPeak: #delta(t) ~5<A_{eff}/#sigma_{N}<6", 400, -20, 20); 
+  TH1F*     dtUpToHalfGeVEBPeak      = new TH1F("EBPeak: #delta(t) A_{eff} up to half GeV", "EBPeak: #delta(t) 6<A_{eff}/#sigma_{N}<12", 400, -20, 20); 
+  TH1F*     dtUpToOneGeVEBPeak       = new TH1F("EBPeak: #delta(t) A_{eff} up to one GeV", "EBPeak: #delta(t) 12<A_{eff}/#sigma_{N}<24", 200, -10, 10); 
+  TH1F*     dtUpToTwoGeVEBPeak       = new TH1F("EBPeak: #delta(t) A_{eff} up to two GeV", "EBPeak: #delta(t) 24<A_{eff}/#sigma_{N}<48", 200, -10, 10); 
+  TH1F*     dtUpOverTwoGeVEBPeak     = new TH1F("EBPeak: #delta(t) A_{eff} over two GeV", "EBPeak: #delta(t) A_{eff}/#sigma_{N}>48", 200, -10, 10); 
+          				    
+  TH1F*     dtUpToThreeQuarterGeVEEPeak = new TH1F("EEPeak: #delta(t) A_{eff} up to 3/4 GeV", "EEPeak: #delta(t) A_{eff}/#sigma_{N}<6", 200, -10, 10); 
+  TH1F*     dtUpToOneAndHalfGeVEEPeak    = new TH1F("EEPeak: #delta(t) A_{eff} up to one&1/2 GeV", "EEPeak: #delta(t) 6<A_{eff}/#sigma_{N}<12", 200, -10, 10); 
+  TH1F*     dtUpToThreeGeVEEPeak        = new TH1F("EEPeak: #delta(t) A_{eff} up to three GeV", "EEPeak: #delta(t) 12<A_{eff}/#sigma_{N}<24", 200, -10, 10); 
+  TH1F*     dtUpToSixGeVEEPeak          = new TH1F("EEPeak: #delta(t) A_{eff} up to six GeV", "EEPeak: #delta(t) 24<A_{eff}/#sigma_{N}<48", 200, -10, 10); 
+  TH1F*     dtUpOverSixGeVEEPeak        = new TH1F("EEPeak: #delta(t) A_{eff} over six GeV", "EEPeak: #delta(t) A_{eff}/#sigma_{N}>48", 200, -10, 10); 
+
+  TH2F*     dtVSAeffHistAnyPeak_ = new TH2F("Peak: #delta(t) VS A_{eff}/#sigma_{N}","Peak: #delta(t) VS A_{eff}/#sigma_{N}",250,0.,250,100,0,10);
+  TH2F*     dtVSAeffHistEBPeak_  = new TH2F("EBPeak: #delta(t) VS A_{eff}/#sigma_{N}","EBPeak #delta(t) VS A_{eff}/#sigma_{N}",250,0.,250,100,0,10);
+  TH2F*     dtVSAeffHistEEPeak_  = new TH2F("EEPeak: E#delta(t) VS A_{eff}/#sigma_{N}","EEPeak: #delta(t) VS A_{eff}/#sigma_{N}",250,0.,250,100,0,10);
+  TProfile* dtVSAeffProfAnyPeak_ = new TProfile("Peak: #delta(t) VS A_{eff}/#sigma_{N} prof","Peak: #delta(t) VS A_{eff}/#sigma_{N} prof",125,0.,250,0,10);
+  TProfile* dtVSAeffProfEBPeak_  = new TProfile("EBPeak: #delta(t) VS A_{eff}/#sigma_{N} prof","EBPeak #delta(t) VS A_{eff}/#sigma_{N} prof",125,0.,250,0,10);
+  TProfile* dtVSAeffProfEEPeak_  = new TProfile("EEPeak: #delta(t) VS A_{eff}/#sigma_{N} prof","EEPeak: #delta(t) VS A_{eff}/#sigma_{N} prof",125,0.,250,0,10);
 
 
   /////////////////////////////////////////////////////
@@ -401,11 +447,11 @@ int main (int argc, char** argv)
 	      // std::cout << "gammaA: " << gammaA << " " << gammaA.M() << "\t\t gammaB: " << gammaB << " " << gammaB.M() << std::endl;
 	      // std::cout << "pi0Candidate: " << pi0Candidate << " " << pi0Candidate.M() << std::endl;
 
-
 	      if ( fabs(pi0Candidate.Eta()) < BarrelLimit) {
-		eTPi0Min = eTPi0MinEB;	      }
-	      else{		eTPi0Min = eTPi0MinEE;
-	      }
+		eTPi0Min      = eTPi0MinEB;}
+	      else{
+		eTPi0Min      = eTPi0MinEE;}
+	      
 
 
 	      // third selection cut: pi0 candidate Et
@@ -422,14 +468,18 @@ int main (int argc, char** argv)
 	      else	     
 		massDiGammaEBHist_  -> Fill(pi0Candidate.M());
 	      
+	      // occupancy of all candidates (this is FIRST loop)
+	      diPhotonOccupancyAny_ -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
+	      
 	      
 	    }//loop on candidateB
-	}//loop on candidateA - (FIRST) to build pi0 candidates and get the mass
-
+	  
+	  }//loop on candidateA - (FIRST) to build pi0 candidates and get the mass
+      
     }   // end of first loop over entries
         // now you have di-mass plots filled => get masses
-
-
+  
+  
 
   // get mass and width for EB 
   TF1 *massEB = new TF1("massEB","gaus(0)+pol3(3)",0,1); 
@@ -467,13 +517,19 @@ int main (int argc, char** argv)
   float pi0MassEEM  = massEEM->GetParameter(1);
   float pi0WidthEEM = massEEM->GetParameter(2);
   
-
+  // FIX
+  // fit to mass to be made robust
+  // set masses to a-priori values for now 
+  pi0MassEB  = 0.111;
+  pi0WidthEB = 0.013; 
+  pi0MassEE  = 0.126;
+  pi0WidthEE  = 0.030;
 
 
   /////////////////////////////////////////////////////
   // SECOND loop over entries
   for (int entry = 0 ; (entry < nEntries && entry < numEvents); ++entry)
-    {
+    {// SECOND loop over entries
       chain->GetEntry (entry) ;
 
 	////////////////////////////////////////////////////////////////////      
@@ -493,7 +549,7 @@ int main (int argc, char** argv)
 		else {std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
 
 		float ampliOfThis = treeVars.xtalInBCAmplitudeADC[bCluster][thisCry] / sigmaNoiseOfThis; 
-		if( ampliOfThis < minApliOverSigma) continue;
+		if( ampliOfThis < minAmpliOverSigma) continue;
 
 
 		for(int thatCry=thisCry+1; thatCry<treeVars.nXtalsInCluster[bCluster]; thatCry++)
@@ -504,27 +560,38 @@ int main (int argc, char** argv)
 		    else {std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
 		    
 		    float ampliOfThat = treeVars.xtalInBCAmplitudeADC[bCluster][thatCry] / sigmaNoiseOfThat; 
-		    if( ampliOfThat < minApliOverSigma) continue;
+		    if( ampliOfThat < minAmpliOverSigma) continue;
 		    
 		    float Aeff = ampliOfThis * ampliOfThat / sqrt( pow(ampliOfThis,2) + pow(ampliOfThat,2) );
 		    float dt  = treeVars.xtalInBCTime[bCluster][thisCry] - treeVars.xtalInBCTime[bCluster][thatCry]; 
-		    dt        = fabs(dt);
 
 		    // for debug
-		    std::cout << "ampliOfThis: " << ampliOfThis << "\tampliOfThat: " << ampliOfThat
-			      << "\n timeOfThis: " << treeVars.xtalInBCTime[bCluster][thisCry] << "\ttimeOfThat: " << treeVars.xtalInBCTime[bCluster][thatCry]
-			      << "\n Aeff: " << Aeff << "\tdt: " << dt 
-			      << std::endl;
+		    //std::cout << "ampliOfThis: " << ampliOfThis << "\tampliOfThat: " << ampliOfThat
+		    //          << "\n timeOfThis: " << treeVars.xtalInBCTime[bCluster][thisCry] << "\ttimeOfThat: " << treeVars.xtalInBCTime[bCluster][thatCry]
+		    //          << "\n Aeff: " << Aeff << "\tdt: " << dt 
+		    //          << std::endl;
 		    
-
 		    dtVSAeffHistAny_  -> Fill(Aeff, dt); 
 		    dtVSAeffProfAny_  -> Fill(Aeff, dt); 
 		    if (thisIsInEB) {
-		      dtVSAeffHistEB_ -> Fill(Aeff, dt); 
-		      dtVSAeffProfEB_ -> Fill(Aeff, dt); }
+		      if      (Aeff < 6)   dtUpToQuarterGeVEB->Fill(dt);
+		      else if (Aeff < 12)  dtUpToHalfGeVEB   ->Fill(dt);
+		      else if (Aeff < 24)  dtUpToOneGeVEB    ->Fill(dt);
+		      else if (Aeff < 48)  dtUpToTwoGeVEB    ->Fill(dt);
+		      else                 dtUpOverTwoGeVEB  ->Fill(dt);
+		      
+		      dtVSAeffHistEB_ -> Fill(Aeff, fabs(dt)); 
+		      dtVSAeffProfEB_ -> Fill(Aeff, fabs(dt)); 
+		    }
 		    else      {
-		      dtVSAeffHistEE_ -> Fill(Aeff, dt); 
-		      dtVSAeffProfEE_ -> Fill(Aeff, dt); }
+		      if      (Aeff < 6)   dtUpToThreeQuarterGeVEE->Fill(dt);
+		      else if (Aeff < 12)  dtUpToOneAndHalfGeVEE  ->Fill(dt);
+		      else if (Aeff < 24)  dtUpToThreeGeVEE       ->Fill(dt);
+		      else if (Aeff < 48)  dtUpToSixGeVEE         ->Fill(dt);
+		      else                 dtUpOverSixGeVEE       ->Fill(dt);
+
+		      dtVSAeffHistEE_ -> Fill(Aeff, fabs(dt)); 
+		      dtVSAeffProfEE_ -> Fill(Aeff, fabs(dt)); }
 		    
 		  }// loop on thatCry
 		
@@ -540,7 +607,8 @@ int main (int argc, char** argv)
       float s4s9GammaMinA, s4s9GammaMinB;
       bool  AisEB,         BisEB;
       float eTPi0Min;
-      
+      std::vector<int> clustersFromPi0;
+
       ////////////////////////////////////////////////////////////////////      
       // (SECOND) loop on basic cluster - to perform di-cluster studies
       // loop on cluster A
@@ -601,58 +669,137 @@ int main (int argc, char** argv)
 	      math::PtEtaPhiMLorentzVectorD gammaB (eTB, treeVars.clusterEta[bClusterB], treeVars.clusterPhi[bClusterB], 0);
 	      math::PtEtaPhiMLorentzVectorD pi0Candidate = gammaA + gammaB;
 	      
-
+	      bool candidateIsEB=false;
 	      if ( fabs(pi0Candidate.Eta()) < BarrelLimit) {
-		eTPi0Min = eTPi0MinEB;	      }
-	      else{		eTPi0Min = eTPi0MinEE;
-	      }
-
+		eTPi0Min      = eTPi0MinEB;	
+		candidateIsEB = true;	      }
+	      else{		
+		eTPi0Min      = eTPi0MinEE;
+		candidateIsEB = false;	      }
 
 	      // third selection cut: pi0 candidate Et
 	      if(pi0Candidate.Et() < eTPi0Min ) continue;
 
-	      // here I have pi0's that pass the definition   
 
 
+	      /////////////////////////////////////////////////////////////
+	      // here I have di-gamma pairs that pass cuts
+	      // now select pi0's based on the mass
+	      /////////////////////////////////////////////////////////////
+		
+	      float nSigma =1;
+	      // reject sidebands in EB
+	      if( candidateIsEB &&
+		  (pi0Candidate.M() < pi0MassEB-nSigma*pi0WidthEB ||
+		   pi0MassEB+nSigma*pi0WidthEB > pi0Candidate.M())
+		  ) {
+		diPhotonSidesOccupancyAny_ -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
+		continue;}
 	      
-	    }//loop on candidateB
-	}//loop on candidateA
+	      // reject sidebands in EE
+	      if( (!candidateIsEB) &&
+		  (pi0Candidate.M() < pi0MassEE-nSigma*pi0WidthEE ||
+		   pi0MassEE+nSigma*pi0WidthEE > pi0Candidate.M())
+		  ) {
+		diPhotonSidesOccupancyAny_ -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
+		continue;}
+	      
+
+	      /////////////////////////////////////////////////////////////
+	      // from here on I have pi0 candidates
+	      // bClusterA and bClusterB are the two clusters making this candidate
+	      diPhotonPeakOccupancyAny_  -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
+	
+
+	      // add cluster to the list of those coming from pi0 if not already added
+	      if( std::find( clustersFromPi0.begin(), clustersFromPi0.end(), bClusterA)  == clustersFromPi0.end()  )
+		 clustersFromPi0.push_back(bClusterA);
+	      if( std::find( clustersFromPi0.begin(), clustersFromPi0.end(), bClusterB)  == clustersFromPi0.end()  )
+		 clustersFromPi0.push_back(bClusterB);
+
+	    }//loop on clusterB
+	}//loop on clusterA
+
+
+
+
+
+
       
 
-    }   // end of first loop over entries
-        // now you have di-mass plots filled => get masses
+      // now do single cluster resulution study on the clcusters which passed pi0 peak selection
+      std::vector<int>::iterator bcFromPi0Itr;
+      for(bcFromPi0Itr  = clustersFromPi0.begin(); 
+	  bcFromPi0Itr != clustersFromPi0.end();
+	  bcFromPi0Itr++)
+	{
+	  int bCluster = (*bcFromPi0Itr);
+	  
+	  // loop on the cry components of a basic cluster
+	  for(int thisCry=0; thisCry<treeVars.nXtalsInCluster[bCluster]; thisCry++)
+	    {
+	      bool  thisIsInEBPeak=false;
+	      float sigmaNoiseOfThis=0;
+	      if(treeVars.xtalInBCIEta[bCluster][thisCry]      !=-999999)   {sigmaNoiseOfThis=sigmaNoiseEB; thisIsInEBPeak=true;}
+	      else if (treeVars.xtalInBCIy[bCluster][thisCry]  !=-999999)   {sigmaNoiseOfThis=sigmaNoiseEE; thisIsInEBPeak=false;}
+	      else {std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
+	      
+	      float ampliOfThis = treeVars.xtalInBCAmplitudeADC[bCluster][thisCry] / sigmaNoiseOfThis; 
+	      if( ampliOfThis < minAmpliOverSigma) continue;
+	      
+	      
+	      for(int thatCry=thisCry+1; thatCry<treeVars.nXtalsInCluster[bCluster]; thatCry++)
+		{
+		  float sigmaNoiseOfThat=0;
+		  if(treeVars.xtalInBCIEta[bCluster][thatCry]      !=-999999)   sigmaNoiseOfThat=sigmaNoiseEB;
+		  else if (treeVars.xtalInBCIy[bCluster][thatCry]  !=-999999)   sigmaNoiseOfThat=sigmaNoiseEE;
+		  else {std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
+		  
+		  float ampliOfThat = treeVars.xtalInBCAmplitudeADC[bCluster][thatCry] / sigmaNoiseOfThat; 
+		  if( ampliOfThat < minAmpliOverSigma) continue;
+		  
+		  float Aeff = ampliOfThis * ampliOfThat / sqrt( pow(ampliOfThis,2) + pow(ampliOfThat,2) );
+		  float dt  = treeVars.xtalInBCTime[bCluster][thisCry] - treeVars.xtalInBCTime[bCluster][thatCry]; 
+		  
+		  dtVSAeffHistAnyPeak_  -> Fill(Aeff, dt); 
+		  dtVSAeffProfAnyPeak_  -> Fill(Aeff, dt); 
+		  if (thisIsInEBPeak) {
+		    if      (Aeff < 6)   dtUpToQuarterGeVEBPeak->Fill(dt);
+		    else if (Aeff < 12)  dtUpToHalfGeVEBPeak   ->Fill(dt);
+		    else if (Aeff < 24)  dtUpToOneGeVEBPeak    ->Fill(dt);
+		    else if (Aeff < 48)  dtUpToTwoGeVEBPeak    ->Fill(dt);
+		    else                 dtUpOverTwoGeVEBPeak  ->Fill(dt);
+		    
+		    dtVSAeffHistEBPeak_ -> Fill(Aeff, fabs(dt)); 
+		    dtVSAeffProfEBPeak_ -> Fill(Aeff, fabs(dt)); 
+		  }
+		  else      {
+		    if      (Aeff < 6)   dtUpToThreeQuarterGeVEEPeak->Fill(dt);
+		    else if (Aeff < 12)  dtUpToOneAndHalfGeVEEPeak  ->Fill(dt);
+		    else if (Aeff < 24)  dtUpToThreeGeVEEPeak       ->Fill(dt);
+		    else if (Aeff < 48)  dtUpToSixGeVEEPeak         ->Fill(dt);
+		    else                 dtUpOverSixGeVEEPeak       ->Fill(dt);
+		    
+		    dtVSAeffHistEEPeak_ -> Fill(Aeff, fabs(dt)); 
+		    dtVSAeffProfEEPeak_ -> Fill(Aeff, fabs(dt)); }
+		  
+		}// loop on thatCry
+	      
+	    }// loop on thisCry
+
+	}// end loop on bc selected from pi0
+
+
+    }   // end of SECOND loop over entries
 
 
 
+  // now save the plots
 
+  // write out control histograms
+  TDirectory *controlPlots = saving.mkdir("control");
+  controlPlots->cd();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  // write out histograms
   BCNumPerEventHist_->Write();
   BCEnergyHist_->Write();
   BCEtHist_->Write();
@@ -675,14 +822,23 @@ int main (int argc, char** argv)
   xtalIPhiHist_->Write();
   xtalIXHist_ ->Write();
   xtalIYHist_ ->Write();
-
+  
   // xtalStatusHist_->Write();
   // xtalOccupancyHistEB_->Write();
-  massDiGammaHist_-> Write(); 
   massDiGammaEBHist_-> Write(); 
   massDiGammaEEHist_-> Write(); 
   massDiGammaEEPHist_-> Write(); 
   massDiGammaEEMHist_-> Write(); 
+
+  diPhotonOccupancyAny_      -> Write();
+  diPhotonPeakOccupancyAny_  -> Write();
+  diPhotonSidesOccupancyAny_ -> Write();
+
+
+
+  // write out single cluster resolution plots 
+  TDirectory *singleClusResolution = saving.mkdir("single-resolution");
+  singleClusResolution->cd();
   
   dtVSAeffHistAny_-> Write(); 
   dtVSAeffHistEB_ -> Write(); 
@@ -690,6 +846,44 @@ int main (int argc, char** argv)
   dtVSAeffProfAny_-> Write(); 
   dtVSAeffProfEB_ -> Write(); 
   dtVSAeffProfEE_ -> Write(); 
+  
+  dtUpToQuarterGeVEB-> Write(); 
+  dtUpToHalfGeVEB   -> Write(); 
+  dtUpToOneGeVEB    -> Write(); 
+  dtUpToTwoGeVEB    -> Write(); 
+  dtUpOverTwoGeVEB  -> Write(); 
+				    
+  dtUpToThreeQuarterGeVEE-> Write(); 
+  dtUpToOneAndHalfGeVEE  -> Write(); 
+  dtUpToThreeGeVEE       -> Write(); 
+  dtUpToSixGeVEE         -> Write(); 
+  dtUpOverSixGeVEE       -> Write(); 
+
+
+  // write out single cluster resolution plots after pi0 selection
+  TDirectory *singleClusResolutionPi0Clusters = saving.mkdir("single-resolution-pi0cluster");
+  singleClusResolutionPi0Clusters->cd();
+
+  dtUpToQuarterGeVEBPeak -> Write(); 
+  dtUpToHalfGeVEBPeak    -> Write(); 
+  dtUpToOneGeVEBPeak     -> Write(); 
+  dtUpToTwoGeVEBPeak     -> Write(); 
+  dtUpOverTwoGeVEBPeak  -> Write(); 
+				    
+  dtUpToThreeQuarterGeVEEPeak -> Write(); 
+  dtUpToOneAndHalfGeVEEPeak   -> Write(); 
+  dtUpToThreeGeVEEPeak        -> Write(); 
+  dtUpToSixGeVEEPeak          -> Write(); 
+  dtUpOverSixGeVEEPeak        -> Write(); 
+  
+  dtVSAeffHistAnyPeak_ -> Write(); 
+  dtVSAeffHistEBPeak_  -> Write(); 
+  dtVSAeffHistEEPeak_  -> Write(); 
+  dtVSAeffProfAnyPeak_ -> Write(); 
+  dtVSAeffProfEBPeak_  -> Write(); 
+  dtVSAeffProfEEPeak_  -> Write(); 
+
+
 
 
   saving.Close () ;
