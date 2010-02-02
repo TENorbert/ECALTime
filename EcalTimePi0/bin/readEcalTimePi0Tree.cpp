@@ -265,8 +265,8 @@ void initializeHists()
   BCEtHist_ = new TH1F("BCEt","E_{T} of BCs;GeV",100,0,25);
   BCOccupancyEBHist_  = new TH2F("BCOccupancyEB","BC occupancy;i#eta;i#phi",171,-85,86,361,1.,361.);
   BCOccupancyEEHist_  = new TH2F("BCOccupancyEE","BC occupancy;ix;iy",101,1.,101.,101,1,101);
-  BCOccupancyEEPHist_  = new TH2F("BCOccupancyEEP","BC occupancy;ix;iy",101,1.,101.,101,1,101);
-  BCOccupancyEEMHist_  = new TH2F("BCOccupancyEEM","BC occupancy;ix;iy",101,1.,101.,101,1,101);
+  BCOccupancyEEPHist_  = new TH2F("BCOccupancyEEP","BC occupancy EE+;ix;iy",101,1.,101.,101,1,101);
+  BCOccupancyEEMHist_  = new TH2F("BCOccupancyEEM","BC occupancy EE-;ix;iy",101,1.,101.,101,1,101);
   BCOccupancyHistAny_ = new TH2F("BCOccupancyAny","BC occupancy;#eta;#phi",50,-3.5,3.5,50,-1*TMath::Pi(),TMath::Pi());
   BCEtaHist_ = new TH1F("Cluster #eta","#eta of cluster",171,-3.5,3.5);
   BCPhiHist_ = new TH1F("Cluster #phi","#phi of cluster",50,-1*TMath::Pi(),TMath::Pi());
@@ -378,6 +378,9 @@ void doControlHists()
         if (treeVars_.xtalInBCIPhi[bCluster][thisCry]!=-999999)  xtalIPhiHist_ -> Fill (treeVars_.xtalInBCIPhi[bCluster][thisCry]);
         if (treeVars_.xtalInBCIx[bCluster][thisCry]  !=-999999)  xtalIXHist_   -> Fill (treeVars_.xtalInBCIx[bCluster][thisCry]);
         if (treeVars_.xtalInBCIy[bCluster][thisCry]  !=-999999)  xtalIYHist_   -> Fill (treeVars_.xtalInBCIy[bCluster][thisCry]);
+	xtalEnergyHist_                                                        -> Fill (treeVars_.xtalInBCEnergy[bCluster][thisCry]);
+	if(treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry]>15) xtalTimeHist_ -> Fill (treeVars_.xtalInBCTime[bCluster][thisCry]);
+
       }
   }
 }
