@@ -55,9 +55,11 @@ float s4s9GammaMinEE_ = 0.85;
 float eTPi0MinEE_     = 0.800;
 
 // Consts
-const float sigmaNoiseEB      = 1.06; // ADC 
-const float sigmaNoiseEE      = 2.10; // ADC
-const float minAmpliOverSigma = 7;    // dimensionless
+const float sigmaNoiseEB        = 1.06; // ADC 
+const float sigmaNoiseEE        = 2.10; // ADC
+const float minAmpliOverSigma   = 7;    // dimensionless
+const float timingResParamN     = 35.1; // ns
+const float timingResParamConst = 0.020; //ns
 
 // -------- Histograms -------------------------------------
 // xtals
@@ -134,6 +136,8 @@ TH2F*     dtVSAeffHistEEPeak_;
 TProfile* dtVSAeffProfAnyPeak_;
 TProfile* dtVSAeffProfEBPeak_;
 TProfile* dtVSAeffProfEEPeak_;
+// double cluster resolution
+TH1F* dtDoubleClusterHistAny_;
 
 
 
@@ -322,6 +326,8 @@ void initializeHists()
   dtVSAeffProfAnyPeak_ = new TProfile("Peak: #delta(t) VS A_{eff}/#sigma_{N} prof","Peak: #delta(t) VS A_{eff}/#sigma_{N} prof",125,0.,250,0,10);
   dtVSAeffProfEBPeak_  = new TProfile("EBPeak: #delta(t) VS A_{eff}/#sigma_{N} prof","EBPeak #delta(t) VS A_{eff}/#sigma_{N} prof",125,0.,250,0,10);
   dtVSAeffProfEEPeak_  = new TProfile("EEPeak: #delta(t) VS A_{eff}/#sigma_{N} prof","EEPeak: #delta(t) VS A_{eff}/#sigma_{N} prof",125,0.,250,0,10);
+  // Initialize histograms -- double cluster resolution
+  dtDoubleClusterHistAny_ = new TH1F("deltaTDoubleClusterAny","#Delta(t) between two clusters EB/EE",200,-25,25);
 }
 
 // ---------------------------------------------------------------------------------------
@@ -473,6 +479,51 @@ void writeHists()
   dtVSAeffProfAnyPeak_ -> Write(); 
   dtVSAeffProfEBPeak_  -> Write(); 
   dtVSAeffProfEEPeak_  -> Write(); 
+  
+  // write out double cluster resolution plots
+  TDirectory *doubleClusResolution = saving_->mkdir("double-resolution");
+  doubleClusResolution->cd();
+
+  dtDoubleClusterHistAny_->Write();
+}
+
+// ---------------------------------------------------------------------------------------
+// ------------------ Function to compute time and error for a cluster -------------------
+std::pair<float,float> timeAndUncertSingleCluster(int bClusterIndex)
+{
+  float weightTsum = 0;
+  float weightSum = 0;
+  // loop on the cry components of a basic cluster
+  for(int thisCry=0; thisCry<treeVars_.nXtalsInCluster[bClusterIndex]; thisCry++)
+  {
+    bool  thisIsInEB=false;
+    float sigmaNoiseOfThis=0;
+    if(treeVars_.xtalInBCIEta[bClusterIndex][thisCry]!=-999999)   
+    {
+      sigmaNoiseOfThis=sigmaNoiseEB;
+      thisIsInEB=true;
+    }
+    else if(treeVars_.xtalInBCIy[bClusterIndex][thisCry]!=-999999)
+    {
+      sigmaNoiseOfThis=sigmaNoiseEE;
+      thisIsInEB=false;
+    }
+    else
+    {
+      std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;
+    }
+    float ampliOfThis = treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] / sigmaNoiseOfThis; 
+    if( ampliOfThis < minAmpliOverSigma) continue;
+    float timeOfThis = treeVars_.xtalInBCTime[bClusterIndex][thisCry];
+    float sigmaOfThis = sqrt(pow(timingResParamN/ampliOfThis,2)+pow(timingResParamConst,2));
+
+    weightTsum+=(timeOfThis/pow(sigmaOfThis,2));
+    weightSum+=1/pow(sigmaOfThis,2);
+  }
+  if(weightSum <= 0)
+    return std::make_pair<float,float>(0,0);
+  else
+    return std::make_pair<float,float>(weightTsum/weightSum,sqrt(1/weightSum));
 }
 
 // ---------------------------------------------------------------------------------------
@@ -765,6 +816,8 @@ void doDoubleClusterResolutionPlots()
     // second selection cut: cluster shape
     if ( e22A/e33A < s4s9GammaMinA ) continue;
 
+    std::pair<float,float> timeAndUncertClusterA = timeAndUncertSingleCluster(bClusterA);
+
     for (int bClusterB=(bClusterA+1); bClusterB < treeVars_.nClusters; bClusterB++)
     {
 
@@ -791,6 +844,9 @@ void doDoubleClusterResolutionPlots()
 
       // second selection cut: cluster shape
       if ( e22B/e33B < s4s9GammaMinB ) continue;
+      
+      std::pair<float,float> timeAndUncertClusterB = timeAndUncertSingleCluster(bClusterB);
+      dtDoubleClusterHistAny_->Fill(timeAndUncertClusterB.first-timeAndUncertClusterA.first);
 
       // now build the pi0 candidate
       math::PtEtaPhiMLorentzVectorD gammaA (eTA, treeVars_.clusterEta[bClusterA], treeVars_.clusterPhi[bClusterA], 0);
@@ -848,6 +904,7 @@ void doDoubleClusterResolutionPlots()
     }//loop on clusterB
   }//loop on clusterA
 }
+
 
 // ---------------------------------------------------------------------------------------
 //! main program
