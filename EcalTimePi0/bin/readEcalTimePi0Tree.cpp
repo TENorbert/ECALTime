@@ -153,9 +153,21 @@ TH2F*     dtVSAeffHistEEPeak_;
 TProfile* dtVSAeffProfAnyPeak_;
 TProfile* dtVSAeffProfEBPeak_;
 TProfile* dtVSAeffProfEEPeak_;
+
 // double cluster resolution
 TH1F* dtDoubleClusterHistAny_;
+TH1F* dtPoolDoubleClusterHistAny_;
+TH2F* dtVsPtDoubleClusterHistAny_;
+
 TH1F* dtDoubleClusterHistPi0Peak_;
+TH1F* dtDoubleClusterHistPi0PeakEE_;
+TH1F* dtDoubleClusterHistPi0PeakEB_;
+TH1F* dtPoolDoubleClusterHistPi0Peak_;
+TH1F* dtPoolDoubleClusterHistPi0PeakEE_;
+TH1F* dtPoolDoubleClusterHistPi0PeakEB_;
+TH2F* dtVsPtDoubleClusterHistPi0Peak_;
+TH2F* dtVsPtDoubleClusterHistPi0PeakEE_;
+TH2F* dtVsPtDoubleClusterHistPi0PeakEB_;
 
 
 
@@ -355,10 +367,24 @@ void initializeHists()
   dtVSAeffProfAnyPeak_ = new TProfile("Peak: #Delta(t) VS A_{eff}/#sigma_{N} prof","Peak: #Delta(t) VS A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
   dtVSAeffProfEBPeak_  = new TProfile("EBPeak: #Delta(t) VS A_{eff}/#sigma_{N} prof","EBPeak #Delta(t) VS A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
   dtVSAeffProfEEPeak_  = new TProfile("EEPeak: #Delta(t) VS A_{eff}/#sigma_{N} prof","EEPeak: #Delta(t) VS A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
+
+  // should these DeltaT be vary in [-DtMax_, DtMax_] ? Once fixed/understood
   // Initialize histograms -- double cluster resolution
-  dtDoubleClusterHistAny_     = new TH1F("DeltaTDoubleClusterAny","#Delta(t) between two clusters EB/EE",200,-25,25);
-  dtDoubleClusterHistPi0Peak_ = new TH1F("DeltaTDoubleClusterPi0Peak","#Delta(t) between two clusters in #pi^{0} mass peak EB/EE",200,-25,25);
+  dtDoubleClusterHistAny_     = new TH1F("DeltaTDoubleClusterAny","#Delta(t) between two clusters EB/EE",100,-25,25);
+  dtPoolDoubleClusterHistAny_ = new TH1F("DeltaTPoolDoubleClusterAny","#Delta(t)/#sigma(t) between two clusters EB/EE (pool)",100,-5,5);
+  dtVsPtDoubleClusterHistAny_ = new TH2F("DeltaTVSPtDoubleClusterAny","#Delta(t)  between two clusters EB/EE VS P_{t}(di-photon) ",50,0,10,50,-25,25);
+
+  dtDoubleClusterHistPi0Peak_  = new TH1F("DeltaTDoubleClusterPi0Peak","#Delta(t) between two clusters in #pi^{0} mass peak EB/EE",100,-25,25);
+  dtDoubleClusterHistPi0PeakEE_= new TH1F("DeltaTDoubleClusterPi0PeakEE","#Delta(t) between two EE clusters in #pi^{0} mass peak",100,-25,25);
+  dtDoubleClusterHistPi0PeakEB_= new TH1F("DeltaTDoubleClusterPi0PeakEB","#Delta(t) between two EB clusters in #pi^{0} mass peak",100,-25,25);
+  dtPoolDoubleClusterHistPi0Peak_  = new TH1F("DeltaTPoolDoubleClusterPeak","#Delta(t)/#sigma(t) between two clusters EB/EE (pool)",100,-5,5);
+  dtPoolDoubleClusterHistPi0PeakEE_= new TH1F("DeltaTPoolDoubleClusterPeakEE","#Delta(t)/#sigma(t) between two clusters EE (pool)",100,-5,5);
+  dtPoolDoubleClusterHistPi0PeakEB_= new TH1F("DeltaTPoolDoubleClusterPeakEB","#Delta(t)/#sigma(t) between two clusters EB (pool)",100,-5,5);
+  dtVsPtDoubleClusterHistPi0Peak_  = new TH2F("DeltaTVSPtDoubleClusterPeak","#Delta(t) between two clusters EB/EE VS P_{t}(#pi_{0}) ",50,0,10,50,-25,25);
+  dtVsPtDoubleClusterHistPi0PeakEE_= new TH2F("DeltaTVSPtDoubleClusterPeakEE","#Delta(t) between two clusters EE VS P_{t}(#pi_{0}) ",50,0,10,50,-25,25);
+  dtVsPtDoubleClusterHistPi0PeakEB_= new TH2F("DeltaTVSPtDoubleClusterPeakEB","#Delta(t) between two clusters EB VS P_{t}(#pi_{0}) ",50,0,10,50,-25,25);
 }
+
 
 // ---------------------------------------------------------------------------------------
 // ------------------ Function to plot the control hists ---------------------------------
@@ -547,8 +573,20 @@ void writeHists()
   TDirectory *doubleClusResolution = saving_->mkdir("double-resolution");
   doubleClusResolution->cd();
 
-  dtDoubleClusterHistAny_->Write();
+  dtDoubleClusterHistAny_    ->Write();
+  dtPoolDoubleClusterHistAny_->Write();
+  dtVsPtDoubleClusterHistAny_->Write();
+
   dtDoubleClusterHistPi0Peak_->Write();
+  dtDoubleClusterHistPi0PeakEE_->Write();
+  dtDoubleClusterHistPi0PeakEB_->Write();
+  dtPoolDoubleClusterHistPi0Peak_  ->Write();
+  dtPoolDoubleClusterHistPi0PeakEE_->Write();
+  dtPoolDoubleClusterHistPi0PeakEB_->Write();
+  dtVsPtDoubleClusterHistPi0Peak_  ->Write();
+  dtVsPtDoubleClusterHistPi0PeakEE_->Write();
+  dtVsPtDoubleClusterHistPi0PeakEB_->Write();
+
 }
 
 // ---------------------------------------------------------------------------------------
@@ -599,11 +637,14 @@ std::pair<float,float> timeAndUncertSingleCluster(int bClusterIndex)
 
 }// end timeAndUncertSingleCluster
 
+
 // ---------------------------------------------------------------------------------------
 // ------------------ Function to do single BasicCluster resolution studies  -------------
 void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Selection)
 {
-  // perform single-cluster resolution study
+  // single-cluster resolution studies: DeltaT VS Aeff
+  // filling different plots for all clusters compared to clusters from pi0 peak selection
+
   for (std::set<int>::const_iterator bcItr = bcIndicies.begin();
       bcItr!=bcIndicies.end(); ++bcItr)
   {// loop on bc
@@ -665,7 +706,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
             dtVSAeffHistEE_ -> Fill(Aeff, dt); 
             dtVSAeffProfEE_ -> Fill(Aeff, dt); }
         }
-        else
+        else // clusters matching the pi0 mass
         {
           dtVSAeffHistAnyPeak_  -> Fill(Aeff, dt); 
           dtVSAeffProfAnyPeak_  -> Fill(Aeff, dt); 
@@ -688,12 +729,14 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
 
             dtVSAeffHistEEPeak_ -> Fill(Aeff, dt); 
             dtVSAeffProfEEPeak_ -> Fill(Aeff, dt); }
-        } // if-else pi0 selection
+        } // else-if pi0 selection
+
       }// loop on thatCry
 
     }// loop on thisCry
   }// end loop on bc
-}
+}// end doSingleClusterResolutionPlots
+
 
 // ---------------------------------------------------------------------------------------
 // ------------------ Function to do select pi-zero candidates ---------------------------
@@ -887,56 +930,64 @@ void doDoubleClusterResolutionPlots(SetOfIntPairs myBCpairs, bool isAfterPi0Sele
 {
   // loop on pairs of basicClusters
   for(SetOfIntPairs::const_iterator pairItr = myBCpairs.begin(); pairItr != myBCpairs.end(); ++pairItr)
-  {
-    int bClusterA = pairItr->first;
-    int bClusterB = pairItr->second;
-    
-    if(isAfterPi0Selection)
     {
+      int bClusterA = pairItr->first;
+      int bClusterB = pairItr->second;
+      
       float eTA = treeVars_.clusterTransverseEnergy[bClusterA];
       float eTB = treeVars_.clusterTransverseEnergy[bClusterB];
-      //      float eTPi0Min = 0;
-      // now build the pi0 candidate
+      
+      // re-build the pi0 candidate
       math::PtEtaPhiMLorentzVectorD gammaA (eTA, treeVars_.clusterEta[bClusterA], treeVars_.clusterPhi[bClusterA], 0);
       math::PtEtaPhiMLorentzVectorD gammaB (eTB, treeVars_.clusterEta[bClusterB], treeVars_.clusterPhi[bClusterB], 0);
       math::PtEtaPhiMLorentzVectorD pi0Candidate = gammaA + gammaB;
       
+      bool isEB=false;
+      if( fabs(pi0Candidate.Eta()) < BarrelLimit) isEB=true;
+      //std::cout << "eta: " << pi0Candidate.Eta() << " isEB " << isEB << std::endl;//gfcomm
+
+      // Make the time check between two clusters in the peaks
+      std::pair<float,float> timeAndUncertClusterA = timeAndUncertSingleCluster(bClusterA);
+      if(timeAndUncertClusterA.second <= 0) // if something went wrong combining the times, bail out
+	continue;
+      std::pair<float,float> timeAndUncertClusterB = timeAndUncertSingleCluster(bClusterB);
+      if(timeAndUncertClusterB.second <= 0) // if something went wrong combining the times, bail out
+	continue;
       
-      /////////////////////////////////////////////////////////////
-	// from here on I have pi0 candidates
-	// bClusterA and bClusterB are the two clusters making this candidate
-	diPhotonPeakOccupancyAny_  -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
-	
-	// Make the time check between two clusters in the peaks
-	std::pair<float,float> timeAndUncertClusterA = timeAndUncertSingleCluster(bClusterA);
-	if(timeAndUncertClusterA.second <= 0) // if something went wrong combining the times, bail out
-	  continue;
-	std::pair<float,float> timeAndUncertClusterB = timeAndUncertSingleCluster(bClusterB);
-	if(timeAndUncertClusterB.second <= 0) // if something went wrong combining the times, bail out
-	  continue;
-	
-	dtDoubleClusterHistPi0Peak_->Fill(timeAndUncertClusterB.first-timeAndUncertClusterA.first);
-	// add pool distribution?
-	// separate EB and EE?
+      float Dt      = timeAndUncertClusterB.first-timeAndUncertClusterA.first;
+      float errorDt = sqrt( pow(timeAndUncertClusterA.second,2) + pow(timeAndUncertClusterB.second,2));
+      float Pt      = pi0Candidate.Et();
 
-    } // isAfterPi0Selection
-    else
-      {
-	// Make the time check between two clusters in the sidebands
-	std::pair<float,float> timeAndUncertClusterA = timeAndUncertSingleCluster(bClusterA);
-	if(timeAndUncertClusterA.second <= 0) // if something went wrong combining the times, bail out
-	  continue;
-	std::pair<float,float> timeAndUncertClusterB = timeAndUncertSingleCluster(bClusterB);
-	if(timeAndUncertClusterB.second <= 0) // if something went wrong combining the times, bail out
-	  continue;
-	
-	dtDoubleClusterHistAny_->Fill(timeAndUncertClusterB.first-timeAndUncertClusterA.first);
-      }// !isAfterPi0Selection
-    
-  }//loop on pairs
+      if(isAfterPi0Selection)
+	{
+	  
+	  //////////////////////////////////////////////////////////
+	  // from here on I have pi0 candidates
+	  // bClusterA and bClusterB are the two clusters making this candidate
+	  diPhotonPeakOccupancyAny_  -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
+	  
+	  dtDoubleClusterHistPi0Peak_            ->Fill(Dt);
+	  if(isEB) dtDoubleClusterHistPi0PeakEB_ ->Fill(Dt);
+	  else     dtDoubleClusterHistPi0PeakEE_ ->Fill(Dt);
+
+	  dtPoolDoubleClusterHistPi0Peak_            ->Fill(Dt/errorDt);
+	  if(isEB) dtPoolDoubleClusterHistPi0PeakEB_ ->Fill(Dt/errorDt);
+	  else     dtPoolDoubleClusterHistPi0PeakEE_ ->Fill(Dt/errorDt);
+
+	  dtVsPtDoubleClusterHistPi0Peak_            ->Fill(Pt,Dt);
+	  if(isEB) dtVsPtDoubleClusterHistPi0PeakEB_ ->Fill(Pt,Dt);
+	  else     dtVsPtDoubleClusterHistPi0PeakEE_ ->Fill(Pt,Dt);
+
+	} // isAfterPi0Selection
+      else
+	{
+	  dtDoubleClusterHistAny_     ->Fill(Dt);
+	  dtPoolDoubleClusterHistAny_ ->Fill(Dt/errorDt);
+	  dtVsPtDoubleClusterHistAny_ ->Fill(Pt,Dt);
+	}// !isAfterPi0Selection
+      
+    }//loop on pairs
 }// end doDoubleClusterResolutionPlots
-
-
 
 
 // ---------------------------------------------------------------------------------------
@@ -966,6 +1017,8 @@ void doFinalPlots()
     dtSigmaAeffAny_ -> SetBinError(sliceX+1, sigmaErr);
   }// end loop on Xslices
   
+  // gf: add here sigma/RMS VS Aeff also for clusters matching the pi0 mass
+
 }// end doFinalPlots
 
 
@@ -984,6 +1037,7 @@ std::set<int> makeUniqueList1D(SetOfIntPairs myPairs)
   
   return returnSet;
 }
+
 
 // ---------------------------------------------------------------------------------------
 //! main program
@@ -1044,6 +1098,7 @@ int main (int argc, char** argv)
   {
     chain->GetEntry (entry) ;
 
+    speak_=false;
     if (entry<10 || entry%1000==0) speak_=true;
 
     if (speak_)  std::cout << "------> reading entry " << entry << " <------\n" ; 
