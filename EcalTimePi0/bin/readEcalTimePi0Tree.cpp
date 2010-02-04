@@ -84,6 +84,9 @@ TH1F* xtalIYHist_;
 // BasicClusters
 TH1F* BCNumPerEventHist_;
 TH1F* BCNumCrysHist_;
+TH1F* BCNumCrysOverThrHist_;
+TH1F* BCNumCrysOverThrEBHist_;
+TH1F* BCNumCrysOverThrEEHist_;
 TH1F* BCEnergyHist_;
 TH1F* BCEtHist_;
 TH2F* BCOccupancyEBHist_;
@@ -280,6 +283,10 @@ void initializeHists()
   // Initialize histograms -- BasicClusters
   BCNumPerEventHist_ = new TH1F("BCNumPerEvent","Number of BC per event",100,0,100);
   BCNumCrysHist_ = new TH1F("BCNumCrys","Number of crystals per BC",10,0,10);
+  BCNumCrysOverThrHist_  = new TH1F("BCNumCrys over threshold","Number of crystals per BC over threshold",10,0,10);
+  BCNumCrysOverThrEBHist_= new TH1F("EB BCNumCrys over threshold","EB Number of crystals per BC over threshold",10,0,10);
+  BCNumCrysOverThrEEHist_= new TH1F("EE BCNumCrys over threshold","EE Number of crystals per BC over threshold",10,0,10);
+
   BCEnergyHist_ = new TH1F("BCEnergy","Energy of BCs;GeV",100,0,25);
   BCEtHist_ = new TH1F("BCEt","E_{T} of BCs;GeV",100,0,25);
   BCOccupancyEBHist_  = new TH2F("BCOccupancyEB","BC occupancy;i#eta;i#phi",171,-85,86,361,1.,361.);
@@ -327,7 +334,7 @@ void initializeHists()
   dtVSAeffProfEE_  = new TProfile("EE:  #Delta(t)   VS  A_{eff}/#sigma_{N} prof","EE:  #Delta(t)  VS  A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
 
   // Initialize histograms -- selection on pi0 candidates 
-  diPhotonPeakOccupancyAny_     = new TH2F("#pi_{0} occupancy","di-photon peak;#eta;#phi",50,-3.5,3.5,50,-1*TMath::Pi(),TMath::Pi());
+  diPhotonPeakOccupancyAny_     = new TH2F("#pi_{0} occupancy (di-photon peak)","di-photon peak;#eta;#phi",50,-3.5,3.5,50,-1*TMath::Pi(),TMath::Pi());
   diPhotonSidesOccupancyAny_    = new TH2F("di-photon side-bands","di-photon side-bands;#eta;#phi",50,-3.5,3.5,50,-1*TMath::Pi(),TMath::Pi());
   // Initialize histograms -- single cluster resolution in pi0 peak
   dtUpToQuarterGeVEBPeak_   = new TH1F("EBPeak: #Delta(t) A_{eff} up to 1/4 GeV", "EBPeak: #Delta(t) ~5<A_{eff}/#sigma_{N}<6", 400, -20, 20); 
@@ -374,18 +381,19 @@ void doControlHists()
     BCOccupancyHistAny_ -> Fill(treeVars_.clusterEta[bCluster],treeVars_.clusterPhi[bCluster]);
     BCEtaHist_ -> Fill(treeVars_.clusterEta[bCluster]);
     BCPhiHist_ -> Fill(treeVars_.clusterPhi[bCluster]);
-
+    
+    bool thisIsEB = false;
     //  basic cluster occupancy in detector coordinates, using first cry of BC as a representative
-    if(treeVars_.xtalInBCIEta[bCluster][0] != -999999)                                        // ieta=-999999 tags EE
-      BCOccupancyEBHist_->Fill(treeVars_.xtalInBCIEta[bCluster][0],treeVars_.xtalInBCIPhi[bCluster][0]);
-
-    else if (treeVars_.xtalInBCIx[bCluster][0] != -999999 && treeVars_.clusterEta[bCluster]>0){ // ix=-999999 tags EB
+    if(treeVars_.xtalInBCIEta[bCluster][0] != -999999){                                        // this is EB; ieta=-999999 tags EE
+      BCOccupancyEBHist_->Fill(treeVars_.xtalInBCIEta[bCluster][0],treeVars_.xtalInBCIPhi[bCluster][0]); thisIsEB = true;   }
+    else if (treeVars_.xtalInBCIx[bCluster][0] != -999999 && treeVars_.clusterEta[bCluster]>0){ // this is EEP; ix=-999999 tags EB
       BCOccupancyEEHist_ ->Fill(treeVars_.xtalInBCIx[bCluster][0],treeVars_.xtalInBCIy[bCluster][0]);
-      BCOccupancyEEPHist_->Fill(treeVars_.xtalInBCIx[bCluster][0],treeVars_.xtalInBCIy[bCluster][0]);}
-
-    else if (treeVars_.xtalInBCIx[bCluster][0] != -999999 && treeVars_.clusterEta[bCluster]<0){ // ix=-999999 tags EB
+      BCOccupancyEEPHist_->Fill(treeVars_.xtalInBCIx[bCluster][0],treeVars_.xtalInBCIy[bCluster][0]);
+      thisIsEB = false;   }
+    else if (treeVars_.xtalInBCIx[bCluster][0] != -999999 && treeVars_.clusterEta[bCluster]<0){ // this is EEM; ix=-999999 tags EB
       BCOccupancyEEHist_ ->Fill(treeVars_.xtalInBCIx[bCluster][0],treeVars_.xtalInBCIy[bCluster][0]);
-      BCOccupancyEEMHist_->Fill(treeVars_.xtalInBCIx[bCluster][0],treeVars_.xtalInBCIy[bCluster][0]);}
+      BCOccupancyEEMHist_->Fill(treeVars_.xtalInBCIx[bCluster][0],treeVars_.xtalInBCIy[bCluster][0]);
+      thisIsEB = false;   }
 
       if (speak_)  std::cout << "\tbCluster: num "               << bCluster 
         << "\t eBC: "                      << treeVars_.clusterEnergy[bCluster]
@@ -401,6 +409,8 @@ void doControlHists()
           << " \t time "                     << treeVars_.xtalInBCTime[bCluster][0] 
           << std::endl;
 
+      // count number of crystals in a BC over threshold
+      int numCryOverThreshold=0; 
       for(int thisCry=0; thisCry<treeVars_.nXtalsInCluster[bCluster]; thisCry++)
       {
         if (treeVars_.xtalInBCIEta[bCluster][thisCry]!=-999999)  xtalIEtaHist_ -> Fill (treeVars_.xtalInBCIEta[bCluster][thisCry]);
@@ -408,11 +418,29 @@ void doControlHists()
         if (treeVars_.xtalInBCIx[bCluster][thisCry]  !=-999999)  xtalIXHist_   -> Fill (treeVars_.xtalInBCIx[bCluster][thisCry]);
         if (treeVars_.xtalInBCIy[bCluster][thisCry]  !=-999999)  xtalIYHist_   -> Fill (treeVars_.xtalInBCIy[bCluster][thisCry]);
 	xtalEnergyHist_                                                        -> Fill (treeVars_.xtalInBCEnergy[bCluster][thisCry]);
-	if(treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry]>15) xtalTimeHist_ -> Fill (treeVars_.xtalInBCTime[bCluster][thisCry]);
+	
+	if (thisIsEB &&                                                           // this is barrel
+	    (treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry]/sigmaNoiseEB) > minAmpliOverSigma ) {  
+	  xtalIEtaHist_ -> Fill (treeVars_.xtalInBCIEta[bCluster][thisCry]);
+	  numCryOverThreshold++;	 } 
+	else if ( (!thisIsEB) &&                                                   // this is endcap
+		  (treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry]/sigmaNoiseEE) > minAmpliOverSigma ) {  
+	  xtalIEtaHist_ -> Fill (treeVars_.xtalInBCIEta[bCluster][thisCry]);
+	  numCryOverThreshold++;	  }
+	
+      }//end loop on crystals
 
-      }
-  }
-}
+  
+      if(thisIsEB){
+	BCNumCrysOverThrHist_  ->Fill(numCryOverThreshold);
+	BCNumCrysOverThrEBHist_->Fill(numCryOverThreshold);}
+      else{
+	BCNumCrysOverThrHist_  ->Fill(numCryOverThreshold);
+	BCNumCrysOverThrEEHist_->Fill(numCryOverThreshold);}
+     
+      
+  }//end loop on basic clusters
+}// end doControlHistograms
 
 // ---------------------------------------------------------------------------------------
 // ------------------ Function to write hists --------------------------------------------
@@ -426,6 +454,9 @@ void writeHists()
   BCEnergyHist_->Write();
   BCEtHist_->Write();
   BCNumCrysHist_->Write();
+  BCNumCrysOverThrHist_  ->Write();
+  BCNumCrysOverThrEBHist_->Write();
+  BCNumCrysOverThrEEHist_->Write();
   BCOccupancyEBHist_->Write();
   BCOccupancyEEHist_->Write();
   BCOccupancyEEPHist_->Write();
@@ -447,6 +478,7 @@ void writeHists()
   
   // xtalStatusHist_->Write();
   // xtalOccupancyHistEB_->Write();
+  massDiGammaHist_-> Write(); 
   massDiGammaEBHist_-> Write(); 
   massDiGammaEEHist_-> Write(); 
   massDiGammaEEPHist_-> Write(); 
@@ -542,21 +574,30 @@ std::pair<float,float> timeAndUncertSingleCluster(int bClusterIndex)
     }
     else
     {
-      std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;
+      std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;//gfdebug
     }
     float ampliOfThis = treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] / sigmaNoiseOfThis; 
     if( ampliOfThis < minAmpliOverSigma) continue;
-    float timeOfThis = treeVars_.xtalInBCTime[bClusterIndex][thisCry];
+    float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry];
     float sigmaOfThis = sqrt(pow(timingResParamN/ampliOfThis,2)+pow(timingResParamConst,2));
+
+    //std::cout << "GFdeb eampli: " << treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry]
+    //          << " ampliOfThis: " << ampliOfThis
+    //          << " timeOfThis: " << timeOfThis
+    //          << " sigmaOfThis: " << sigmaOfThis
+    //          << std::endl;//gfdebug
 
     weightTsum+=(timeOfThis/pow(sigmaOfThis,2));
     weightSum+=1/pow(sigmaOfThis,2);
   }
   if(weightSum <= 0)
     return std::make_pair<float,float>(-999999,-999999);
-  else
+  else{
+    //std::cout << "-- GFdeb time: " << weightTsum/weightSum << " error: " << sqrt(1/weightSum) << std::endl;//gfdebug
     return std::make_pair<float,float>(weightTsum/weightSum,sqrt(1/weightSum));
-}
+  }
+
+}// end timeAndUncertSingleCluster
 
 // ---------------------------------------------------------------------------------------
 // ------------------ Function to do single BasicCluster resolution studies  -------------
@@ -756,8 +797,40 @@ SetOfIntPairs selectPi0Candidates()
 
         // occupancy of all candidates (this is FIRST loop)
         diPhotonOccupancyAny_ -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
-
+	
 	// TODO: don't you want to insert the mass cut here? //gf
+
+	
+	
+	
+        /////////////////////////////////////////////////////////////
+	  // here I have di-gamma pairs that pass cuts
+	  // now select pi0's based on the mass
+	  /////////////////////////////////////////////////////////////
+	  
+	  float nSigma =1;
+	  // reject sidebands in EB
+	  //std::cout << "select pi0 BisEB: " << BisEB << " pi0MassEB_ " << pi0MassEB_ << " pi0WidthEB_ " << pi0WidthEB_ << " mass: " << pi0Candidate.M() << std::endl; //gfdebu
+	  if( BisEB &&
+	      (pi0Candidate.M() < pi0MassEB_-nSigma*pi0WidthEB_ ||
+	       pi0MassEB_+nSigma*pi0WidthEB_ < pi0Candidate.M())
+	      ) {
+	    diPhotonSidesOccupancyAny_ -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
+	    //std::cout << "sideband found in EB" << std::endl; //gf debug
+	    continue;}
+	  
+          // reject sidebands in EE
+          if( (!BisEB) &&
+              (pi0Candidate.M() < pi0MassEE_-nSigma*pi0WidthEE_ ||
+               pi0MassEE_+nSigma*pi0WidthEE_ < pi0Candidate.M())
+	      ) {
+            diPhotonSidesOccupancyAny_ -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
+	    //std::cout << "sideband found in EE" << std::endl; //gf debug
+            continue;}
+	  
+	  
+	  
+
         returnPairs.insert(std::make_pair<int,int>(bClusterA,bClusterB));
 
       }//loop on candidateB
@@ -818,85 +891,50 @@ void doDoubleClusterResolutionPlots(SetOfIntPairs myBCpairs, bool isAfterPi0Sele
     int bClusterA = pairItr->first;
     int bClusterB = pairItr->second;
     
-
     if(isAfterPi0Selection)
     {
       float eTA = treeVars_.clusterTransverseEnergy[bClusterA];
       float eTB = treeVars_.clusterTransverseEnergy[bClusterB];
-      float eTPi0Min = 0;
+      //      float eTPi0Min = 0;
       // now build the pi0 candidate
       math::PtEtaPhiMLorentzVectorD gammaA (eTA, treeVars_.clusterEta[bClusterA], treeVars_.clusterPhi[bClusterA], 0);
       math::PtEtaPhiMLorentzVectorD gammaB (eTB, treeVars_.clusterEta[bClusterB], treeVars_.clusterPhi[bClusterB], 0);
       math::PtEtaPhiMLorentzVectorD pi0Candidate = gammaA + gammaB;
-
-      bool candidateIsEB=false;
-      if ( fabs(pi0Candidate.Eta()) < BarrelLimit) {
-        eTPi0Min      = eTPi0MinEB_;	
-        candidateIsEB = true;	      }
-      else{		
-        eTPi0Min      = eTPi0MinEE_;
-        candidateIsEB = false;	      }
-
-        // third selection cut: pi0 candidate Et
-        if(pi0Candidate.Et() < eTPi0Min ) continue;
-
-	//TODO: gf don't  you want to move this selection inside selectPi0Candidates(..)?
-        /////////////////////////////////////////////////////////////
-        // here I have di-gamma pairs that pass cuts
-        // now select pi0's based on the mass
-        /////////////////////////////////////////////////////////////
-
-        float nSigma =1;
-        // reject sidebands in EB
-        if( candidateIsEB &&
-            (pi0Candidate.M() < pi0MassEB_-nSigma*pi0WidthEB_ ||
-             pi0MassEB_+nSigma*pi0WidthEB_ > pi0Candidate.M())
-	    ) {
-          diPhotonSidesOccupancyAny_ -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
-	  std::cout << "sideband found in EB" << std::endl; //gf debug
-          continue;}
+      
+      
+      /////////////////////////////////////////////////////////////
+	// from here on I have pi0 candidates
+	// bClusterA and bClusterB are the two clusters making this candidate
+	diPhotonPeakOccupancyAny_  -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
 	
-          // reject sidebands in EE
-          if( (!candidateIsEB) &&
-              (pi0Candidate.M() < pi0MassEE_-nSigma*pi0WidthEE_ ||
-               pi0MassEE_+nSigma*pi0WidthEE_ > pi0Candidate.M())
-            ) {
-            diPhotonSidesOccupancyAny_ -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
-	    std::cout << "sideband found in EE" << std::endl; //gf debug
-            continue;}
-
-
-            /////////////////////////////////////////////////////////////
-            // from here on I have pi0 candidates
-            // bClusterA and bClusterB are the two clusters making this candidate
-            diPhotonPeakOccupancyAny_  -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
-
-            // Make the time check
-            std::pair<float,float> timeAndUncertClusterA = timeAndUncertSingleCluster(bClusterA);
-            if(timeAndUncertClusterA.second <= 0) // if something went wrong combining the times, bail out
-              continue;
-            std::pair<float,float> timeAndUncertClusterB = timeAndUncertSingleCluster(bClusterB);
-            if(timeAndUncertClusterB.second <= 0) // if something went wrong combining the times, bail out
-              continue;
-
-            dtDoubleClusterHistPi0Peak_->Fill(timeAndUncertClusterB.first-timeAndUncertClusterA.first);
+	// Make the time check between two clusters in the peaks
+	std::pair<float,float> timeAndUncertClusterA = timeAndUncertSingleCluster(bClusterA);
+	if(timeAndUncertClusterA.second <= 0) // if something went wrong combining the times, bail out
+	  continue;
+	std::pair<float,float> timeAndUncertClusterB = timeAndUncertSingleCluster(bClusterB);
+	if(timeAndUncertClusterB.second <= 0) // if something went wrong combining the times, bail out
+	  continue;
+	
+	dtDoubleClusterHistPi0Peak_->Fill(timeAndUncertClusterB.first-timeAndUncertClusterA.first);
+	// add pool distribution?
+	// separate EB and EE?
 
     } // isAfterPi0Selection
     else
-    {
-      // Make the time check
-      std::pair<float,float> timeAndUncertClusterA = timeAndUncertSingleCluster(bClusterA);
-      if(timeAndUncertClusterA.second <= 0) // if something went wrong combining the times, bail out
-        continue;
-      std::pair<float,float> timeAndUncertClusterB = timeAndUncertSingleCluster(bClusterB);
-      if(timeAndUncertClusterB.second <= 0) // if something went wrong combining the times, bail out
-        continue;
-      
-      dtDoubleClusterHistAny_->Fill(timeAndUncertClusterB.first-timeAndUncertClusterA.first);
-    }
-
+      {
+	// Make the time check between two clusters in the sidebands
+	std::pair<float,float> timeAndUncertClusterA = timeAndUncertSingleCluster(bClusterA);
+	if(timeAndUncertClusterA.second <= 0) // if something went wrong combining the times, bail out
+	  continue;
+	std::pair<float,float> timeAndUncertClusterB = timeAndUncertSingleCluster(bClusterB);
+	if(timeAndUncertClusterB.second <= 0) // if something went wrong combining the times, bail out
+	  continue;
+	
+	dtDoubleClusterHistAny_->Fill(timeAndUncertClusterB.first-timeAndUncertClusterA.first);
+      }// !isAfterPi0Selection
+    
   }//loop on pairs
-}
+}// end doDoubleClusterResolutionPlots
 
 
 
@@ -992,6 +1030,14 @@ int main (int argc, char** argv)
   // Initialize the histograms
   initializeHists();
 
+  // FIXME
+  // fit to mass to be made robust
+  // re masses to a-priori values for now 
+  pi0MassEB_  = 0.111;
+  pi0WidthEB_ = 0.013; 
+  pi0MassEE_  = 0.126;
+  pi0WidthEE_  = 0.030;
+
   /////////////////////////////////////////////////////
   // Main loop over entries
   for (int entry = 0 ; (entry < nEntries && entry < numEvents_); ++entry)
@@ -1000,10 +1046,10 @@ int main (int argc, char** argv)
 
     if (entry<10 || entry%1000==0) speak_=true;
 
-    if (speak_) std::cout << "------> reading entry " << entry << " <------\n" ; 
+    if (speak_)  std::cout << "------> reading entry " << entry << " <------\n" ; 
     if (speak_)  std::cout << "  found " << treeVars_.nSuperClusters << " superclusters" << std::endl ;
     if (speak_)  std::cout << "  found " << treeVars_.nClusters << " basic clusters" << std::endl ;
-    if (speak_) std::cout << "  found " << treeVars_.nXtals << " crystals\n" ;    
+    if (speak_)  std::cout << "  found " << treeVars_.nXtals << " crystals\n" ;    
 
     // Plot the control hists
     doControlHists();
@@ -1043,7 +1089,7 @@ int main (int argc, char** argv)
   fitMassSpectra();
   // FIXME
   // fit to mass to be made robust
-  // set masses to a-priori values for now 
+  // re-set masses to a-priori values for now 
   pi0MassEB_  = 0.111;
   pi0WidthEB_ = 0.013; 
   pi0MassEE_  = 0.126;
