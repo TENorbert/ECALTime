@@ -150,6 +150,7 @@ TProfile* dtVSAeffProfEBPeak_;
 TProfile* dtVSAeffProfEEPeak_;
 // double cluster resolution
 TH1F* dtDoubleClusterHistAny_;
+TH1F* dtDoubleClusterHistPi0Peak_;
 
 
 
@@ -334,7 +335,7 @@ void initializeHists()
   dtUpOverTwoGeVEBPeak_     = new TH1F("EBPeak: #delta(t) A_{eff} over two GeV", "EBPeak: #delta(t) A_{eff}/#sigma_{N}>48", 200, -DtMax, DtMax); 
 
   dtUpToThreeQuarterGeVEEPeak_ = new TH1F("EEPeak: #delta(t) A_{eff} up to 3/4 GeV", "EEPeak: #delta(t) A_{eff}/#sigma_{N}<6", 200, -DtMax, DtMax); 
-  dtUpToOneAndHalfGeVEEPeak_    = new TH1F("EEPeak: #delta(t) A_{eff} up to one&1/2 GeV", "EEPeak: #delta(t) 6<A_{eff}/#sigma_{N}<12", 200, -DtMax, DtMax); 
+  dtUpToOneAndHalfGeVEEPeak_   = new TH1F("EEPeak: #delta(t) A_{eff} up to one&1/2 GeV", "EEPeak: #delta(t) 6<A_{eff}/#sigma_{N}<12", 200, -DtMax, DtMax); 
   dtUpToThreeGeVEEPeak_        = new TH1F("EEPeak: #delta(t) A_{eff} up to three GeV", "EEPeak: #delta(t) 12<A_{eff}/#sigma_{N}<24", 200, -DtMax, DtMax); 
   dtUpToSixGeVEEPeak_          = new TH1F("EEPeak: #delta(t) A_{eff} up to six GeV", "EEPeak: #delta(t) 24<A_{eff}/#sigma_{N}<48", 200, -DtMax, DtMax); 
   dtUpOverSixGeVEEPeak_        = new TH1F("EEPeak: #delta(t) A_{eff} over six GeV", "EEPeak: #delta(t) A_{eff}/#sigma_{N}>48", 200, -DtMax, DtMax); 
@@ -346,7 +347,8 @@ void initializeHists()
   dtVSAeffProfEBPeak_  = new TProfile("EBPeak: #delta(t) VS A_{eff}/#sigma_{N} prof","EBPeak #delta(t) VS A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax,-DtMax,DtMax);
   dtVSAeffProfEEPeak_  = new TProfile("EEPeak: #delta(t) VS A_{eff}/#sigma_{N} prof","EEPeak: #delta(t) VS A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax,-DtMax,DtMax);
   // Initialize histograms -- double cluster resolution
-  dtDoubleClusterHistAny_ = new TH1F("deltaTDoubleClusterAny","#Delta(t) between two clusters EB/EE",200,-25,25);
+  dtDoubleClusterHistAny_     = new TH1F("deltaTDoubleClusterAny","#Delta(t) between two clusters EB/EE",200,-25,25);
+  dtDoubleClusterHistPi0Peak_ = new TH1F("deltaTDoubleClusterPi0Peak","#Delta(t) between two clusters in #pi^{0} mass peak EB/EE",200,-25,25);
 }
 
 // ---------------------------------------------------------------------------------------
@@ -512,6 +514,7 @@ void writeHists()
   doubleClusResolution->cd();
 
   dtDoubleClusterHistAny_->Write();
+  dtDoubleClusterHistPi0Peak_->Write();
 }
 
 // ---------------------------------------------------------------------------------------
@@ -662,7 +665,7 @@ SetOfIntPairs selectPi0Candidates()
   float eTPi0Min;
   // (FIRST) loop on basic cluster - to build pi0 candidates and get the mass
   for (int bCluster=0; bCluster < treeVars_.nClusters; bCluster++)
-    for (int bClusterA=0; bClusterA < treeVars_.nClusters; bClusterA++)
+    for (int bClusterA=bCluster+1; bClusterA < treeVars_.nClusters; bClusterA++)
     {
       eTA = treeVars_.clusterTransverseEnergy[bClusterA];
 
@@ -804,120 +807,88 @@ void fitMassSpectra()
 
 // ---------------------------------------------------------------------------------------
 // ------------------ Function to do double cluster resolution studies -------------------
-void doDoubleClusterResolutionPlots(SetOfIntPairs myBCpairs)
+void doDoubleClusterResolutionPlots(SetOfIntPairs myBCpairs, bool isAfterPi0Selection)
 {
-  float eTA, eTB ;
-  float e22A, e33A,    e22B, e33B;
-  float eTGammaMinA,   eTGammaMinB;
-  float s4s9GammaMinA, s4s9GammaMinB;
-  bool  AisEB,         BisEB;
-  float eTPi0Min;
-
   // loop on pairs of basicClusters
   for(SetOfIntPairs::const_iterator pairItr = myBCpairs.begin(); pairItr != myBCpairs.end(); ++pairItr)
   {
     int bClusterA = pairItr->first;
     int bClusterB = pairItr->second;
-    eTA = treeVars_.clusterTransverseEnergy[bClusterA];
-    e22A = treeVars_.clusterE2x2[bClusterA];
-    e33A = treeVars_.clusterE3x3[bClusterA];
+    
 
-    // Make the time check first so we can fill the time res. histo
-    std::pair<float,float> timeAndUncertClusterA = timeAndUncertSingleCluster(bClusterA);
-    if(timeAndUncertClusterA.second <= 0) // if something went wrong combining the times, bail out
-      continue;
-    std::pair<float,float> timeAndUncertClusterB = timeAndUncertSingleCluster(bClusterB);
-    if(timeAndUncertClusterB.second <= 0) // if something went wrong combining the times, bail out
-      continue;
-    dtDoubleClusterHistAny_->Fill(timeAndUncertClusterB.first-timeAndUncertClusterA.first);
+    if(isAfterPi0Selection)
+    {
+      float eTA = treeVars_.clusterTransverseEnergy[bClusterA];
+      float eTB = treeVars_.clusterTransverseEnergy[bClusterB];
+      float eTPi0Min = 0;
+      // now build the pi0 candidate
+      math::PtEtaPhiMLorentzVectorD gammaA (eTA, treeVars_.clusterEta[bClusterA], treeVars_.clusterPhi[bClusterA], 0);
+      math::PtEtaPhiMLorentzVectorD gammaB (eTB, treeVars_.clusterEta[bClusterB], treeVars_.clusterPhi[bClusterB], 0);
+      math::PtEtaPhiMLorentzVectorD pi0Candidate = gammaA + gammaB;
 
-    // discriminate between EE and EB and set thresholds accordingly
-    if ( fabs(treeVars_.clusterEta[bClusterA]) < BarrelLimit) {
-      AisEB         = true;
-      eTGammaMinA   = eTGammaMinEB_;
-      s4s9GammaMinA = s4s9GammaMinEB_;
-    }
-    else{
-      AisEB         = false;
-      eTGammaMinA   = eTGammaMinEE_;
-      s4s9GammaMinA = s4s9GammaMinEB_; //TODO: possible bug?
-    }
+      bool candidateIsEB=false;
+      if ( fabs(pi0Candidate.Eta()) < BarrelLimit) {
+        eTPi0Min      = eTPi0MinEB_;	
+        candidateIsEB = true;	      }
+      else{		
+        eTPi0Min      = eTPi0MinEE_;
+        candidateIsEB = false;	      }
 
-    // first selecton cut: photon candidate Et
-    if( eTA < eTGammaMinA ) continue;
-
-    // second selection cut: cluster shape
-    if ( e22A/e33A < s4s9GammaMinA ) continue;
+        // third selection cut: pi0 candidate Et
+        if(pi0Candidate.Et() < eTPi0Min ) continue;
 
 
-    // Now look at the second cluster
-    eTB = treeVars_.clusterTransverseEnergy[bClusterB];
-    e22B = treeVars_.clusterE2x2[bClusterB];
-    e33B = treeVars_.clusterE3x3[bClusterB];
+        /////////////////////////////////////////////////////////////
+        // here I have di-gamma pairs that pass cuts
+        // now select pi0's based on the mass
+        /////////////////////////////////////////////////////////////
 
-    // discriminate between EE and EB and set thresholds accordingly
-    if ( fabs(treeVars_.clusterEta[bClusterB]) < BarrelLimit) {
-      BisEB         = true;
-      eTGammaMinB   = eTGammaMinEB_;
-      s4s9GammaMinB = s4s9GammaMinEB_;
-    }
-    else{
-      BisEB         = false;
-      eTGammaMinB   = eTGammaMinEE_;
-      s4s9GammaMinB = s4s9GammaMinEB_; //TODO: possible bug?
-    }
-
-    // first selecton cut: photon candidate Et
-    if( eTB < eTGammaMinB ) continue;
-
-    // second selection cut: cluster shape
-    if ( e22B/e33B < s4s9GammaMinB ) continue;
-
-
-    // now build the pi0 candidate
-    math::PtEtaPhiMLorentzVectorD gammaA (eTA, treeVars_.clusterEta[bClusterA], treeVars_.clusterPhi[bClusterA], 0);
-    math::PtEtaPhiMLorentzVectorD gammaB (eTB, treeVars_.clusterEta[bClusterB], treeVars_.clusterPhi[bClusterB], 0);
-    math::PtEtaPhiMLorentzVectorD pi0Candidate = gammaA + gammaB;
-
-    bool candidateIsEB=false;
-    if ( fabs(pi0Candidate.Eta()) < BarrelLimit) {
-      eTPi0Min      = eTPi0MinEB_;	
-      candidateIsEB = true;	      }
-    else{		
-      eTPi0Min      = eTPi0MinEE_;
-      candidateIsEB = false;	      }
-
-      // third selection cut: pi0 candidate Et
-      if(pi0Candidate.Et() < eTPi0Min ) continue;
-
-
-      /////////////////////////////////////////////////////////////
-      // here I have di-gamma pairs that pass cuts
-      // now select pi0's based on the mass
-      /////////////////////////////////////////////////////////////
-
-      float nSigma =1;
-      // reject sidebands in EB
-      if( candidateIsEB &&
-          (pi0Candidate.M() < pi0MassEB_-nSigma*pi0WidthEB_ ||
-           pi0MassEB_+nSigma*pi0WidthEB_ > pi0Candidate.M())
-        ) {
-        diPhotonSidesOccupancyAny_ -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
-        continue;}
-
-        // reject sidebands in EE
-        if( (!candidateIsEB) &&
-            (pi0Candidate.M() < pi0MassEE_-nSigma*pi0WidthEE_ ||
-             pi0MassEE_+nSigma*pi0WidthEE_ > pi0Candidate.M())
+        float nSigma =1;
+        // reject sidebands in EB
+        if( candidateIsEB &&
+            (pi0Candidate.M() < pi0MassEB_-nSigma*pi0WidthEB_ ||
+             pi0MassEB_+nSigma*pi0WidthEB_ > pi0Candidate.M())
           ) {
           diPhotonSidesOccupancyAny_ -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
           continue;}
 
+          // reject sidebands in EE
+          if( (!candidateIsEB) &&
+              (pi0Candidate.M() < pi0MassEE_-nSigma*pi0WidthEE_ ||
+               pi0MassEE_+nSigma*pi0WidthEE_ > pi0Candidate.M())
+            ) {
+            diPhotonSidesOccupancyAny_ -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
+            continue;}
 
-          /////////////////////////////////////////////////////////////
-          // from here on I have pi0 candidates
-          // bClusterA and bClusterB are the two clusters making this candidate
-          diPhotonPeakOccupancyAny_  -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
+
+            /////////////////////////////////////////////////////////////
+            // from here on I have pi0 candidates
+            // bClusterA and bClusterB are the two clusters making this candidate
+            diPhotonPeakOccupancyAny_  -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
+
+            // Make the time check
+            std::pair<float,float> timeAndUncertClusterA = timeAndUncertSingleCluster(bClusterA);
+            if(timeAndUncertClusterA.second <= 0) // if something went wrong combining the times, bail out
+              continue;
+            std::pair<float,float> timeAndUncertClusterB = timeAndUncertSingleCluster(bClusterB);
+            if(timeAndUncertClusterB.second <= 0) // if something went wrong combining the times, bail out
+              continue;
+
+            dtDoubleClusterHistPi0Peak_->Fill(timeAndUncertClusterB.first-timeAndUncertClusterA.first);
+
+    } // isAfterPi0Selection
+    else
+    {
+      // Make the time check
+      std::pair<float,float> timeAndUncertClusterA = timeAndUncertSingleCluster(bClusterA);
+      if(timeAndUncertClusterA.second <= 0) // if something went wrong combining the times, bail out
+        continue;
+      std::pair<float,float> timeAndUncertClusterB = timeAndUncertSingleCluster(bClusterB);
+      if(timeAndUncertClusterB.second <= 0) // if something went wrong combining the times, bail out
+        continue;
+      
+      dtDoubleClusterHistAny_->Fill(timeAndUncertClusterB.first-timeAndUncertClusterA.first);
+    }
 
   }//loop on pairs
 }
@@ -1019,40 +990,48 @@ int main (int argc, char** argv)
   /////////////////////////////////////////////////////
   // Main loop over entries
   for (int entry = 0 ; (entry < nEntries && entry < numEvents_); ++entry)
+  {
+    chain->GetEntry (entry) ;
+
+    if (entry<10 || entry%1000==0) speak_=true;
+
+    if (speak_) std::cout << "------> reading entry " << entry << " <------\n" ; 
+    if (speak_)  std::cout << "  found " << treeVars_.nSuperClusters << " superclusters" << std::endl ;
+    if (speak_)  std::cout << "  found " << treeVars_.nClusters << " basic clusters" << std::endl ;
+    if (speak_) std::cout << "  found " << treeVars_.nXtals << " crystals\n" ;    
+
+    // Plot the control hists
+    doControlHists();
+
+    // Make pairs of all BasicClusters
+    SetOfIntPairs allBCPairs;
+    for (int bCluster=0; bCluster < treeVars_.nClusters; bCluster++)
     {
-      chain->GetEntry (entry) ;
-
-      if (entry<10 || entry%1000==0) speak_=true;
-
-      if (speak_) std::cout << "------> reading entry " << entry << " <------\n" ; 
-      if (speak_)  std::cout << "  found " << treeVars_.nSuperClusters << " superclusters" << std::endl ;
-      if (speak_)  std::cout << "  found " << treeVars_.nClusters << " basic clusters" << std::endl ;
-      if (speak_) std::cout << "  found " << treeVars_.nXtals << " crystals\n" ;    
-
-      // Plot the control hists
-      doControlHists();
-
-      // Do singleClus
-      std::set<int> basicClusterIndicesAll;
-      for (int bCluster=0; bCluster < treeVars_.nClusters; bCluster++)
+      for (int bClusterA=bCluster+1; bClusterA < treeVars_.nClusters; bClusterA++)
       {
-        basicClusterIndicesAll.insert(bCluster);
+        allBCPairs.insert(std::make_pair<int,int>(bCluster,bClusterA));
       }
-      doSingleClusterResolutionPlots(basicClusterIndicesAll,false);
-      // Select Pi-zeros
-      SetOfIntPairs myPi0BasicClusterPairs = selectPi0Candidates();
+    }
+    // Do singleCluster plots -- all BC pairs (no pi-zero selection)
+    std::set<int> allMyBasicClusterIndicies = makeUniqueList1D(allBCPairs);
+    doSingleClusterResolutionPlots(allMyBasicClusterIndicies,false);
+    // Do doubleCluster plots -- all BC pairs (no pi-zero selection)
+    doDoubleClusterResolutionPlots(allBCPairs,false);
 
-      // Do double cluster plots
-      doDoubleClusterResolutionPlots(myPi0BasicClusterPairs);
+    // ---------------- Select Pi-zeros
+    SetOfIntPairs myPi0BasicClusterPairs = selectPi0Candidates();
 
-      // Make unique list of BasicClusters from the list of pairs
-      std::set<int> myPi0BasicClusters = makeUniqueList1D(myPi0BasicClusterPairs);
-      // Do the singleCluster again on the pi0 BasicClusters
-      doSingleClusterResolutionPlots(myPi0BasicClusters,true);
+    // Do double cluster plots
+    doDoubleClusterResolutionPlots(myPi0BasicClusterPairs,true);
+
+    // Make unique list of BasicClusters from the list of pairs
+    std::set<int> myPi0BasicClusters = makeUniqueList1D(myPi0BasicClusterPairs);
+    // Do the singleCluster again on the pi0 BasicClusters
+    doSingleClusterResolutionPlots(myPi0BasicClusters,true);
 
 
-    }   // end of loop over entries
-        // now you have di-mass plots filled => get masses
+  }   // end of loop over entries
+  // now you have di-mass plots filled => get masses
 
 
   // Fit the invariant mass spectra
