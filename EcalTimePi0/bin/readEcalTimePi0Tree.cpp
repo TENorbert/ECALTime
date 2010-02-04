@@ -27,14 +27,11 @@ typedef std::set<std::pair<int,int> > SetOfIntPairs;
 // initial authors P. Govoni et al
 // authors: S. Cooper and G. Franzoni (UMN)
 
-#define BarrelLimit 1.479
-#define EndcapLimit 3.0
-#define ADCtoGeVEB 0.039
-#define ADCtoGeVEE 0.063
-#define numAeffBins 250
-#define AeffMax  250
-#define numDtBins 50
-#define DtMax     10
+#define BarrelLimit  1.479
+#define EndcapLimit  3.0
+#define ADCtoGeVEB   0.039
+#define ADCtoGeVEE   0.063
+#define numAeffBins  250
 
 // -------- Globals ----------------------------------------
 EcalTimePi0TreeContent treeVars_; 
@@ -60,6 +57,11 @@ float eTPi0MinEB_     = 0.65;
 float eTGammaMinEE_   = 0.250;
 float s4s9GammaMinEE_ = 0.85;
 float eTPi0MinEE_     = 0.800;
+
+// parameters for histograms and ranges
+int AeffMax_     =250;
+int numDtBins_   =50;
+int DtMax_       =10;
 
 // Consts
 const float sigmaNoiseEB        = 1.06; // ADC 
@@ -103,22 +105,22 @@ TH1F* massDiGammaEEPHist_;
 TH1F* massDiGammaEEMHist_;
 TH2F* diPhotonOccupancyAny_;
 // single cluster resolution
-TH1F*     dtUpToQuarterGeVEB_;
-TH1F*     dtUpToHalfGeVEB_;
-TH1F*     dtUpToOneGeVEB_;
-TH1F*     dtUpToTwoGeVEB_;
-TH1F*     dtUpOverTwoGeVEB_;
+TH1F*   dtUpToQuarterGeVEB_;
+TH1F*   dtUpToHalfGeVEB_;
+TH1F*   dtUpToOneGeVEB_;
+TH1F*   dtUpToTwoGeVEB_;
+TH1F*   dtUpOverTwoGeVEB_;
 
-TH1F*     dtUpToThreeQuarterGeVEE_;
-TH1F*     dtUpToOneAndHalfGeVEE_;
-TH1F*     dtUpToThreeGeVEE_;
-TH1F*     dtUpToSixGeVEE_;
-TH1F*     dtUpOverSixGeVEE_;
+TH1F*   dtUpToThreeQuarterGeVEE_;
+TH1F*   dtUpToOneAndHalfGeVEE_;
+TH1F*   dtUpToThreeGeVEE_;
+TH1F*   dtUpToSixGeVEE_;
+TH1F*   dtUpOverSixGeVEE_;
 
-TH2F*     dtVSAeffHistAny_;
-TH1F*     dtSliceVSAeffAny_[numAeffBins];
-TH2F*     dtVSAeffHistEB_;
-TH2F*     dtVSAeffHistEE_;
+TH2F*   dtVSAeffHistAny_;
+TH1F*   dtSliceVSAeffAny_[numAeffBins];
+TH2F*   dtVSAeffHistEB_;
+TH2F*   dtVSAeffHistEE_;
 TProfile* dtVSAeffProfAny_;
 TProfile* dtVSAeffProfEB_;
 TProfile* dtVSAeffProfEE_;
@@ -301,28 +303,28 @@ void initializeHists()
   // Initialize histograms -- single cluster resolution
   dtUpToQuarterGeVEB_   = new TH1F("EB #Delta(t),   A_{eff} up to 1/4 GeV", "EB #Delta(t),   ~5<A_{eff}/#sigma_{N}<6", 400, -20, 20); 
   dtUpToHalfGeVEB_      = new TH1F("EB #Delta(t),   A_{eff} up to half GeV", "EB #Delta(t),   6<A_{eff}/#sigma_{N}<12", 400, -20, 20); 
-  dtUpToOneGeVEB_       = new TH1F("EB #Delta(t),   A_{eff} up to one GeV", "EB #Delta(t),   12<A_{eff}/#sigma_{N}<24", 200, -DtMax, DtMax); 
-  dtUpToTwoGeVEB_       = new TH1F("EB #Delta(t),   A_{eff} up to two GeV", "EB #Delta(t),   24<A_{eff}/#sigma_{N}<48", 200, -DtMax, DtMax); 
-  dtUpOverTwoGeVEB_     = new TH1F("EB #Delta(t),   A_{eff} over two GeV", "EB #Delta(t),   A_{eff}/#sigma_{N}>48", 200, -DtMax, DtMax); 
+  dtUpToOneGeVEB_       = new TH1F("EB #Delta(t),   A_{eff} up to one GeV", "EB #Delta(t),   12<A_{eff}/#sigma_{N}<24", 200, -DtMax_, DtMax_); 
+  dtUpToTwoGeVEB_       = new TH1F("EB #Delta(t),   A_{eff} up to two GeV", "EB #Delta(t),   24<A_{eff}/#sigma_{N}<48", 200, -DtMax_, DtMax_); 
+  dtUpOverTwoGeVEB_     = new TH1F("EB #Delta(t),   A_{eff} over two GeV", "EB #Delta(t),   A_{eff}/#sigma_{N}>48", 200, -DtMax_, DtMax_); 
 
-  dtUpToThreeQuarterGeVEE_ = new TH1F("EE #Delta(t),   A_{eff} up to 3/4 GeV", "EE #Delta(t),   A_{eff}/#sigma_{N}<6", 200, -DtMax, DtMax); 
-  dtUpToOneAndHalfGeVEE_   = new TH1F("EE #Delta(t),   A_{eff} up to one&1/2 GeV", "EE #Delta(t),   6<A_{eff}/#sigma_{N}<12", 200, -DtMax, DtMax); 
-  dtUpToThreeGeVEE_        = new TH1F("EE #Delta(t),   A_{eff} up to three GeV", "EE #Delta(t),   12<A_{eff}/#sigma_{N}<24", 200, -DtMax, DtMax); 
-  dtUpToSixGeVEE_          = new TH1F("EE #Delta(t),   A_{eff} up to six GeV", "EE #Delta(t),   24<A_{eff}/#sigma_{N}<48", 200, -DtMax, DtMax); 
-  dtUpOverSixGeVEE_        = new TH1F("EE #Delta(t),   A_{eff} over six GeV", "EE #Delta(t),   A_{eff}/#sigma_{N}>48", 200, -DtMax, DtMax); 
+  dtUpToThreeQuarterGeVEE_ = new TH1F("EE #Delta(t),   A_{eff} up to 3/4 GeV", "EE #Delta(t),   A_{eff}/#sigma_{N}<6", 200, -DtMax_, DtMax_); 
+  dtUpToOneAndHalfGeVEE_   = new TH1F("EE #Delta(t),   A_{eff} up to one&1/2 GeV", "EE #Delta(t),   6<A_{eff}/#sigma_{N}<12", 200, -DtMax_, DtMax_); 
+  dtUpToThreeGeVEE_        = new TH1F("EE #Delta(t),   A_{eff} up to three GeV", "EE #Delta(t),   12<A_{eff}/#sigma_{N}<24", 200, -DtMax_, DtMax_); 
+  dtUpToSixGeVEE_          = new TH1F("EE #Delta(t),   A_{eff} up to six GeV", "EE #Delta(t),   24<A_{eff}/#sigma_{N}<48", 200, -DtMax_, DtMax_); 
+  dtUpOverSixGeVEE_        = new TH1F("EE #Delta(t),   A_{eff} over six GeV", "EE #Delta(t),   A_{eff}/#sigma_{N}>48", 200, -DtMax_, DtMax_); 
 
-  dtVSAeffHistAny_ = new TH2F("#Delta(t) VS A_{eff}/#sigma_{N}","#Delta(t) VS A_{eff}/#sigma_{N}",numAeffBins,0.,AeffMax,numDtBins,-DtMax,DtMax);
-  dtVSAeffHistEB_  = new TH2F("EB:  #Delta(t)  VS  A_{eff}/#sigma_{N}","EB:  #Delta(t)  VS  A_{eff}/#sigma_{N}",numAeffBins,0.,AeffMax,numDtBins,-DtMax,DtMax);
-  dtVSAeffHistEE_  = new TH2F("EE:  #Delta(t)  VS  A_{eff}/#sigma_{N}","EE:  #Delta(t)  VS  A_{eff}/#sigma_{N}",numAeffBins,0.,AeffMax,numDtBins,-DtMax,DtMax);
-  dtVSAeffProfAny_ = new TProfile("#Delta(t)  VS  A_{eff}/#sigma_{N} prof","#Delta(t) VS A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax,-DtMax,DtMax);
+  dtVSAeffHistAny_ = new TH2F("#Delta(t) VS A_{eff}/#sigma_{N}","#Delta(t) VS A_{eff}/#sigma_{N}",numAeffBins,0.,AeffMax_,numDtBins_,-DtMax_,DtMax_);
+  dtVSAeffHistEB_  = new TH2F("EB:  #Delta(t)  VS  A_{eff}/#sigma_{N}","EB:  #Delta(t)  VS  A_{eff}/#sigma_{N}",numAeffBins,0.,AeffMax_,numDtBins_,-DtMax_,DtMax_);
+  dtVSAeffHistEE_  = new TH2F("EE:  #Delta(t)  VS  A_{eff}/#sigma_{N}","EE:  #Delta(t)  VS  A_{eff}/#sigma_{N}",numAeffBins,0.,AeffMax_,numDtBins_,-DtMax_,DtMax_);
+  dtVSAeffProfAny_ = new TProfile("#Delta(t)  VS  A_{eff}/#sigma_{N} prof","#Delta(t) VS A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
   for (int v=0; v<numAeffBins; v++){// build histograms for RMS and sigma of DeltaT
-    float binLeft=(v*AeffMax/numAeffBins); float binRight=((v+1)*AeffMax/numAeffBins);
+    float binLeft=(v*AeffMax_/numAeffBins); float binRight=((v+1)*AeffMax_/numAeffBins);
     sprintf (buffer_, "#Delta t bin %d, [%4.1f,%4.1f]", v+1, binLeft, binRight);
-    dtSliceVSAeffAny_[v] = new TH1F(buffer_,buffer_,numDtBins,-DtMax,DtMax);  }
-  dtRMSVSAeffAny_  = new TH1F("RMS(#Delta(t)) VS   A_{eff}", "RMS(#Delta(t)) VS   A_{eff}",numAeffBins,0.,AeffMax);  
-  dtSigmaAeffAny_  = new TH1F("#sigma(#Delta(t)) VS   A_{eff}", "#sigma(#Delta(t)) VS   A_{eff}",numAeffBins,0.,AeffMax);  
-  dtVSAeffProfEB_  = new TProfile("EB:  #Delta(t)   VS  A_{eff}/#sigma_{N} prof","EB:  #Delta(t)  VS  A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax,-DtMax,DtMax);
-  dtVSAeffProfEE_  = new TProfile("EE:  #Delta(t)   VS  A_{eff}/#sigma_{N} prof","EE:  #Delta(t)  VS  A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax,-DtMax,DtMax);
+    dtSliceVSAeffAny_[v] = new TH1F(buffer_,buffer_,numDtBins_,-DtMax_,DtMax_);  }
+  dtRMSVSAeffAny_  = new TH1F("RMS(#Delta(t)) VS   A_{eff}", "RMS(#Delta(t)) VS   A_{eff}",numAeffBins,0.,AeffMax_);  
+  dtSigmaAeffAny_  = new TH1F("#sigma(#Delta(t)) VS   A_{eff}", "#sigma(#Delta(t)) VS   A_{eff}",numAeffBins,0.,AeffMax_);  
+  dtVSAeffProfEB_  = new TProfile("EB:  #Delta(t)   VS  A_{eff}/#sigma_{N} prof","EB:  #Delta(t)  VS  A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
+  dtVSAeffProfEE_  = new TProfile("EE:  #Delta(t)   VS  A_{eff}/#sigma_{N} prof","EE:  #Delta(t)  VS  A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
 
   // Initialize histograms -- selection on pi0 candidates 
   diPhotonPeakOccupancyAny_     = new TH2F("#pi_{0} occupancy","di-photon peak;#eta;#phi",50,-3.5,3.5,50,-1*TMath::Pi(),TMath::Pi());
@@ -330,22 +332,22 @@ void initializeHists()
   // Initialize histograms -- single cluster resolution in pi0 peak
   dtUpToQuarterGeVEBPeak_   = new TH1F("EBPeak: #Delta(t) A_{eff} up to 1/4 GeV", "EBPeak: #Delta(t) ~5<A_{eff}/#sigma_{N}<6", 400, -20, 20); 
   dtUpToHalfGeVEBPeak_      = new TH1F("EBPeak: #Delta(t) A_{eff} up to half GeV", "EBPeak: #Delta(t) 6<A_{eff}/#sigma_{N}<12", 400, -20, 20); 
-  dtUpToOneGeVEBPeak_       = new TH1F("EBPeak: #Delta(t) A_{eff} up to one GeV", "EBPeak: #Delta(t) 12<A_{eff}/#sigma_{N}<24", 200, -DtMax, DtMax); 
-  dtUpToTwoGeVEBPeak_       = new TH1F("EBPeak: #Delta(t) A_{eff} up to two GeV", "EBPeak: #Delta(t) 24<A_{eff}/#sigma_{N}<48", 200, -DtMax, DtMax); 
-  dtUpOverTwoGeVEBPeak_     = new TH1F("EBPeak: #Delta(t) A_{eff} over two GeV", "EBPeak: #Delta(t) A_{eff}/#sigma_{N}>48", 200, -DtMax, DtMax); 
+  dtUpToOneGeVEBPeak_       = new TH1F("EBPeak: #Delta(t) A_{eff} up to one GeV", "EBPeak: #Delta(t) 12<A_{eff}/#sigma_{N}<24", 200, -DtMax_, DtMax_); 
+  dtUpToTwoGeVEBPeak_       = new TH1F("EBPeak: #Delta(t) A_{eff} up to two GeV", "EBPeak: #Delta(t) 24<A_{eff}/#sigma_{N}<48", 200, -DtMax_, DtMax_); 
+  dtUpOverTwoGeVEBPeak_     = new TH1F("EBPeak: #Delta(t) A_{eff} over two GeV", "EBPeak: #Delta(t) A_{eff}/#sigma_{N}>48", 200, -DtMax_, DtMax_); 
 
-  dtUpToThreeQuarterGeVEEPeak_ = new TH1F("EEPeak: #Delta(t) A_{eff} up to 3/4 GeV", "EEPeak: #Delta(t) A_{eff}/#sigma_{N}<6", 200, -DtMax, DtMax); 
-  dtUpToOneAndHalfGeVEEPeak_   = new TH1F("EEPeak: #Delta(t) A_{eff} up to one&1/2 GeV", "EEPeak: #Delta(t) 6<A_{eff}/#sigma_{N}<12", 200, -DtMax, DtMax); 
-  dtUpToThreeGeVEEPeak_        = new TH1F("EEPeak: #Delta(t) A_{eff} up to three GeV", "EEPeak: #Delta(t) 12<A_{eff}/#sigma_{N}<24", 200, -DtMax, DtMax); 
-  dtUpToSixGeVEEPeak_          = new TH1F("EEPeak: #Delta(t) A_{eff} up to six GeV", "EEPeak: #Delta(t) 24<A_{eff}/#sigma_{N}<48", 200, -DtMax, DtMax); 
-  dtUpOverSixGeVEEPeak_        = new TH1F("EEPeak: #Delta(t) A_{eff} over six GeV", "EEPeak: #Delta(t) A_{eff}/#sigma_{N}>48", 200, -DtMax, DtMax); 
+  dtUpToThreeQuarterGeVEEPeak_ = new TH1F("EEPeak: #Delta(t) A_{eff} up to 3/4 GeV", "EEPeak: #Delta(t) A_{eff}/#sigma_{N}<6", 200, -DtMax_, DtMax_); 
+  dtUpToOneAndHalfGeVEEPeak_   = new TH1F("EEPeak: #Delta(t) A_{eff} up to one&1/2 GeV", "EEPeak: #Delta(t) 6<A_{eff}/#sigma_{N}<12", 200, -DtMax_, DtMax_); 
+  dtUpToThreeGeVEEPeak_        = new TH1F("EEPeak: #Delta(t) A_{eff} up to three GeV", "EEPeak: #Delta(t) 12<A_{eff}/#sigma_{N}<24", 200, -DtMax_, DtMax_); 
+  dtUpToSixGeVEEPeak_          = new TH1F("EEPeak: #Delta(t) A_{eff} up to six GeV", "EEPeak: #Delta(t) 24<A_{eff}/#sigma_{N}<48", 200, -DtMax_, DtMax_); 
+  dtUpOverSixGeVEEPeak_        = new TH1F("EEPeak: #Delta(t) A_{eff} over six GeV", "EEPeak: #Delta(t) A_{eff}/#sigma_{N}>48", 200, -DtMax_, DtMax_); 
 
-  dtVSAeffHistAnyPeak_ = new TH2F("Peak: #Delta(t) VS A_{eff}/#sigma_{N}","Peak: #Delta(t) VS A_{eff}/#sigma_{N}",numAeffBins,0.,AeffMax,numDtBins,-DtMax,DtMax);
-  dtVSAeffHistEBPeak_  = new TH2F("EBPeak: #Delta(t) VS A_{eff}/#sigma_{N}","EBPeak #Delta(t) VS A_{eff}/#sigma_{N}",numAeffBins,0.,AeffMax,numDtBins,-DtMax,DtMax);
-  dtVSAeffHistEEPeak_  = new TH2F("EEPeak: E#Delta(t) VS A_{eff}/#sigma_{N}","EEPeak: #Delta(t) VS A_{eff}/#sigma_{N}",numAeffBins,0.,AeffMax,numDtBins,-DtMax,DtMax);
-  dtVSAeffProfAnyPeak_ = new TProfile("Peak: #Delta(t) VS A_{eff}/#sigma_{N} prof","Peak: #Delta(t) VS A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax,-DtMax,DtMax);
-  dtVSAeffProfEBPeak_  = new TProfile("EBPeak: #Delta(t) VS A_{eff}/#sigma_{N} prof","EBPeak #Delta(t) VS A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax,-DtMax,DtMax);
-  dtVSAeffProfEEPeak_  = new TProfile("EEPeak: #Delta(t) VS A_{eff}/#sigma_{N} prof","EEPeak: #Delta(t) VS A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax,-DtMax,DtMax);
+  dtVSAeffHistAnyPeak_ = new TH2F("Peak: #Delta(t) VS A_{eff}/#sigma_{N}","Peak: #Delta(t) VS A_{eff}/#sigma_{N}",numAeffBins,0.,AeffMax_,numDtBins_,-DtMax_,DtMax_);
+  dtVSAeffHistEBPeak_  = new TH2F("EBPeak: #Delta(t) VS A_{eff}/#sigma_{N}","EBPeak #Delta(t) VS A_{eff}/#sigma_{N}",numAeffBins,0.,AeffMax_,numDtBins_,-DtMax_,DtMax_);
+  dtVSAeffHistEEPeak_  = new TH2F("EEPeak: E#Delta(t) VS A_{eff}/#sigma_{N}","EEPeak: #Delta(t) VS A_{eff}/#sigma_{N}",numAeffBins,0.,AeffMax_,numDtBins_,-DtMax_,DtMax_);
+  dtVSAeffProfAnyPeak_ = new TProfile("Peak: #Delta(t) VS A_{eff}/#sigma_{N} prof","Peak: #Delta(t) VS A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
+  dtVSAeffProfEBPeak_  = new TProfile("EBPeak: #Delta(t) VS A_{eff}/#sigma_{N} prof","EBPeak #Delta(t) VS A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
+  dtVSAeffProfEEPeak_  = new TProfile("EEPeak: #Delta(t) VS A_{eff}/#sigma_{N} prof","EEPeak: #Delta(t) VS A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
   // Initialize histograms -- double cluster resolution
   dtDoubleClusterHistAny_     = new TH1F("DeltaTDoubleClusterAny","#Delta(t) between two clusters EB/EE",200,-25,25);
   dtDoubleClusterHistPi0Peak_ = new TH1F("DeltaTDoubleClusterPi0Peak","#Delta(t) between two clusters in #pi^{0} mass peak EB/EE",200,-25,25);
@@ -663,14 +665,15 @@ SetOfIntPairs selectPi0Candidates()
   float s4s9GammaMinA, s4s9GammaMinB;
   bool  AisEB,         BisEB;
   float eTPi0Min;
+
   // (FIRST) loop on basic cluster - to build pi0 candidates and get the mass
-    for (int bClusterA=0; bClusterA < treeVars_.nClusters; bClusterA++)
-      {
-	eTA = treeVars_.clusterTransverseEnergy[bClusterA];
-	
+  for (int bClusterA=0; bClusterA < treeVars_.nClusters; bClusterA++)
+    {
+      eTA = treeVars_.clusterTransverseEnergy[bClusterA];
+      
       e22A = treeVars_.clusterE2x2[bClusterA];
       e33A = treeVars_.clusterE3x3[bClusterA];
-
+      
       // discriminate between EE and EB and set thresholds accordingly
       if ( fabs(treeVars_.clusterEta[bClusterA]) < BarrelLimit) {
         AisEB         = true;
@@ -683,10 +686,10 @@ SetOfIntPairs selectPi0Candidates()
         s4s9GammaMinA = s4s9GammaMinEE_;
       }
 
-      if(treeVars_.clusterEta[bClusterA]<-1.4)     {
+      if(treeVars_.clusterEta[bClusterA]<-BarrelLimit)     {
         BCClusterShapeEEHist_  -> Fill(e22A/e33A);
         BCClusterShapeEEMHist_ -> Fill(e22A/e33A);}
-      else if(treeVars_.clusterEta[bClusterA]>1.4) {
+      else if(treeVars_.clusterEta[bClusterA]>BarrelLimit) {
         BCClusterShapeEEHist_  -> Fill(e22A/e33A);
         BCClusterShapeEEPHist_ -> Fill(e22A/e33A);}
       else	                                      
@@ -742,10 +745,10 @@ SetOfIntPairs selectPi0Candidates()
 
         massDiGammaHist_ -> Fill(pi0Candidate.M());
 
-        if(treeVars_.clusterEta[bClusterA]<-1.4){
+        if(treeVars_.clusterEta[bClusterA]<-BarrelLimit){
           massDiGammaEEHist_  -> Fill(pi0Candidate.M());
           massDiGammaEEMHist_ -> Fill(pi0Candidate.M());}
-        else if(treeVars_.clusterEta[bClusterA]>1.4) {
+        else if(treeVars_.clusterEta[bClusterA]>BarrelLimit) {
           massDiGammaEEHist_  -> Fill(pi0Candidate.M());
           massDiGammaEEPHist_ -> Fill(pi0Candidate.M());}
         else	     
@@ -754,6 +757,7 @@ SetOfIntPairs selectPi0Candidates()
         // occupancy of all candidates (this is FIRST loop)
         diPhotonOccupancyAny_ -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
 
+	// TODO: don't you want to insert the mass cut here? //gf
         returnPairs.insert(std::make_pair<int,int>(bClusterA,bClusterB));
 
       }//loop on candidateB
@@ -836,7 +840,7 @@ void doDoubleClusterResolutionPlots(SetOfIntPairs myBCpairs, bool isAfterPi0Sele
         // third selection cut: pi0 candidate Et
         if(pi0Candidate.Et() < eTPi0Min ) continue;
 
-
+	//TODO: gf don't  you want to move this selection inside selectPi0Candidates(..)?
         /////////////////////////////////////////////////////////////
         // here I have di-gamma pairs that pass cuts
         // now select pi0's based on the mass
@@ -847,16 +851,18 @@ void doDoubleClusterResolutionPlots(SetOfIntPairs myBCpairs, bool isAfterPi0Sele
         if( candidateIsEB &&
             (pi0Candidate.M() < pi0MassEB_-nSigma*pi0WidthEB_ ||
              pi0MassEB_+nSigma*pi0WidthEB_ > pi0Candidate.M())
-          ) {
+	    ) {
           diPhotonSidesOccupancyAny_ -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
+	  std::cout << "sideband found in EB" << std::endl; //gf debug
           continue;}
-
+	
           // reject sidebands in EE
           if( (!candidateIsEB) &&
               (pi0Candidate.M() < pi0MassEE_-nSigma*pi0WidthEE_ ||
                pi0MassEE_+nSigma*pi0WidthEE_ > pi0Candidate.M())
             ) {
             diPhotonSidesOccupancyAny_ -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
+	    std::cout << "sideband found in EE" << std::endl; //gf debug
             continue;}
 
 
@@ -900,7 +906,7 @@ void doDoubleClusterResolutionPlots(SetOfIntPairs myBCpairs, bool isAfterPi0Sele
 void doFinalPlots()
 {
   for (int sliceX=0; sliceX<numAeffBins; sliceX++)  {//looping on the X axis, at constant Aeff
-    for (int binY=0; binY<numDtBins; binY++)  {// looping in Delta t bins
+    for (int binY=0; binY<numDtBins_; binY++)  {// looping in Delta t bins
       dtSliceVSAeffAny_[sliceX] ->SetBinContent( (binY+1), (dtVSAeffHistAny_->GetBinContent((sliceX+1),(binY+1))) );    
     }// end loop on Ybins 
   
@@ -913,7 +919,7 @@ void doFinalPlots()
     dtRMSVSAeffAny_ -> SetBinContent(sliceX+1, RMS);
     dtRMSVSAeffAny_ -> SetBinError(sliceX+1, RMSErr);
     
-    TF1 *gauss = new TF1("dtFit","gaus",-DtMax,DtMax); // require min number entries
+    TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
     gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
     dtSliceVSAeffAny_[sliceX]->Fit("dtFit");
     float sigma     = gauss -> GetParameter(2);
