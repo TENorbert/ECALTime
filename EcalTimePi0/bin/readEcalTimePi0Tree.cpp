@@ -22,6 +22,8 @@
 #include "TMath.h"
 #include "TFile.h"
 
+typedef std::set<std::pair<int,int> > SetOfIntPairs;
+
 // initial authors P. Govoni et al
 // authors: S. Cooper and G. Franzoni (UMN)
 
@@ -546,7 +548,7 @@ std::pair<float,float> timeAndUncertSingleCluster(int bClusterIndex)
     weightSum+=1/pow(sigmaOfThis,2);
   }
   if(weightSum <= 0)
-    return std::make_pair<float,float>(0,0);
+    return std::make_pair<float,float>(-999999,-999999);
   else
     return std::make_pair<float,float>(weightTsum/weightSum,sqrt(1/weightSum));
 }
@@ -649,9 +651,9 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
 
 // ---------------------------------------------------------------------------------------
 // ------------------ Function to do select pi-zero candidates ---------------------------
-std::set<int> selectPi0Candidates()
+SetOfIntPairs selectPi0Candidates()
 {
-  std::set<int> BCReturnSet;
+  SetOfIntPairs returnPairs;
   float eTA, eTB ;
   float e22A, e33A,    e22B, e33B;
   float eTGammaMinA,   eTGammaMinB;
@@ -750,15 +752,13 @@ std::set<int> selectPi0Candidates()
         // occupancy of all candidates (this is FIRST loop)
         diPhotonOccupancyAny_ -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
 
-        BCReturnSet.insert(bClusterA);
-        BCReturnSet.insert(bClusterB);
-
+        returnPairs.insert(std::make_pair<int,int>(bClusterA,bClusterB));
 
       }//loop on candidateB
 
     }//loop on candidateA - (FIRST) to build pi0 candidates and get the mass
   
-  return BCReturnSet;
+  return returnPairs;
 }
 
 // ---------------------------------------------------------------------------------------
@@ -804,7 +804,7 @@ void fitMassSpectra()
 
 // ---------------------------------------------------------------------------------------
 // ------------------ Function to do double cluster resolution studies -------------------
-void doDoubleClusterResolutionPlots()
+void doDoubleClusterResolutionPlots(SetOfIntPairs myBCpairs)
 {
   float eTA, eTB ;
   float e22A, e33A,    e22B, e33B;
@@ -812,16 +812,24 @@ void doDoubleClusterResolutionPlots()
   float s4s9GammaMinA, s4s9GammaMinB;
   bool  AisEB,         BisEB;
   float eTPi0Min;
-  std::vector<int> clustersFromPi0;
 
-  // loop on basic cluster - to perform di-cluster studies
-  // loop on cluster A
-  for (int bClusterA=0; bClusterA < treeVars_.nClusters; bClusterA++)
+  // loop on pairs of basicClusters
+  for(SetOfIntPairs::const_iterator pairItr = myBCpairs.begin(); pairItr != myBCpairs.end(); ++pairItr)
   {
+    int bClusterA = pairItr->first;
+    int bClusterB = pairItr->second;
     eTA = treeVars_.clusterTransverseEnergy[bClusterA];
-
     e22A = treeVars_.clusterE2x2[bClusterA];
     e33A = treeVars_.clusterE3x3[bClusterA];
+
+    // Make the time check first so we can fill the time res. histo
+    std::pair<float,float> timeAndUncertClusterA = timeAndUncertSingleCluster(bClusterA);
+    if(timeAndUncertClusterA.second <= 0) // if something went wrong combining the times, bail out
+      continue;
+    std::pair<float,float> timeAndUncertClusterB = timeAndUncertSingleCluster(bClusterB);
+    if(timeAndUncertClusterB.second <= 0) // if something went wrong combining the times, bail out
+      continue;
+    dtDoubleClusterHistAny_->Fill(timeAndUncertClusterB.first-timeAndUncertClusterA.first);
 
     // discriminate between EE and EB and set thresholds accordingly
     if ( fabs(treeVars_.clusterEta[bClusterA]) < BarrelLimit) {
@@ -841,93 +849,77 @@ void doDoubleClusterResolutionPlots()
     // second selection cut: cluster shape
     if ( e22A/e33A < s4s9GammaMinA ) continue;
 
-    std::pair<float,float> timeAndUncertClusterA = timeAndUncertSingleCluster(bClusterA);
 
-    for (int bClusterB=(bClusterA+1); bClusterB < treeVars_.nClusters; bClusterB++)
-    {
+    // Now look at the second cluster
+    eTB = treeVars_.clusterTransverseEnergy[bClusterB];
+    e22B = treeVars_.clusterE2x2[bClusterB];
+    e33B = treeVars_.clusterE3x3[bClusterB];
 
-      eTB = treeVars_.clusterTransverseEnergy[bClusterB];
+    // discriminate between EE and EB and set thresholds accordingly
+    if ( fabs(treeVars_.clusterEta[bClusterB]) < BarrelLimit) {
+      BisEB         = true;
+      eTGammaMinB   = eTGammaMinEB_;
+      s4s9GammaMinB = s4s9GammaMinEB_;
+    }
+    else{
+      BisEB         = false;
+      eTGammaMinB   = eTGammaMinEE_;
+      s4s9GammaMinB = s4s9GammaMinEB_; //TODO: possible bug?
+    }
 
-      e22B = treeVars_.clusterE2x2[bClusterB];
-      e33B = treeVars_.clusterE3x3[bClusterB];
+    // first selecton cut: photon candidate Et
+    if( eTB < eTGammaMinB ) continue;
 
-      // discriminate between EE and EB and set thresholds accordingly
-      if ( fabs(treeVars_.clusterEta[bClusterB]) < BarrelLimit) {
-        BisEB         = true;
-        eTGammaMinB   = eTGammaMinEB_;
-        s4s9GammaMinB = s4s9GammaMinEB_;
-      }
-      else{
-        BisEB         = false;
-        eTGammaMinB   = eTGammaMinEE_;
-        s4s9GammaMinB = s4s9GammaMinEB_; //TODO: possible bug?
-      }
-
-
-      // first selecton cut: photon candidate Et
-      if( eTB < eTGammaMinB ) continue;
-
-      // second selection cut: cluster shape
-      if ( e22B/e33B < s4s9GammaMinB ) continue;
-      
-      std::pair<float,float> timeAndUncertClusterB = timeAndUncertSingleCluster(bClusterB);
-      dtDoubleClusterHistAny_->Fill(timeAndUncertClusterB.first-timeAndUncertClusterA.first);
-
-      // now build the pi0 candidate
-      math::PtEtaPhiMLorentzVectorD gammaA (eTA, treeVars_.clusterEta[bClusterA], treeVars_.clusterPhi[bClusterA], 0);
-      math::PtEtaPhiMLorentzVectorD gammaB (eTB, treeVars_.clusterEta[bClusterB], treeVars_.clusterPhi[bClusterB], 0);
-      math::PtEtaPhiMLorentzVectorD pi0Candidate = gammaA + gammaB;
-
-      bool candidateIsEB=false;
-      if ( fabs(pi0Candidate.Eta()) < BarrelLimit) {
-        eTPi0Min      = eTPi0MinEB_;	
-        candidateIsEB = true;	      }
-      else{		
-        eTPi0Min      = eTPi0MinEE_;
-        candidateIsEB = false;	      }
-
-        // third selection cut: pi0 candidate Et
-        if(pi0Candidate.Et() < eTPi0Min ) continue;
+    // second selection cut: cluster shape
+    if ( e22B/e33B < s4s9GammaMinB ) continue;
 
 
+    // now build the pi0 candidate
+    math::PtEtaPhiMLorentzVectorD gammaA (eTA, treeVars_.clusterEta[bClusterA], treeVars_.clusterPhi[bClusterA], 0);
+    math::PtEtaPhiMLorentzVectorD gammaB (eTB, treeVars_.clusterEta[bClusterB], treeVars_.clusterPhi[bClusterB], 0);
+    math::PtEtaPhiMLorentzVectorD pi0Candidate = gammaA + gammaB;
 
-        /////////////////////////////////////////////////////////////
-        // here I have di-gamma pairs that pass cuts
-        // now select pi0's based on the mass
-        /////////////////////////////////////////////////////////////
+    bool candidateIsEB=false;
+    if ( fabs(pi0Candidate.Eta()) < BarrelLimit) {
+      eTPi0Min      = eTPi0MinEB_;	
+      candidateIsEB = true;	      }
+    else{		
+      eTPi0Min      = eTPi0MinEE_;
+      candidateIsEB = false;	      }
 
-        float nSigma =1;
-        // reject sidebands in EB
-        if( candidateIsEB &&
-            (pi0Candidate.M() < pi0MassEB_-nSigma*pi0WidthEB_ ||
-             pi0MassEB_+nSigma*pi0WidthEB_ > pi0Candidate.M())
+      // third selection cut: pi0 candidate Et
+      if(pi0Candidate.Et() < eTPi0Min ) continue;
+
+
+      /////////////////////////////////////////////////////////////
+      // here I have di-gamma pairs that pass cuts
+      // now select pi0's based on the mass
+      /////////////////////////////////////////////////////////////
+
+      float nSigma =1;
+      // reject sidebands in EB
+      if( candidateIsEB &&
+          (pi0Candidate.M() < pi0MassEB_-nSigma*pi0WidthEB_ ||
+           pi0MassEB_+nSigma*pi0WidthEB_ > pi0Candidate.M())
+        ) {
+        diPhotonSidesOccupancyAny_ -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
+        continue;}
+
+        // reject sidebands in EE
+        if( (!candidateIsEB) &&
+            (pi0Candidate.M() < pi0MassEE_-nSigma*pi0WidthEE_ ||
+             pi0MassEE_+nSigma*pi0WidthEE_ > pi0Candidate.M())
           ) {
           diPhotonSidesOccupancyAny_ -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
           continue;}
 
-          // reject sidebands in EE
-          if( (!candidateIsEB) &&
-              (pi0Candidate.M() < pi0MassEE_-nSigma*pi0WidthEE_ ||
-               pi0MassEE_+nSigma*pi0WidthEE_ > pi0Candidate.M())
-            ) {
-            diPhotonSidesOccupancyAny_ -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
-            continue;}
 
+          /////////////////////////////////////////////////////////////
+          // from here on I have pi0 candidates
+          // bClusterA and bClusterB are the two clusters making this candidate
+          diPhotonPeakOccupancyAny_  -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
 
-            /////////////////////////////////////////////////////////////
-            // from here on I have pi0 candidates
-            // bClusterA and bClusterB are the two clusters making this candidate
-            diPhotonPeakOccupancyAny_  -> Fill(pi0Candidate.Eta(), pi0Candidate.Phi());
-
-
-            // add cluster to the list of those coming from pi0 if not already added
-            if( std::find( clustersFromPi0.begin(), clustersFromPi0.end(), bClusterA)  == clustersFromPi0.end()  )
-              clustersFromPi0.push_back(bClusterA);
-            if( std::find( clustersFromPi0.begin(), clustersFromPi0.end(), bClusterB)  == clustersFromPi0.end()  )
-              clustersFromPi0.push_back(bClusterB);
-
-    }//loop on clusterB
-  }//loop on clusterA
+  }//loop on pairs
 }
 
 
@@ -942,8 +934,8 @@ void doFinalPlots()
       dtSliceVSAeffAny_[sliceX] ->SetBinContent( (binY+1), (dtVSAeffHistAny_->GetBinContent((sliceX+1),(binY+1))) );    
     }// end loop on Ybins 
   
-    std::cout << "integral is: " << (*(dtSliceVSAeffAny_[sliceX] -> GetIntegral())) << std::endl;
-    if( *(dtSliceVSAeffAny_[sliceX] -> GetIntegral() ) < 10 ) continue;
+    std::cout << "integral is: " << dtSliceVSAeffAny_[sliceX] -> Integral() << std::endl;
+    if( dtSliceVSAeffAny_[sliceX] -> Integral()  < 10 ) continue;
     
     // extract RMS and sigma for each Aeff=const slice
     float RMS       = dtSliceVSAeffAny_[sliceX] -> GetRMS();
@@ -963,6 +955,21 @@ void doFinalPlots()
 }// end doFinalPlots
 
 
+// ---------------------------------------------------------------------------------------
+// ------------------ Function to make unique set from set of pairs ----------------------
+std::set<int> makeUniqueList1D(SetOfIntPairs myPairs)
+{
+  std::set<int> returnSet;
+  // Loop
+  for(SetOfIntPairs::const_iterator pairItr = myPairs.begin(); pairItr != myPairs.end();
+      ++pairItr)
+  {
+    returnSet.insert(pairItr->first);
+    returnSet.insert(pairItr->second);
+  }
+  
+  return returnSet;
+}
 
 // ---------------------------------------------------------------------------------------
 //! main program
@@ -1026,18 +1033,20 @@ int main (int argc, char** argv)
       doControlHists();
 
       // Do singleClus
-      std::set<int> basicClusterIndices;
+      std::set<int> basicClusterIndicesAll;
       for (int bCluster=0; bCluster < treeVars_.nClusters; bCluster++)
       {
-        basicClusterIndices.insert(bCluster);
+        basicClusterIndicesAll.insert(bCluster);
       }
-      doSingleClusterResolutionPlots(basicClusterIndices,false);
+      doSingleClusterResolutionPlots(basicClusterIndicesAll,false);
       // Select Pi-zeros
-      std::set<int> myPi0BasicClusters = selectPi0Candidates();
+      SetOfIntPairs myPi0BasicClusterPairs = selectPi0Candidates();
 
       // Do double cluster plots
-      doDoubleClusterResolutionPlots();
+      doDoubleClusterResolutionPlots(myPi0BasicClusterPairs);
 
+      // Make unique list of BasicClusters from the list of pairs
+      std::set<int> myPi0BasicClusters = makeUniqueList1D(myPi0BasicClusterPairs);
       // Do the singleCluster again on the pi0 BasicClusters
       doSingleClusterResolutionPlots(myPi0BasicClusters,true);
 
