@@ -58,6 +58,8 @@ float eTGammaMinEE_   = 0.250;
 float s4s9GammaMinEE_ = 0.85;
 float eTPi0MinEE_     = 0.800;
 
+float minAmpliOverSigma_   = 7;    // dimensionless
+
 // parameters for histograms and ranges
 int AeffMax_     =250;
 int numDtBins_   =50;
@@ -66,7 +68,6 @@ int DtMax_       =10;
 // Consts
 const float sigmaNoiseEB        = 1.06; // ADC 
 const float sigmaNoiseEE        = 2.10; // ADC
-const float minAmpliOverSigma   = 7;    // dimensionless
 const float timingResParamN     = 35.1; // ns
 const float timingResParamConst = 0.020; //ns
 
@@ -185,6 +186,7 @@ void parseArguments(int argc, char** argv)
   std::string stringETGammaMinEE     = "--eTGammaMinEE";
   std::string strings4s9GammaMinEE   = "--s4s9GammaMinEE";
   std::string stringeTPi0MinEE       = "--eTPi0MinEE";
+  std::string stringminAmpliOverSigma= "--minAOverSigma";
   std::string stringNumEvents        = "--n";
 
 
@@ -213,6 +215,7 @@ void parseArguments(int argc, char** argv)
       std::cout << " --eTGammaMinEE: min eT for EE gammas" << std::endl;
       std::cout << " --s4s9GammaMinEE: min EE shower shape" << std::endl;
       std::cout << " --eTPi0MinEE min eT for EE pi0 candidate" << std::endl;
+      std::cout <<  "--minAOverSigma min ampli considered for time" << std::endl;
       std::cout << " --i <list of strings> list of input files" << std::endl ;     
       exit(1);      }
 
@@ -248,6 +251,10 @@ void parseArguments(int argc, char** argv)
     }
     else if (argv[v] == stringOutFileName) { // set output file
       outputRootName_ = argv[v+1];
+      v++;
+    }
+    else if (argv[v] == stringminAmpliOverSigma) { // set min amplitude considered for time measurement
+      minAmpliOverSigma_  = atof(argv[v+1]);
       v++;
     }
     // handle here the case of multiple arguments for input files
@@ -446,11 +453,11 @@ void doControlHists()
 	xtalEnergyHist_                                                        -> Fill (treeVars_.xtalInBCEnergy[bCluster][thisCry]);
 	
 	if (thisIsEB &&                                                           // this is barrel
-	    (treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry]/sigmaNoiseEB) > minAmpliOverSigma ) {  
+	    (treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry]/sigmaNoiseEB) > minAmpliOverSigma_ ) {  
 	  xtalIEtaHist_ -> Fill (treeVars_.xtalInBCIEta[bCluster][thisCry]);
 	  numCryOverThreshold++;	 } 
 	else if ( (!thisIsEB) &&                                                   // this is endcap
-		  (treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry]/sigmaNoiseEE) > minAmpliOverSigma ) {  
+		  (treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry]/sigmaNoiseEE) > minAmpliOverSigma_ ) {  
 	  xtalIEtaHist_ -> Fill (treeVars_.xtalInBCIEta[bCluster][thisCry]);
 	  numCryOverThreshold++;	  }
 	
@@ -615,7 +622,7 @@ std::pair<float,float> timeAndUncertSingleCluster(int bClusterIndex)
       std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;//gfdebug
     }
     float ampliOfThis = treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] / sigmaNoiseOfThis; 
-    if( ampliOfThis < minAmpliOverSigma) continue;
+    if( ampliOfThis < minAmpliOverSigma_) continue;
     float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry];
     float sigmaOfThis = sqrt(pow(timingResParamN/ampliOfThis,2)+pow(timingResParamConst,2));
 
@@ -660,7 +667,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
       else {std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
 
       float ampliOfThis = treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry] / sigmaNoiseOfThis; 
-      if( ampliOfThis < minAmpliOverSigma) continue;
+      if( ampliOfThis < minAmpliOverSigma_) continue;
 
 
       for(int thatCry=thisCry+1; thatCry<treeVars_.nXtalsInCluster[bCluster]; thatCry++)
@@ -671,7 +678,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
         else {std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
 
         float ampliOfThat = treeVars_.xtalInBCAmplitudeADC[bCluster][thatCry] / sigmaNoiseOfThat; 
-        if( ampliOfThat < minAmpliOverSigma) continue;
+        if( ampliOfThat < minAmpliOverSigma_) continue;
 
         float Aeff = ampliOfThis * ampliOfThat / sqrt( pow(ampliOfThis,2) + pow(ampliOfThat,2) );
         float dt  = treeVars_.xtalInBCTime[bCluster][thisCry] - treeVars_.xtalInBCTime[bCluster][thatCry]; 
@@ -1069,6 +1076,7 @@ int main (int argc, char** argv)
   std::cout << "\n\tFOUND "         <<  nEntries << " events" << std::endl ;    
   std::cout << "\tWILL run on: "    <<  numEvents_ << " events" << std::endl;
   std::cout << "\tOutput file: "    <<  outputRootName_ << std::endl;
+  std::cout << "\tminAOverSigma: "  <<  minAmpliOverSigma_ << std::endl;
   std::cout << "\teTGammaMinEB: "   <<  eTGammaMinEB_ << std::endl;
   std::cout << "\ts4s9GammaMinEB: " <<  s4s9GammaMinEB_ << std::endl;
   std::cout << "\teTPi0MinEB: "     <<  eTPi0MinEB_ << std::endl;
