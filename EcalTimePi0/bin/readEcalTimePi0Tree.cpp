@@ -33,6 +33,14 @@ typedef std::set<std::pair<int,int> > SetOfIntPairs;
 #define ADCtoGeVEE   0.063
 #define numAeffBins  250
 
+struct clusterTime {
+  int   numCry;
+  float time;
+  float timeErr;
+  float chi2;
+} ;
+
+
 // -------- Globals ----------------------------------------
 EcalTimePi0TreeContent treeVars_; 
 TFile* saving_;
@@ -598,35 +606,33 @@ void writeHists()
 
 // ---------------------------------------------------------------------------------------
 // ------------------ Function to compute time and error for a cluster -------------------
-std::pair<float,float> timeAndUncertSingleCluster(int bClusterIndex)
+//std::pair<float,float> timeAndUncertSingleCluster(int bClusterIndex)
+clusterTime timeAndUncertSingleCluster(int bClusterIndex)
 {
-  float weightTsum = 0;
-  float weightSum = 0;
-  // loop on the cry components of a basic cluster
+  float weightTsum  = 0;
+  float weightSum   = 0;
+  int   numCrystals = 0;
+
+  // loop on the cry components of a basic cluster; get timeBest and uncertainty 
   for(int thisCry=0; thisCry<treeVars_.nXtalsInCluster[bClusterIndex]; thisCry++)
   {
     bool  thisIsInEB=false;
     float sigmaNoiseOfThis=0;
-    if(treeVars_.xtalInBCIEta[bClusterIndex][thisCry]!=-999999)   
-    {
+    if(treeVars_.xtalInBCIEta[bClusterIndex][thisCry]!=-999999)       {
       sigmaNoiseOfThis=sigmaNoiseEB;
-      thisIsInEB=true;
-    }
-    else if(treeVars_.xtalInBCIy[bClusterIndex][thisCry]!=-999999)
-    {
+      thisIsInEB=true;    }
+    else if(treeVars_.xtalInBCIy[bClusterIndex][thisCry]!=-999999)    {
       sigmaNoiseOfThis=sigmaNoiseEE;
-      thisIsInEB=false;
-    }
-    else
-    {
-      std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;//gfdebug
-    }
+      thisIsInEB=false;    }
+    else    {  std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
     float ampliOfThis = treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] / sigmaNoiseOfThis; 
     if( ampliOfThis < minAmpliOverSigma_) continue;
+
+    numCrystals++;
     float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry];
     float sigmaOfThis = sqrt(pow(timingResParamN/ampliOfThis,2)+pow(timingResParamConst,2));
 
-    //std::cout << "GFdeb eampli: " << treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry]
+    //std::cout << "GFdeb eampli: " << treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] //gfdebug
     //          << " ampliOfThis: " << ampliOfThis
     //          << " timeOfThis: " << timeOfThis
     //          << " sigmaOfThis: " << sigmaOfThis
@@ -635,11 +641,53 @@ std::pair<float,float> timeAndUncertSingleCluster(int bClusterIndex)
     weightTsum+=(timeOfThis/pow(sigmaOfThis,2));
     weightSum+=1/pow(sigmaOfThis,2);
   }
-  if(weightSum <= 0)
-    return std::make_pair<float,float>(-999999,-999999);
+  float bestTime = weightTsum/weightSum;
+
+  float chi2 = -1;
+  // loop on the cry components to get chi2
+  // do this only if you have at least 2 crystals over threshold
+  if(numCrystals>1){
+    chi2=0;
+    for(int thisCry=0; thisCry<treeVars_.nXtalsInCluster[bClusterIndex]; thisCry++)
+      {
+	//bool  thisIsInEB=false;
+	float sigmaNoiseOfThis=0;
+	if(treeVars_.xtalInBCIEta[bClusterIndex][thisCry]!=-999999)       {
+	  sigmaNoiseOfThis=sigmaNoiseEB;
+	  //thisIsInEB=true;
+	}
+	else if(treeVars_.xtalInBCIy[bClusterIndex][thisCry]!=-999999)    {
+	  sigmaNoiseOfThis=sigmaNoiseEE;
+	  //thisIsInEB=false;    
+	}
+	else    {  std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
+	
+	float ampliOfThis = treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] / sigmaNoiseOfThis; 
+	if( ampliOfThis < minAmpliOverSigma_) continue;
+	
+	float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry];
+	float sigmaOfThis = sqrt(pow(timingResParamN/ampliOfThis,2)+pow(timingResParamConst,2));
+	
+	chi2 += pow( (timeOfThis-bestTime)/sigmaOfThis, 2);
+	
+      }// end loop on cry
+    chi2 /=(numCrystals-1);
+  }//end if
+
+
+  clusterTime theResult; //initialize
+  theResult.numCry = -999999;   theResult.time   = -999999;
+  theResult.timeErr= -999999;   theResult.chi2   = -999999;
+  
+  if(weightSum <= 0) {
+    return theResult;}
   else{
-    //std::cout << "-- GFdeb time: " << weightTsum/weightSum << " error: " << sqrt(1/weightSum) << std::endl;//gfdebug
-    return std::make_pair<float,float>(weightTsum/weightSum,sqrt(1/weightSum));
+    //std::cout << "-- GFdeb time: " << bestTime << " error: " << sqrt(1/weightSum) << std::endl;//gfdebug
+    theResult.numCry = numCrystals;
+    theResult.time   = bestTime;
+    theResult.timeErr= sqrt(1/weightSum);
+    theResult.chi2   = chi2;
+    return theResult;
   }
 
 }// end timeAndUncertSingleCluster
@@ -954,16 +1002,28 @@ void doDoubleClusterResolutionPlots(SetOfIntPairs myBCpairs, bool isAfterPi0Sele
       //std::cout << "eta: " << pi0Candidate.Eta() << " isEB " << isEB << std::endl;//gfcomm
 
       // Make the time check between two clusters in the peaks
-      std::pair<float,float> timeAndUncertClusterA = timeAndUncertSingleCluster(bClusterA);
-      if(timeAndUncertClusterA.second <= 0) // if something went wrong combining the times, bail out
+      //std::pair<float,float> timeAndUncertClusterA = timeAndUncertSingleCluster(bClusterA);
+      clusterTime timeAndUncertClusterA = timeAndUncertSingleCluster(bClusterA);
+      if(timeAndUncertClusterA.timeErr <= 0) // if something went wrong combining the times, bail out
 	continue;
-      std::pair<float,float> timeAndUncertClusterB = timeAndUncertSingleCluster(bClusterB);
-      if(timeAndUncertClusterB.second <= 0) // if something went wrong combining the times, bail out
+      //std::pair<float,float> timeAndUncertClusterB = timeAndUncertSingleCluster(bClusterB);
+      clusterTime timeAndUncertClusterB = timeAndUncertSingleCluster(bClusterB);
+      if(timeAndUncertClusterB.timeErr <= 0) // if something went wrong combining the times, bail out
 	continue;
       
-      float Dt      = timeAndUncertClusterB.first-timeAndUncertClusterA.first;
-      float errorDt = sqrt( pow(timeAndUncertClusterA.second,2) + pow(timeAndUncertClusterB.second,2));
+      float Dt      = timeAndUncertClusterB.time-timeAndUncertClusterA.time;
+      float errorDt = sqrt( pow(timeAndUncertClusterA.timeErr,2) + pow(timeAndUncertClusterB.timeErr,2));
       float Pt      = pi0Candidate.Et();
+      
+      //std::cout << "--A time: " << timeAndUncertClusterA.time
+      //  	<< " timeErr: " << timeAndUncertClusterA.timeErr
+      //  	<< " timeNcry: "<< timeAndUncertClusterA.numCry
+      //  	<< " timechi2: "<< timeAndUncertClusterA.chi2
+      //  	<< "\n--B time: " << timeAndUncertClusterB.time
+      //  	<< " timeErr: " << timeAndUncertClusterB.timeErr
+      //  	<< " timeNcry: "<< timeAndUncertClusterB.numCry
+      //  	<< " timechi2: "<< timeAndUncertClusterB.chi2
+      //  	<< std::endl;
 
       if(isAfterPi0Selection)
 	{
