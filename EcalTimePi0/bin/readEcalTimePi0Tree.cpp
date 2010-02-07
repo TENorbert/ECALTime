@@ -69,9 +69,9 @@ float eTPi0MinEE_     = 0.800;
 float minAmpliOverSigma_   = 7;    // dimensionless
 
 // parameters for histograms and ranges
-int AeffMax_     =250;
-int numDtBins_   =50;
-int DtMax_       =10;
+int AeffMax_    = 250;
+int numDtBins_  = 75;
+int DtMax_      = 15; // useful to catch tails also at low Aeff (<10)
 
 // Consts
 const float sigmaNoiseEB        = 1.06; // ADC 
@@ -132,13 +132,16 @@ TH1F*   dtUpOverSixGeVEE_;
 TH2F*   dtVSAeffHistAny_;
 TH1F*   dtSliceVSAeffAny_[numAeffBins];
 TH2F*   dtVSAeffHistEB_;
+TH1F*   dtSliceVSAeffEB_[numAeffBins];
 TH2F*   dtVSAeffHistEE_;
+TH1F*   dtSliceVSAeffEE_[numAeffBins];
 TProfile* dtVSAeffProfAny_;
 TProfile* dtVSAeffProfEB_;
 TProfile* dtVSAeffProfEE_;
 
-TH1F*    dtRMSVSAeffAny_;
-TH1F*    dtSigmaAeffAny_;
+TH1F*    dtRMSVSAeffAny_; TH1F*    dtSigmaAeffAny_;
+TH1F*    dtRMSVSAeffEB_;  TH1F*    dtSigmaAeffEB_;
+TH1F*    dtRMSVSAeffEE_;  TH1F*    dtSigmaAeffEE_;
 
 // selection on pi0 candidates 
 TH2F* diPhotonPeakOccupancyAny_;
@@ -157,8 +160,14 @@ TH1F*     dtUpToSixGeVEEPeak_;
 TH1F*     dtUpOverSixGeVEEPeak_;
 
 TH2F*     dtVSAeffHistAnyPeak_;
+TH1F*     dtSliceVSAeffAnyPeak_[numAeffBins];
 TH2F*     dtVSAeffHistEBPeak_;
+TH1F*     dtSliceVSAeffEBPeak_[numAeffBins];
 TH2F*     dtVSAeffHistEEPeak_;
+TH1F*     dtSliceVSAeffEEPeak_[numAeffBins];
+TH1F*     dtRMSVSAeffAnyPeak_; TH1F*    dtSigmaAeffAnyPeak_;
+TH1F*     dtRMSVSAeffEBPeak_;  TH1F*    dtSigmaAeffEBPeak_;
+TH1F*     dtRMSVSAeffEEPeak_;  TH1F*    dtSigmaAeffEEPeak_;
 TProfile* dtVSAeffProfAnyPeak_;
 TProfile* dtVSAeffProfEBPeak_;
 TProfile* dtVSAeffProfEEPeak_;
@@ -351,12 +360,24 @@ void initializeHists()
   dtVSAeffHistEB_  = new TH2F("EB:  #Delta(t)  VS  A_{eff}/#sigma_{N}","EB:  #Delta(t)  VS  A_{eff}/#sigma_{N}; A_{eff}/#sigma_{N}; #Delta(t) [ns]",numAeffBins,0.,AeffMax_,numDtBins_,-DtMax_,DtMax_);
   dtVSAeffHistEE_  = new TH2F("EE:  #Delta(t)  VS  A_{eff}/#sigma_{N}","EE:  #Delta(t)  VS  A_{eff}/#sigma_{N}; A_{eff}/#sigma_{N}; #Delta(t) [ns]",numAeffBins,0.,AeffMax_,numDtBins_,-DtMax_,DtMax_);
   dtVSAeffProfAny_ = new TProfile("#Delta(t)  VS  A_{eff}/#sigma_{N} prof","#Delta(t) VS A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
-  for (int v=0; v<numAeffBins; v++){// build histograms for RMS and sigma of DeltaT
+  for (int v=0; v<numAeffBins; v++){// build histograms for RMS and sigma of DeltaT for Any
     float binLeft=(v*AeffMax_/numAeffBins); float binRight=((v+1)*AeffMax_/numAeffBins);
     sprintf (buffer_, "#Deltat bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
     dtSliceVSAeffAny_[v] = new TH1F(buffer_,buffer_,numDtBins_,-DtMax_,DtMax_);  }
   dtRMSVSAeffAny_  = new TH1F("RMS(#Delta(t)) VS   A_{eff}", "RMS(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; RMS(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
   dtSigmaAeffAny_  = new TH1F("#sigma(#Delta(t)) VS   A_{eff}", "#sigma(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
+  for (int v=0; v<numAeffBins; v++){// build histograms for RMS and sigma of DeltaT for EB
+    float binLeft=(v*AeffMax_/numAeffBins); float binRight=((v+1)*AeffMax_/numAeffBins);
+    sprintf (buffer_, "EB: #Deltat bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
+    dtSliceVSAeffEB_[v] = new TH1F(buffer_,buffer_,numDtBins_,-DtMax_,DtMax_);  }
+  dtRMSVSAeffEB_  = new TH1F("EB: RMS(#Delta(t)) VS   A_{eff}", "EB: RMS(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; RMS(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
+  dtSigmaAeffEB_  = new TH1F("EB: #sigma(#Delta(t)) VS   A_{eff}", "EB: #sigma(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
+  for (int v=0; v<numAeffBins; v++){// build histograms for RMS and sigma of DeltaT for EE
+    float binLeft=(v*AeffMax_/numAeffBins); float binRight=((v+1)*AeffMax_/numAeffBins);
+    sprintf (buffer_, "EE: #Deltat bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
+    dtSliceVSAeffEE_[v] = new TH1F(buffer_,buffer_,numDtBins_,-DtMax_,DtMax_);  }
+  dtRMSVSAeffEE_  = new TH1F("EE: RMS(#Delta(t)) VS   A_{eff}", "EE: RMS(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; RMS(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
+  dtSigmaAeffEE_  = new TH1F("EE: #sigma(#Delta(t)) VS   A_{eff}", "EE: #sigma(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
   dtVSAeffProfEB_  = new TProfile("EB:  #Delta(t)   VS  A_{eff}/#sigma_{N} prof","EB:  #Delta(t)  VS  A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
   dtVSAeffProfEE_  = new TProfile("EE:  #Delta(t)   VS  A_{eff}/#sigma_{N} prof","EE:  #Delta(t)  VS  A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
 
@@ -555,10 +576,20 @@ void writeHists()
   dtRMSVSAeffAny_-> Write();
   dtSigmaAeffAny_-> Write();
 
-  // write out 1-d control plots for DeltaT RMS and sigma 
+  // write out 1-d control plots for DeltaT RMS and sigma for Any
   TDirectory *singleClusResolutionSlices = singleClusResolution->mkdir("dtslices-any");
   singleClusResolutionSlices->cd();
   for (int v=0; v<numAeffBins; v++){    dtSliceVSAeffAny_[v] -> Write();  }
+
+  // write out 1-d control plots for DeltaT RMS and sigma for EB
+  TDirectory *singleClusResolutionEBSlices = singleClusResolution->mkdir("dtslices-EB");
+  singleClusResolutionEBSlices->cd();
+  for (int v=0; v<numAeffBins; v++){    dtSliceVSAeffEB_[v] -> Write();  }
+
+  // write out 1-d control plots for DeltaT RMS and sigma for EE
+  TDirectory *singleClusResolutionEESlices = singleClusResolution->mkdir("dtslices-EE");
+  singleClusResolutionEESlices->cd();
+  for (int v=0; v<numAeffBins; v++){    dtSliceVSAeffEE_[v] -> Write();  }
 
 
   // write out single cluster resolution plots after pi0 selection
@@ -1063,29 +1094,67 @@ void doFinalPlots()
 {
   for (int sliceX=0; sliceX<numAeffBins; sliceX++)  {//looping on the X axis, at constant Aeff
     for (int binY=0; binY<numDtBins_; binY++)  {// looping in Delta t bins
-      dtSliceVSAeffAny_[sliceX] ->SetBinContent( (binY+1), (dtVSAeffHistAny_->GetBinContent((sliceX+1),(binY+1))) );    
+      dtSliceVSAeffAny_[sliceX]   ->SetBinContent( (binY+1), (dtVSAeffHistAny_->GetBinContent((sliceX+1),(binY+1))) );    
+      dtSliceVSAeffEB_[sliceX] ->SetBinContent( (binY+1), (dtVSAeffHistEB_->GetBinContent((sliceX+1),(binY+1))) );    
+      dtSliceVSAeffEE_[sliceX] ->SetBinContent( (binY+1), (dtVSAeffHistEE_->GetBinContent((sliceX+1),(binY+1))) );    
     }// end loop on Ybins 
-  
-    // std::cout << "integral is: " << dtSliceVSAeffAny_[sliceX] -> Integral() << std::endl;
-    if( dtSliceVSAeffAny_[sliceX] -> Integral()  < 10 ) continue;
+
+    // do slices RMS and fitting for  Any 
+    if( dtSliceVSAeffAny_[sliceX] -> Integral()  > 10 ){
+      // extract RMS and sigma for each Aeff=const slice
+      float RMS       = dtSliceVSAeffAny_[sliceX] -> GetRMS();
+      float RMSErr    = dtSliceVSAeffAny_[sliceX] -> GetRMSError();
+      dtRMSVSAeffAny_ -> SetBinContent(sliceX+1, RMS);
+      dtRMSVSAeffAny_ -> SetBinError(sliceX+1, RMSErr);
+      
+      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
+      dtSliceVSAeffAny_[sliceX]->Fit("dtFit");
+      float sigma     = gauss -> GetParameter(2);
+      float sigmaErr  = gauss -> GetParError(2);
+      dtSigmaAeffAny_ -> SetBinContent(sliceX+1, sigma);
+      dtSigmaAeffAny_ -> SetBinError(sliceX+1, sigmaErr);
+    }// slices for Any
+
+    // do slices RMS and fitting for EB
+    if( dtSliceVSAeffEB_[sliceX] -> Integral()  > 10 ){
+      // extract RMS and sigma for each Aeff=const slice
+      float RMS       = dtSliceVSAeffEB_[sliceX] -> GetRMS();
+      float RMSErr    = dtSliceVSAeffEB_[sliceX] -> GetRMSError();
+      dtRMSVSAeffEB_ -> SetBinContent(sliceX+1, RMS);
+      dtRMSVSAeffEB_ -> SetBinError(sliceX+1, RMSErr);
+      
+      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
+      dtSliceVSAeffEB_[sliceX]->Fit("dtFit");
+      float sigma     = gauss -> GetParameter(2);
+      float sigmaErr  = gauss -> GetParError(2);
+      dtSigmaAeffEB_ -> SetBinContent(sliceX+1, sigma);
+      dtSigmaAeffEB_ -> SetBinError(sliceX+1, sigmaErr);
+    }// slices for EB
+
+    // do slices RMS and fitting for EE
+    if( dtSliceVSAeffEE_[sliceX] -> Integral()  > 10 ){
+      // extract RMS and sigma for each Aeff=const slice
+      float RMS       = dtSliceVSAeffEE_[sliceX] -> GetRMS();
+      float RMSErr    = dtSliceVSAeffEE_[sliceX] -> GetRMSError();
+      dtRMSVSAeffEE_ -> SetBinContent(sliceX+1, RMS);
+      dtRMSVSAeffEE_ -> SetBinError(sliceX+1, RMSErr);
+      
+      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
+      dtSliceVSAeffEE_[sliceX]->Fit("dtFit");
+      float sigma     = gauss -> GetParameter(2);
+      float sigmaErr  = gauss -> GetParError(2);
+      dtSigmaAeffEE_ -> SetBinContent(sliceX+1, sigma);
+      dtSigmaAeffEE_ -> SetBinError(sliceX+1, sigmaErr);
+    }// slices for EE
     
-    // extract RMS and sigma for each Aeff=const slice
-    float RMS       = dtSliceVSAeffAny_[sliceX] -> GetRMS();
-    float RMSErr    = dtSliceVSAeffAny_[sliceX] -> GetRMSError();
-    dtRMSVSAeffAny_ -> SetBinContent(sliceX+1, RMS);
-    dtRMSVSAeffAny_ -> SetBinError(sliceX+1, RMSErr);
     
-    TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
-    gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
-    dtSliceVSAeffAny_[sliceX]->Fit("dtFit");
-    float sigma     = gauss -> GetParameter(2);
-    float sigmaErr  = gauss -> GetParError(2);
-    dtSigmaAeffAny_ -> SetBinContent(sliceX+1, sigma);
-    dtSigmaAeffAny_ -> SetBinError(sliceX+1, sigmaErr);
   }// end loop on Xslices
   
   // gf: add here sigma/RMS VS Aeff also for clusters matching the pi0 mass
-
+  
 }// end doFinalPlots
 
 
