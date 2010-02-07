@@ -347,16 +347,16 @@ void initializeHists()
   dtUpToSixGeVEE_          = new TH1F("EE #Delta(t),   A_{eff} up to six GeV", "EE #Delta(t),   24<A_{eff}/#sigma_{N}<48", 200, -DtMax_, DtMax_); 
   dtUpOverSixGeVEE_        = new TH1F("EE #Delta(t),   A_{eff} over six GeV", "EE #Delta(t),   A_{eff}/#sigma_{N}>48", 200, -DtMax_, DtMax_); 
 
-  dtVSAeffHistAny_ = new TH2F("#Delta(t) VS A_{eff}/#sigma_{N}","#Delta(t) VS A_{eff}/#sigma_{N}",numAeffBins,0.,AeffMax_,numDtBins_,-DtMax_,DtMax_);
-  dtVSAeffHistEB_  = new TH2F("EB:  #Delta(t)  VS  A_{eff}/#sigma_{N}","EB:  #Delta(t)  VS  A_{eff}/#sigma_{N}",numAeffBins,0.,AeffMax_,numDtBins_,-DtMax_,DtMax_);
-  dtVSAeffHistEE_  = new TH2F("EE:  #Delta(t)  VS  A_{eff}/#sigma_{N}","EE:  #Delta(t)  VS  A_{eff}/#sigma_{N}",numAeffBins,0.,AeffMax_,numDtBins_,-DtMax_,DtMax_);
+  dtVSAeffHistAny_ = new TH2F("#Delta(t) VS A_{eff}/#sigma_{N}","#Delta(t) VS A_{eff}/#sigma_{N}; A_{eff}/#sigma_{N}; #Delta(t) [ns]",numAeffBins,0.,AeffMax_,numDtBins_,-DtMax_,DtMax_);
+  dtVSAeffHistEB_  = new TH2F("EB:  #Delta(t)  VS  A_{eff}/#sigma_{N}","EB:  #Delta(t)  VS  A_{eff}/#sigma_{N}; A_{eff}/#sigma_{N}; #Delta(t) [ns]",numAeffBins,0.,AeffMax_,numDtBins_,-DtMax_,DtMax_);
+  dtVSAeffHistEE_  = new TH2F("EE:  #Delta(t)  VS  A_{eff}/#sigma_{N}","EE:  #Delta(t)  VS  A_{eff}/#sigma_{N}; A_{eff}/#sigma_{N}; #Delta(t) [ns]",numAeffBins,0.,AeffMax_,numDtBins_,-DtMax_,DtMax_);
   dtVSAeffProfAny_ = new TProfile("#Delta(t)  VS  A_{eff}/#sigma_{N} prof","#Delta(t) VS A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
   for (int v=0; v<numAeffBins; v++){// build histograms for RMS and sigma of DeltaT
     float binLeft=(v*AeffMax_/numAeffBins); float binRight=((v+1)*AeffMax_/numAeffBins);
-    sprintf (buffer_, "#Delta t bin %d, [%4.1f,%4.1f]", v+1, binLeft, binRight);
+    sprintf (buffer_, "#Deltat bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
     dtSliceVSAeffAny_[v] = new TH1F(buffer_,buffer_,numDtBins_,-DtMax_,DtMax_);  }
-  dtRMSVSAeffAny_  = new TH1F("RMS(#Delta(t)) VS   A_{eff}", "RMS(#Delta(t)) VS   A_{eff}",numAeffBins,0.,AeffMax_);  
-  dtSigmaAeffAny_  = new TH1F("#sigma(#Delta(t)) VS   A_{eff}", "#sigma(#Delta(t)) VS   A_{eff}",numAeffBins,0.,AeffMax_);  
+  dtRMSVSAeffAny_  = new TH1F("RMS(#Delta(t)) VS   A_{eff}", "RMS(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; RMS(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
+  dtSigmaAeffAny_  = new TH1F("#sigma(#Delta(t)) VS   A_{eff}", "#sigma(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
   dtVSAeffProfEB_  = new TProfile("EB:  #Delta(t)   VS  A_{eff}/#sigma_{N} prof","EB:  #Delta(t)  VS  A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
   dtVSAeffProfEE_  = new TProfile("EE:  #Delta(t)   VS  A_{eff}/#sigma_{N} prof","EE:  #Delta(t)  VS  A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
 
