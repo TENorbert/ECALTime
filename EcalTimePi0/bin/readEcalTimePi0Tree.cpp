@@ -33,7 +33,7 @@ typedef std::set<std::pair<int,int> > SetOfIntPairs;
 #define ADCtoGeVEE   0.063
 #define numAeffBins  250
 
-struct clusterTime {
+struct ClusterTime {
   int   numCry;
   float time;
   float timeErr;
@@ -674,7 +674,7 @@ void writeHists()
 // ---------------------------------------------------------------------------------------
 // ------------------ Function to compute time and error for a cluster -------------------
 //std::pair<float,float> timeAndUncertSingleCluster(int bClusterIndex)
-clusterTime timeAndUncertSingleCluster(int bClusterIndex)
+ClusterTime timeAndUncertSingleCluster(int bClusterIndex)
 {
   float weightTsum  = 0;
   float weightSum   = 0;
@@ -742,7 +742,7 @@ clusterTime timeAndUncertSingleCluster(int bClusterIndex)
   }//end if
 
 
-  clusterTime theResult; //initialize
+  ClusterTime theResult; //initialize
   theResult.numCry = -999999;   theResult.time   = -999999;
   theResult.timeErr= -999999;   theResult.chi2   = -999999;
   
@@ -1070,11 +1070,11 @@ void doDoubleClusterResolutionPlots(SetOfIntPairs myBCpairs, bool isAfterPi0Sele
 
       // Make the time check between two clusters in the peaks
       //std::pair<float,float> timeAndUncertClusterA = timeAndUncertSingleCluster(bClusterA);
-      clusterTime timeAndUncertClusterA = timeAndUncertSingleCluster(bClusterA);
+      ClusterTime timeAndUncertClusterA = timeAndUncertSingleCluster(bClusterA);
       if(timeAndUncertClusterA.timeErr <= 0) // if something went wrong combining the times, bail out
 	continue;
       //std::pair<float,float> timeAndUncertClusterB = timeAndUncertSingleCluster(bClusterB);
-      clusterTime timeAndUncertClusterB = timeAndUncertSingleCluster(bClusterB);
+      ClusterTime timeAndUncertClusterB = timeAndUncertSingleCluster(bClusterB);
       if(timeAndUncertClusterB.timeErr <= 0) // if something went wrong combining the times, bail out
 	continue;
       
