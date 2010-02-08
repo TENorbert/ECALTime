@@ -142,6 +142,12 @@ TProfile* dtVSAeffProfEE_;
 TH1F*    dtRMSVSAeffAny_; TH1F*    dtSigmaAeffAny_;
 TH1F*    dtRMSVSAeffEB_;  TH1F*    dtSigmaAeffEB_;
 TH1F*    dtRMSVSAeffEE_;  TH1F*    dtSigmaAeffEE_;
+TH1F*  singleClusterChi2HistAny_;
+TH1F*  singleClusterChi2NDFHistAny_;
+TH1F*  singleClusterChi2HistEB_;
+TH1F*  singleClusterChi2NDFHistEB_;
+TH1F*  singleClusterChi2HistEE_;
+TH1F*  singleClusterChi2NDFHistEE_;
 
 // selection on pi0 candidates 
 TH2F* diPhotonPeakOccupancyAny_;
@@ -171,6 +177,12 @@ TH1F*     dtRMSVSAeffEEPeak_;  TH1F*    dtSigmaAeffEEPeak_;
 TProfile* dtVSAeffProfAnyPeak_;
 TProfile* dtVSAeffProfEBPeak_;
 TProfile* dtVSAeffProfEEPeak_;
+TH1F*  singleClusterChi2HistAnyPeak_;
+TH1F*  singleClusterChi2NDFHistAnyPeak_;
+TH1F*  singleClusterChi2HistEBPeak_;
+TH1F*  singleClusterChi2NDFHistEBPeak_;
+TH1F*  singleClusterChi2HistEEPeak_;
+TH1F*  singleClusterChi2NDFHistEEPeak_;
 
 // double cluster resolution
 TH1F* dtDoubleClusterHistAny_;
@@ -305,6 +317,11 @@ void parseArguments(int argc, char** argv)
 // ------------------ Function to initialize the histograms ------------------------------
 void initializeHists()
 {
+  int numChi2Bins = 1000;
+  int chi2Max = 100;
+  int numChi2NDFBins = 250;
+  int chi2NDFMax = 25;
+
   saving_->cd();
   // Initialize histograms -- xtals
   xtalEnergyHist_ = new TH1F("XtalEnergy","Crystal energy;GeV",110,-1,10);
@@ -380,6 +397,12 @@ void initializeHists()
   dtSigmaAeffEE_  = new TH1F("EE: #sigma(#Delta(t)) VS   A_{eff}", "EE: #sigma(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
   dtVSAeffProfEB_  = new TProfile("EB:  #Delta(t)   VS  A_{eff}/#sigma_{N} prof","EB:  #Delta(t)  VS  A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
   dtVSAeffProfEE_  = new TProfile("EE:  #Delta(t)   VS  A_{eff}/#sigma_{N} prof","EE:  #Delta(t)  VS  A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
+  singleClusterChi2HistAny_ = new TH1F("clusterChi2Any","#Chi^{2} of crystal times in a cluster (any)",numChi2Bins,0,chi2Max);
+  singleClusterChi2NDFHistAny_ = new TH1F("clusterChi2NDFAny","#Chi^{2}/NDF of crystal times in a cluster (any)",numChi2NDFBins,0,chi2NDFMax);
+  singleClusterChi2HistEB_ = new TH1F("clusterChi2EB","#Chi^{2} of crystal times in a cluster (EB)",numChi2Bins,0,chi2Max);
+  singleClusterChi2NDFHistEB_ = new TH1F("clusterChi2NDFEB","#Chi^{2}/NDF of crystal times in a cluster (EB)",numChi2NDFBins,0,chi2NDFMax);
+  singleClusterChi2HistEE_ = new TH1F("clusterChi2EE","#Chi^{2} of crystal times in a cluster (EE)",numChi2Bins,0,chi2Max);
+  singleClusterChi2NDFHistEE_ = new TH1F("clusterChi2NDFEE","#Chi^{2}/NDF of crystal times in a cluster (EE)",numChi2NDFBins,0,chi2NDFMax);
 
   // Initialize histograms -- selection on pi0 candidates 
   diPhotonPeakOccupancyAny_     = new TH2F("#pi_{0} occupancy (di-photon peak)","di-photon peak;#eta;#phi",50,-3.5,3.5,50,-1*TMath::Pi(),TMath::Pi());
@@ -421,6 +444,12 @@ void initializeHists()
   dtVSAeffProfAnyPeak_ = new TProfile("Peak: #Delta(t) VS A_{eff}/#sigma_{N} prof","Peak: #Delta(t) VS A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
   dtVSAeffProfEBPeak_  = new TProfile("EBPeak: #Delta(t) VS A_{eff}/#sigma_{N} prof","EBPeak #Delta(t) VS A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
   dtVSAeffProfEEPeak_  = new TProfile("EEPeak: #Delta(t) VS A_{eff}/#sigma_{N} prof","EEPeak: #Delta(t) VS A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
+  singleClusterChi2HistAnyPeak_ = new TH1F("clusterChi2AnyPeak","#Chi^{2} of crystal times in a cluster (any peak)",numChi2Bins,0,chi2Max);
+  singleClusterChi2NDFHistAnyPeak_ = new TH1F("clusterChi2NDFAnyPeak","#Chi^{2}/NDF of crystal times in a cluster (any peak)",numChi2NDFBins,0,chi2NDFMax);
+  singleClusterChi2HistEBPeak_ = new TH1F("clusterChi2EBPeak","#Chi^{2} of crystal times in a cluster (EB peak)",numChi2Bins,0,chi2Max);
+  singleClusterChi2NDFHistEBPeak_ = new TH1F("clusterChi2NDFEBPeak","#Chi^{2}/NDF of crystal times in a cluster (EB peak)",numChi2NDFBins,0,chi2NDFMax);
+  singleClusterChi2HistEEPeak_ = new TH1F("clusterChi2EEPeak","#Chi^{2} of crystal times in a cluster (EE peak)",numChi2Bins,0,chi2Max);
+  singleClusterChi2NDFHistEEPeak_ = new TH1F("clusterChi2NDFEEPeak","#Chi^{2}/NDF of crystal times in a cluster (EE peak)",numChi2NDFBins,0,chi2NDFMax);
 
   // should these DeltaT be vary in [-DtMax_, DtMax_] ? Once fixed/understood
   // Initialize histograms -- double cluster resolution
@@ -593,6 +622,12 @@ void writeHists()
 
   dtRMSVSAeffAny_-> Write();
   dtSigmaAeffAny_-> Write();
+  singleClusterChi2HistAny_->Write();
+  singleClusterChi2NDFHistAny_->Write();
+  singleClusterChi2HistEB_->Write();
+  singleClusterChi2NDFHistEB_->Write();
+  singleClusterChi2HistEE_->Write();
+  singleClusterChi2NDFHistEE_->Write();
 
   // write out 1-d control plots for DeltaT RMS and sigma for Any
   TDirectory *singleClusResolutionSlices = singleClusResolution->mkdir("dtslices-any");
@@ -635,6 +670,12 @@ void writeHists()
   
   dtRMSVSAeffAnyPeak_-> Write();
   dtSigmaAeffAnyPeak_-> Write();
+  singleClusterChi2HistAnyPeak_->Write();
+  singleClusterChi2NDFHistAnyPeak_->Write();
+  singleClusterChi2HistEBPeak_->Write();
+  singleClusterChi2NDFHistEBPeak_->Write();
+  singleClusterChi2HistEEPeak_->Write();
+  singleClusterChi2NDFHistEEPeak_->Write();
 
   // write out 1-d control plots for DeltaT RMS and sigma for any peak
   TDirectory *singleClusResolutionSlicesPeak = singleClusResolutionPi0Clusters->mkdir("dtslices-anyPeak");
@@ -710,7 +751,7 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex)
   }
   float bestTime = weightTsum/weightSum;
 
-  float chi2 = -1;
+  float chi2 = -999999;
   // loop on the cry components to get chi2
   // do this only if you have at least 2 crystals over threshold
   if(numCrystals>1){
@@ -772,6 +813,41 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
   {// loop on bc
 
     int bCluster = *bcItr;
+    ClusterTime myClusterTime = timeAndUncertSingleCluster(bCluster);
+    bool isEB=false;
+    if( fabs(treeVars_.clusterEta[bCluster]) < BarrelLimit) isEB=true;
+    if(!isAfterPi0Selection && myClusterTime.numCry > 1)
+    {
+      singleClusterChi2HistAny_->Fill(myClusterTime.chi2);
+      singleClusterChi2NDFHistAny_->Fill(myClusterTime.chi2/myClusterTime.numCry);
+      if(isEB)
+      {
+        singleClusterChi2HistEB_->Fill(myClusterTime.chi2);
+        singleClusterChi2NDFHistEB_->Fill(myClusterTime.chi2/myClusterTime.numCry);
+      }
+      else
+      {
+        singleClusterChi2HistEE_->Fill(myClusterTime.chi2);
+        singleClusterChi2NDFHistEE_->Fill(myClusterTime.chi2/myClusterTime.numCry);
+      }
+    }
+    else if(myClusterTime.numCry > 1) // these are the pi-zero clusters
+    {
+      singleClusterChi2HistAnyPeak_->Fill(myClusterTime.chi2);
+      singleClusterChi2NDFHistAnyPeak_->Fill(myClusterTime.chi2/myClusterTime.numCry);
+      if(isEB)
+      {
+        singleClusterChi2HistEBPeak_->Fill(myClusterTime.chi2);
+        singleClusterChi2NDFHistEBPeak_->Fill(myClusterTime.chi2/myClusterTime.numCry);
+      }
+      else
+      {
+        singleClusterChi2HistEEPeak_->Fill(myClusterTime.chi2);
+        singleClusterChi2NDFHistEEPeak_->Fill(myClusterTime.chi2/myClusterTime.numCry);
+      }
+    }
+
+    
     // loop on the cry components of a basic cluster
     for(int thisCry=0; thisCry<treeVars_.nXtalsInCluster[bCluster]; thisCry++)
     {
