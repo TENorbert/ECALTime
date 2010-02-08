@@ -400,6 +400,24 @@ void initializeHists()
   dtVSAeffHistAnyPeak_ = new TH2F("Peak: #Delta(t) VS A_{eff}/#sigma_{N}","Peak: #Delta(t) VS A_{eff}/#sigma_{N}",numAeffBins,0.,AeffMax_,numDtBins_,-DtMax_,DtMax_);
   dtVSAeffHistEBPeak_  = new TH2F("EBPeak: #Delta(t) VS A_{eff}/#sigma_{N}","EBPeak #Delta(t) VS A_{eff}/#sigma_{N}",numAeffBins,0.,AeffMax_,numDtBins_,-DtMax_,DtMax_);
   dtVSAeffHistEEPeak_  = new TH2F("EEPeak: E#Delta(t) VS A_{eff}/#sigma_{N}","EEPeak: #Delta(t) VS A_{eff}/#sigma_{N}",numAeffBins,0.,AeffMax_,numDtBins_,-DtMax_,DtMax_);
+  for (int v=0; v<numAeffBins; v++){// build histograms for RMS and sigma of DeltaT for Any
+    float binLeft=(v*AeffMax_/numAeffBins); float binRight=((v+1)*AeffMax_/numAeffBins);
+    sprintf (buffer_, "Peak: #Deltat bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
+    dtSliceVSAeffAnyPeak_[v] = new TH1F(buffer_,buffer_,numDtBins_,-DtMax_,DtMax_);  }
+  dtRMSVSAeffAnyPeak_  = new TH1F("RMS(#Delta(t)) VS   A_{eff}", "Peak: RMS(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; RMS(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
+  dtSigmaAeffAnyPeak_  = new TH1F("#sigma(#Delta(t)) VS   A_{eff}", "Peak: #sigma(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
+  for (int v=0; v<numAeffBins; v++){// build histograms for RMS and sigma of DeltaT for EB
+    float binLeft=(v*AeffMax_/numAeffBins); float binRight=((v+1)*AeffMax_/numAeffBins);
+    sprintf (buffer_, "EBPeak: #Deltat bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
+    dtSliceVSAeffEBPeak_[v] = new TH1F(buffer_,buffer_,numDtBins_,-DtMax_,DtMax_);  }
+  dtRMSVSAeffEBPeak_  = new TH1F("EB: RMS(#Delta(t)) VS   A_{eff}", "EBPeak: RMS(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; RMS(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
+  dtSigmaAeffEBPeak_  = new TH1F("EB: #sigma(#Delta(t)) VS   A_{eff}", "EBPeak: #sigma(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
+  for (int v=0; v<numAeffBins; v++){// build histograms for RMS and sigma of DeltaT for EE
+    float binLeft=(v*AeffMax_/numAeffBins); float binRight=((v+1)*AeffMax_/numAeffBins);
+    sprintf (buffer_, "EEPeak: #Deltat bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
+    dtSliceVSAeffEEPeak_[v] = new TH1F(buffer_,buffer_,numDtBins_,-DtMax_,DtMax_);  }
+  dtRMSVSAeffEEPeak_  = new TH1F("EEPeak: RMS(#Delta(t)) VS   A_{eff}", "EE: RMS(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; RMS(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
+  dtSigmaAeffEEPeak_  = new TH1F("EEPeak: #sigma(#Delta(t)) VS   A_{eff}", "EE: #sigma(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
   dtVSAeffProfAnyPeak_ = new TProfile("Peak: #Delta(t) VS A_{eff}/#sigma_{N} prof","Peak: #Delta(t) VS A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
   dtVSAeffProfEBPeak_  = new TProfile("EBPeak: #Delta(t) VS A_{eff}/#sigma_{N} prof","EBPeak #Delta(t) VS A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
   dtVSAeffProfEEPeak_  = new TProfile("EEPeak: #Delta(t) VS A_{eff}/#sigma_{N} prof","EEPeak: #Delta(t) VS A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
@@ -614,6 +632,24 @@ void writeHists()
   dtVSAeffProfAnyPeak_ -> Write(); 
   dtVSAeffProfEBPeak_  -> Write(); 
   dtVSAeffProfEEPeak_  -> Write(); 
+  
+  dtRMSVSAeffAnyPeak_-> Write();
+  dtSigmaAeffAnyPeak_-> Write();
+
+  // write out 1-d control plots for DeltaT RMS and sigma for any peak
+  TDirectory *singleClusResolutionSlicesPeak = singleClusResolutionPi0Clusters->mkdir("dtslices-anyPeak");
+  singleClusResolutionSlicesPeak->cd();
+  for (int v=0; v<numAeffBins; v++){    dtSliceVSAeffAnyPeak_[v] -> Write();  }
+
+  // write out 1-d control plots for DeltaT RMS and sigma for EB peak
+  TDirectory *singleClusResolutionEBSlicesPeak = singleClusResolutionPi0Clusters->mkdir("dtslices-EBPeak");
+  singleClusResolutionEBSlicesPeak->cd();
+  for (int v=0; v<numAeffBins; v++){    dtSliceVSAeffEBPeak_[v] -> Write();  }
+
+  // write out 1-d control plots for DeltaT RMS and sigma for EE peak
+  TDirectory *singleClusResolutionEESlicesPeak = singleClusResolutionPi0Clusters->mkdir("dtslices-EEPeak");
+  singleClusResolutionEESlicesPeak->cd();
+  for (int v=0; v<numAeffBins; v++){    dtSliceVSAeffEEPeak_[v] -> Write();  }
   
   // write out double cluster resolution plots
   TDirectory *doubleClusResolution = saving_->mkdir("double-resolution");
@@ -1094,9 +1130,12 @@ void doFinalPlots()
 {
   for (int sliceX=0; sliceX<numAeffBins; sliceX++)  {//looping on the X axis, at constant Aeff
     for (int binY=0; binY<numDtBins_; binY++)  {// looping in Delta t bins
-      dtSliceVSAeffAny_[sliceX]   ->SetBinContent( (binY+1), (dtVSAeffHistAny_->GetBinContent((sliceX+1),(binY+1))) );    
-      dtSliceVSAeffEB_[sliceX] ->SetBinContent( (binY+1), (dtVSAeffHistEB_->GetBinContent((sliceX+1),(binY+1))) );    
-      dtSliceVSAeffEE_[sliceX] ->SetBinContent( (binY+1), (dtVSAeffHistEE_->GetBinContent((sliceX+1),(binY+1))) );    
+      dtSliceVSAeffAny_[sliceX]   ->SetBinContent( (binY+1), (dtVSAeffHistAny_->GetBinContent((sliceX+1),(binY+1))) ); 
+      dtSliceVSAeffEB_[sliceX] ->SetBinContent( (binY+1), (dtVSAeffHistEB_->GetBinContent((sliceX+1),(binY+1))) ); 
+      dtSliceVSAeffEE_[sliceX] ->SetBinContent( (binY+1), (dtVSAeffHistEE_->GetBinContent((sliceX+1),(binY+1))) ); 
+      dtSliceVSAeffAnyPeak_[sliceX] ->SetBinContent( (binY+1), (dtVSAeffHistAnyPeak_->GetBinContent((sliceX+1),(binY+1))) ); 
+      dtSliceVSAeffEBPeak_[sliceX] ->SetBinContent( (binY+1), (dtVSAeffHistEBPeak_->GetBinContent((sliceX+1),(binY+1))) ); 
+      dtSliceVSAeffEEPeak_[sliceX] ->SetBinContent( (binY+1), (dtVSAeffHistEEPeak_->GetBinContent((sliceX+1),(binY+1))) ); 
     }// end loop on Ybins 
 
     // do slices RMS and fitting for  Any 
@@ -1149,11 +1188,62 @@ void doFinalPlots()
       dtSigmaAeffEE_ -> SetBinContent(sliceX+1, sigma);
       dtSigmaAeffEE_ -> SetBinError(sliceX+1, sigmaErr);
     }// slices for EE
+
+    // **** Peak fits ****
     
+    // do slices RMS and fitting for any peak
+    if( dtSliceVSAeffAnyPeak_[sliceX] -> Integral()  > 10 ){
+      // extract RMS and sigma for each Aeff=const slice
+      float RMS       = dtSliceVSAeffAnyPeak_[sliceX] -> GetRMS();
+      float RMSErr    = dtSliceVSAeffAnyPeak_[sliceX] -> GetRMSError();
+      dtRMSVSAeffAnyPeak_ -> SetBinContent(sliceX+1, RMS);
+      dtRMSVSAeffAnyPeak_ -> SetBinError(sliceX+1, RMSErr);
+      
+      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
+      dtSliceVSAeffAnyPeak_[sliceX]->Fit("dtFit");
+      float sigma     = gauss -> GetParameter(2);
+      float sigmaErr  = gauss -> GetParError(2);
+      dtSigmaAeffAnyPeak_ -> SetBinContent(sliceX+1, sigma);
+      dtSigmaAeffAnyPeak_ -> SetBinError(sliceX+1, sigmaErr);
+    }// slices for any peak
     
+    // do slices RMS and fitting for EB
+    if( dtSliceVSAeffEBPeak_[sliceX] -> Integral()  > 10 ){
+      // extract RMS and sigma for each Aeff=const slice
+      float RMS       = dtSliceVSAeffEBPeak_[sliceX] -> GetRMS();
+      float RMSErr    = dtSliceVSAeffEBPeak_[sliceX] -> GetRMSError();
+      dtRMSVSAeffEBPeak_ -> SetBinContent(sliceX+1, RMS);
+      dtRMSVSAeffEBPeak_ -> SetBinError(sliceX+1, RMSErr);
+      
+      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
+      dtSliceVSAeffEBPeak_[sliceX]->Fit("dtFit");
+      float sigma     = gauss -> GetParameter(2);
+      float sigmaErr  = gauss -> GetParError(2);
+      dtSigmaAeffEBPeak_ -> SetBinContent(sliceX+1, sigma);
+      dtSigmaAeffEBPeak_ -> SetBinError(sliceX+1, sigmaErr);
+    }// slices for EB
+    
+    // do slices RMS and fitting for EE
+    if( dtSliceVSAeffEEPeak_[sliceX] -> Integral()  > 10 ){
+      // extract RMS and sigma for each Aeff=const slice
+      float RMS       = dtSliceVSAeffEEPeak_[sliceX] -> GetRMS();
+      float RMSErr    = dtSliceVSAeffEEPeak_[sliceX] -> GetRMSError();
+      dtRMSVSAeffEEPeak_ -> SetBinContent(sliceX+1, RMS);
+      dtRMSVSAeffEEPeak_ -> SetBinError(sliceX+1, RMSErr);
+      
+      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
+      dtSliceVSAeffEEPeak_[sliceX]->Fit("dtFit");
+      float sigma     = gauss -> GetParameter(2);
+      float sigmaErr  = gauss -> GetParError(2);
+      dtSigmaAeffEEPeak_ -> SetBinContent(sliceX+1, sigma);
+      dtSigmaAeffEEPeak_ -> SetBinError(sliceX+1, sigmaErr);
+    }// slices for EE
+
+
   }// end loop on Xslices
-  
-  // gf: add here sigma/RMS VS Aeff also for clusters matching the pi0 mass
   
 }// end doFinalPlots
 
