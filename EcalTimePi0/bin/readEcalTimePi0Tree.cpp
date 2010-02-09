@@ -68,6 +68,8 @@ float eTPi0MinEE_     = 0.800;
 
 float minAmpliOverSigma_   = 7;    // dimensionless
 
+float maxChi2NDF_ = 20;  //TODO: gf configurable
+
 // parameters for histograms and ranges
 int AeffMax_    = 250;
 int numDtBins_  = 75;
@@ -186,15 +188,19 @@ TH1F*  singleClusterChi2NDFHistEEPeak_;
 
 // double cluster resolution
 TH1F* dtDoubleClusterHistAny_;
-TH1F* dtPoolDoubleClusterHistAny_;
+TH1F* dtPullDoubleClusterHistAny_;
+TH1F* dtPullChi2CutDoubleClusterHistAny_;
 TH2F* dtVsPtDoubleClusterHistAny_;
 
 TH1F* dtDoubleClusterHistPi0Peak_;
 TH1F* dtDoubleClusterHistPi0PeakEE_;
 TH1F* dtDoubleClusterHistPi0PeakEB_;
-TH1F* dtPoolDoubleClusterHistPi0Peak_;
-TH1F* dtPoolDoubleClusterHistPi0PeakEE_;
-TH1F* dtPoolDoubleClusterHistPi0PeakEB_;
+TH1F* dtPullDoubleClusterHistPi0Peak_;
+TH1F* dtPullDoubleClusterHistPi0PeakEE_;
+TH1F* dtPullDoubleClusterHistPi0PeakEB_;
+TH1F* dtPullChi2CutDoubleClusterHistPi0Peak_;
+TH1F* dtPullChi2CutDoubleClusterHistPi0PeakEE_;
+TH1F* dtPullChi2CutDoubleClusterHistPi0PeakEB_;
 TH2F* dtVsPtDoubleClusterHistPi0Peak_;
 TH2F* dtVsPtDoubleClusterHistPi0PeakEE_;
 TH2F* dtVsPtDoubleClusterHistPi0PeakEB_;
@@ -317,10 +323,10 @@ void parseArguments(int argc, char** argv)
 // ------------------ Function to initialize the histograms ------------------------------
 void initializeHists()
 {
-  int numChi2Bins = 1000;
-  int chi2Max = 100;
-  int numChi2NDFBins = 250;
-  int chi2NDFMax = 25;
+  int numChi2Bins = 400;
+  int chi2Max = 200;
+  int numChi2NDFBins = 200;
+  int chi2NDFMax = 100;
 
   saving_->cd();
   // Initialize histograms -- xtals
@@ -454,15 +460,19 @@ void initializeHists()
   // should these DeltaT be vary in [-DtMax_, DtMax_] ? Once fixed/understood
   // Initialize histograms -- double cluster resolution
   dtDoubleClusterHistAny_     = new TH1F("DeltaTDoubleClusterAny","#Delta(t) between two clusters EB/EE",100,-25,25);
-  dtPoolDoubleClusterHistAny_ = new TH1F("DeltaTPoolDoubleClusterAny","#Delta(t)/#sigma(t) between two clusters EB/EE (pool)",100,-5,5);
+  dtPullDoubleClusterHistAny_ = new TH1F("DeltaTPullDoubleClusterAny","#Delta(t)/#sigma(t) between two clusters EB/EE (pull)",100,-5,5);
+  dtPullChi2CutDoubleClusterHistAny_ = new TH1F("DeltaTPullChi2CutDoubleClusterAny","#Delta(t)/#sigma(t) between two clusters EB/EE (pull) with #Chi^{2} cut",100,-5,5);
   dtVsPtDoubleClusterHistAny_ = new TH2F("DeltaTVSPtDoubleClusterAny","#Delta(t)  between two clusters EB/EE VS P_{t}(di-photon) ",50,0,10,50,-25,25);
 
   dtDoubleClusterHistPi0Peak_  = new TH1F("DeltaTDoubleClusterPi0Peak","#Delta(t) between two clusters in #pi^{0} mass peak EB/EE",100,-25,25);
   dtDoubleClusterHistPi0PeakEE_= new TH1F("DeltaTDoubleClusterPi0PeakEE","#Delta(t) between two EE clusters in #pi^{0} mass peak",100,-25,25);
   dtDoubleClusterHistPi0PeakEB_= new TH1F("DeltaTDoubleClusterPi0PeakEB","#Delta(t) between two EB clusters in #pi^{0} mass peak",100,-25,25);
-  dtPoolDoubleClusterHistPi0Peak_  = new TH1F("DeltaTPoolDoubleClusterPeak","#Delta(t)/#sigma(t) between two clusters EB/EE (pool)",100,-5,5);
-  dtPoolDoubleClusterHistPi0PeakEE_= new TH1F("DeltaTPoolDoubleClusterPeakEE","#Delta(t)/#sigma(t) between two clusters EE (pool)",100,-5,5);
-  dtPoolDoubleClusterHistPi0PeakEB_= new TH1F("DeltaTPoolDoubleClusterPeakEB","#Delta(t)/#sigma(t) between two clusters EB (pool)",100,-5,5);
+  dtPullDoubleClusterHistPi0Peak_  = new TH1F("DeltaTPullDoubleClusterPeak","#Delta(t)/#sigma(t) between two clusters EB/EE (pull)",100,-5,5);
+  dtPullDoubleClusterHistPi0PeakEE_= new TH1F("DeltaTPullDoubleClusterPeakEE","#Delta(t)/#sigma(t) between two clusters EE (pull)",100,-5,5);
+  dtPullDoubleClusterHistPi0PeakEB_= new TH1F("DeltaTPullDoubleClusterPeakEB","#Delta(t)/#sigma(t) between two clusters EB (pull)",100,-5,5);
+  dtPullChi2CutDoubleClusterHistPi0Peak_  = new TH1F("DeltaTPullCHi2CutDoubleClusterPeak","#Delta(t)/#sigma(t) between two clusters EB/EE (pull) with #Chi^{2} cut",100,-5,5);
+  dtPullChi2CutDoubleClusterHistPi0PeakEE_= new TH1F("DeltaTPullCHi2CutDoubleClusterPeakEE","#Delta(t)/#sigma(t) between two clusters EE (pull) with #Chi^{2} cut",100,-5,5);
+  dtPullChi2CutDoubleClusterHistPi0PeakEB_= new TH1F("DeltaTPullCHi2CutDoubleClusterPeakEB","#Delta(t)/#sigma(t) between two clusters EB (pull) with #Chi^{2} cut",100,-5,5);
   dtVsPtDoubleClusterHistPi0Peak_  = new TH2F("DeltaTVSPtDoubleClusterPeak","#Delta(t) between two clusters EB/EE VS P_{t}(#pi_{0}) ",50,0,10,50,-25,25);
   dtVsPtDoubleClusterHistPi0PeakEE_= new TH2F("DeltaTVSPtDoubleClusterPeakEE","#Delta(t) between two clusters EE VS P_{t}(#pi_{0}) ",50,0,10,50,-25,25);
   dtVsPtDoubleClusterHistPi0PeakEB_= new TH2F("DeltaTVSPtDoubleClusterPeakEB","#Delta(t) between two clusters EB VS P_{t}(#pi_{0}) ",50,0,10,50,-25,25);
@@ -697,15 +707,19 @@ void writeHists()
   doubleClusResolution->cd();
 
   dtDoubleClusterHistAny_    ->Write();
-  dtPoolDoubleClusterHistAny_->Write();
+  dtPullDoubleClusterHistAny_->Write();
+  dtPullChi2CutDoubleClusterHistAny_->Write();
   dtVsPtDoubleClusterHistAny_->Write();
 
   dtDoubleClusterHistPi0Peak_->Write();
   dtDoubleClusterHistPi0PeakEE_->Write();
   dtDoubleClusterHistPi0PeakEB_->Write();
-  dtPoolDoubleClusterHistPi0Peak_  ->Write();
-  dtPoolDoubleClusterHistPi0PeakEE_->Write();
-  dtPoolDoubleClusterHistPi0PeakEB_->Write();
+  dtPullDoubleClusterHistPi0Peak_  ->Write();
+  dtPullDoubleClusterHistPi0PeakEE_->Write();
+  dtPullDoubleClusterHistPi0PeakEB_->Write();
+  dtPullChi2CutDoubleClusterHistPi0Peak_  ->Write();
+  dtPullChi2CutDoubleClusterHistPi0PeakEE_->Write();
+  dtPullChi2CutDoubleClusterHistPi0PeakEB_->Write();
   dtVsPtDoubleClusterHistPi0Peak_  ->Write();
   dtVsPtDoubleClusterHistPi0PeakEE_->Write();
   dtVsPtDoubleClusterHistPi0PeakEB_->Write();
@@ -779,7 +793,6 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex)
 	chi2 += pow( (timeOfThis-bestTime)/sigmaOfThis, 2);
 	
       }// end loop on cry
-    chi2 /=(numCrystals-1);
   }//end if
 
 
@@ -819,31 +832,31 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
     if(!isAfterPi0Selection && myClusterTime.numCry > 1)
     {
       singleClusterChi2HistAny_->Fill(myClusterTime.chi2);
-      singleClusterChi2NDFHistAny_->Fill(myClusterTime.chi2/myClusterTime.numCry);
+      singleClusterChi2NDFHistAny_->Fill(myClusterTime.chi2/(myClusterTime.numCry-1));
       if(isEB)
       {
         singleClusterChi2HistEB_->Fill(myClusterTime.chi2);
-        singleClusterChi2NDFHistEB_->Fill(myClusterTime.chi2/myClusterTime.numCry);
+        singleClusterChi2NDFHistEB_->Fill(myClusterTime.chi2/(myClusterTime.numCry-1));
       }
       else
       {
         singleClusterChi2HistEE_->Fill(myClusterTime.chi2);
-        singleClusterChi2NDFHistEE_->Fill(myClusterTime.chi2/myClusterTime.numCry);
+        singleClusterChi2NDFHistEE_->Fill(myClusterTime.chi2/(myClusterTime.numCry-1));
       }
     }
     else if(myClusterTime.numCry > 1) // these are the pi-zero clusters
     {
       singleClusterChi2HistAnyPeak_->Fill(myClusterTime.chi2);
-      singleClusterChi2NDFHistAnyPeak_->Fill(myClusterTime.chi2/myClusterTime.numCry);
+      singleClusterChi2NDFHistAnyPeak_->Fill(myClusterTime.chi2/(myClusterTime.numCry-1));
       if(isEB)
       {
         singleClusterChi2HistEBPeak_->Fill(myClusterTime.chi2);
-        singleClusterChi2NDFHistEBPeak_->Fill(myClusterTime.chi2/myClusterTime.numCry);
+        singleClusterChi2NDFHistEBPeak_->Fill(myClusterTime.chi2/(myClusterTime.numCry-1));
       }
       else
       {
         singleClusterChi2HistEEPeak_->Fill(myClusterTime.chi2);
-        singleClusterChi2NDFHistEEPeak_->Fill(myClusterTime.chi2/myClusterTime.numCry);
+        singleClusterChi2NDFHistEEPeak_->Fill(myClusterTime.chi2/(myClusterTime.numCry-1));
       }
     }
 
@@ -1147,6 +1160,8 @@ void doDoubleClusterResolutionPlots(SetOfIntPairs myBCpairs, bool isAfterPi0Sele
       // Make the time check between two clusters in the peaks
       //std::pair<float,float> timeAndUncertClusterA = timeAndUncertSingleCluster(bClusterA);
       ClusterTime timeAndUncertClusterA = timeAndUncertSingleCluster(bClusterA);
+      //  Protect against clusters having zero crystals above amplitude threshold
+      //  (which will cause the timeErr, time, etc. to be -999999)
       if(timeAndUncertClusterA.timeErr <= 0) // if something went wrong combining the times, bail out
 	continue;
       //std::pair<float,float> timeAndUncertClusterB = timeAndUncertSingleCluster(bClusterB);
@@ -1168,9 +1183,13 @@ void doDoubleClusterResolutionPlots(SetOfIntPairs myBCpairs, bool isAfterPi0Sele
       //  	<< " timechi2: "<< timeAndUncertClusterB.chi2
       //  	<< std::endl;
 
+      if(timeAndUncertClusterA.numCry < 1 || timeAndUncertClusterB.numCry < 1)  // need at least one cry above amp threshold
+        continue;
+
+      float chi2NormA = timeAndUncertClusterA.chi2/(timeAndUncertClusterA.numCry-1);
+      float chi2NormB = timeAndUncertClusterB.chi2/(timeAndUncertClusterB.numCry-1);
       if(isAfterPi0Selection)
 	{
-	  
 	  //////////////////////////////////////////////////////////
 	  // from here on I have pi0 candidates
 	  // bClusterA and bClusterB are the two clusters making this candidate
@@ -1180,9 +1199,22 @@ void doDoubleClusterResolutionPlots(SetOfIntPairs myBCpairs, bool isAfterPi0Sele
 	  if(isEB) dtDoubleClusterHistPi0PeakEB_ ->Fill(Dt);
 	  else     dtDoubleClusterHistPi0PeakEE_ ->Fill(Dt);
 
-	  dtPoolDoubleClusterHistPi0Peak_            ->Fill(Dt/errorDt);
-	  if(isEB) dtPoolDoubleClusterHistPi0PeakEB_ ->Fill(Dt/errorDt);
-	  else     dtPoolDoubleClusterHistPi0PeakEE_ ->Fill(Dt/errorDt);
+	  dtPullDoubleClusterHistPi0Peak_            ->Fill(Dt/errorDt);
+          if(chi2NormA < maxChi2NDF_ && chi2NormB < maxChi2NDF_ && chi2NormA > 0 && chi2NormB > 0)
+            dtPullChi2CutDoubleClusterHistPi0Peak_            ->Fill(Dt/errorDt);
+
+	  if(isEB)
+          {
+            dtPullDoubleClusterHistPi0PeakEB_ ->Fill(Dt/errorDt);
+            if(chi2NormA < maxChi2NDF_ && chi2NormB < maxChi2NDF_ && chi2NormA > 0 && chi2NormB > 0)
+            dtPullChi2CutDoubleClusterHistPi0PeakEB_ ->Fill(Dt/errorDt);
+          }
+	  else
+          {
+            dtPullDoubleClusterHistPi0PeakEE_ ->Fill(Dt/errorDt);
+            if(chi2NormA < maxChi2NDF_ && chi2NormB < maxChi2NDF_ && chi2NormA > 0 && chi2NormB > 0)
+              dtPullChi2CutDoubleClusterHistPi0PeakEE_ ->Fill(Dt/errorDt);
+          }
 
 	  dtVsPtDoubleClusterHistPi0Peak_            ->Fill(Pt,Dt);
 	  if(isEB) dtVsPtDoubleClusterHistPi0PeakEB_ ->Fill(Pt,Dt);
@@ -1192,8 +1224,11 @@ void doDoubleClusterResolutionPlots(SetOfIntPairs myBCpairs, bool isAfterPi0Sele
       else
 	{
 	  dtDoubleClusterHistAny_     ->Fill(Dt);
-	  dtPoolDoubleClusterHistAny_ ->Fill(Dt/errorDt);
+	  dtPullDoubleClusterHistAny_ ->Fill(Dt/errorDt);
 	  dtVsPtDoubleClusterHistAny_ ->Fill(Pt,Dt);
+
+          if(chi2NormA < maxChi2NDF_ && chi2NormB < maxChi2NDF_ && chi2NormA > 0 && chi2NormB > 0)
+            dtPullChi2CutDoubleClusterHistAny_ ->Fill(Dt/errorDt);
 	}// !isAfterPi0Selection
       
     }//loop on pairs
