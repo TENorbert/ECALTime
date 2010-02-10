@@ -151,6 +151,10 @@ TH1F*  singleClusterChi2NDFHistEB_;
 TH1F*  singleClusterChi2HistEE_;
 TH1F*  singleClusterChi2NDFHistEE_;
 
+TH2F* deltaTCrysVsAmplitudeEB_;
+TH2F* deltaTCrysVsAmplitudeEE_;
+TH2F* deltaTCrysVsAmplitudeAny_;
+
 // selection on pi0 candidates 
 TH2F* diPhotonPeakOccupancyAny_;
 TH2F* diPhotonSidesOccupancyAny_;
@@ -410,6 +414,10 @@ void initializeHists()
   singleClusterChi2HistEE_ = new TH1F("clusterChi2EE","#Chi^{2} of crystal times in a cluster (EE)",numChi2Bins,0,chi2Max);
   singleClusterChi2NDFHistEE_ = new TH1F("clusterChi2NDFEE","#Chi^{2}/NDF of crystal times in a cluster (EE)",numChi2NDFBins,0,chi2NDFMax);
 
+  deltaTCrysVsAmplitudeAny_ = new TH2F("deltaTCrysVsAmplitudeAny","#Delta(t_{cry2}-t_{cry1}), A/#sigma_{cry1} > 15 vs. A/#sigma_{cry2} (EB/EE);A_{2}/#sigma_{2};ns",50,0,100,1000,-50,50);
+  deltaTCrysVsAmplitudeEB_ = new TH2F("deltaTCrysVsAmplitudeEB","#Delta(t_{cry2}-t_{cry1}), A/#sigma_{cry1} > 15 vs. A/#sigma_{cry2} (EB);A_{2}/#sigma_{2};ns",50,0,100,1000,-50,50);
+  deltaTCrysVsAmplitudeEE_ = new TH2F("deltaTCrysVsAmplitudeEE","#Delta(t_{cry2}-t_{cry1}), A/#sigma_{cry1} > 15 vs. A/#sigma_{cry2} (EE);A_{2}/#sigma_{2};ns",50,0,100,1000,-50,50);
+
   // Initialize histograms -- selection on pi0 candidates 
   diPhotonPeakOccupancyAny_     = new TH2F("#pi_{0} occupancy (di-photon peak)","di-photon peak;#eta;#phi",50,-3.5,3.5,50,-1*TMath::Pi(),TMath::Pi());
   diPhotonSidesOccupancyAny_    = new TH2F("di-photon side-bands","di-photon side-bands;#eta;#phi",50,-3.5,3.5,50,-1*TMath::Pi(),TMath::Pi());
@@ -638,6 +646,10 @@ void writeHists()
   singleClusterChi2NDFHistEB_->Write();
   singleClusterChi2HistEE_->Write();
   singleClusterChi2NDFHistEE_->Write();
+
+  deltaTCrysVsAmplitudeAny_->Write();
+  deltaTCrysVsAmplitudeEB_->Write();
+  deltaTCrysVsAmplitudeEE_->Write();
 
   // write out 1-d control plots for DeltaT RMS and sigma for Any
   TDirectory *singleClusResolutionSlices = singleClusResolution->mkdir("dtslices-any");
@@ -882,10 +894,23 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
         else {std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
 
         float ampliOfThat = treeVars_.xtalInBCAmplitudeADC[bCluster][thatCry] / sigmaNoiseOfThat; 
-        if( ampliOfThat < minAmpliOverSigma_) continue;
 
         float Aeff = ampliOfThis * ampliOfThat / sqrt( pow(ampliOfThis,2) + pow(ampliOfThat,2) );
         float dt  = treeVars_.xtalInBCTime[bCluster][thisCry] - treeVars_.xtalInBCTime[bCluster][thatCry]; 
+
+        // Insert deltaT vs. ampli plots here
+        if(ampliOfThis > 15 && ampliOfThat > 1) // at least require the 2nd cry to have 1 ampli/sigma
+        {
+          deltaTCrysVsAmplitudeAny_->Fill(ampliOfThat,-1*dt);
+          if(thisIsInEB)
+            deltaTCrysVsAmplitudeEB_->Fill(ampliOfThat,-1*dt);
+          else
+            deltaTCrysVsAmplitudeEE_->Fill(ampliOfThat,-1*dt);
+        }
+        
+        // If cry below amp. threshold, skip it
+        if( ampliOfThat < minAmpliOverSigma_) continue;
+
 
         // for debug
         //std::cout << "ampliOfThis: " << ampliOfThis << "\tampliOfThat: " << ampliOfThat
