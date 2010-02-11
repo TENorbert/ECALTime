@@ -638,8 +638,15 @@ void writeHists()
   dtUpToSixGeVEE_         -> Write(); 
   dtUpOverSixGeVEE_       -> Write(); 
 
-  dtRMSVSAeffAny_-> Write();
-  dtSigmaAeffAny_-> Write();
+  dtRMSVSAeffAny_    -> Write();
+  dtSigmaAeffAny_    -> Write();
+  dtSigmaAeffEB_     -> Write();
+  dtSigmaAeffEE_     -> Write();
+  dtRMSVSAeffEB_     -> Write();
+  dtRMSVSAeffEE_     -> Write();
+
+  dtSigmaAeffEBPeak_ -> Write();
+  dtSigmaAeffEEPeak_ -> Write();
   singleClusterChi2HistAny_->Write();
   singleClusterChi2NDFHistAny_->Write();
   singleClusterChi2HistEB_->Write();
@@ -885,7 +892,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
       float ampliOfThis = treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry] / sigmaNoiseOfThis; 
       if( ampliOfThis < minAmpliOverSigma_) continue;
 
-
+      // loop on the other cry among the components of a basic cluster
       for(int thatCry=thisCry+1; thatCry<treeVars_.nXtalsInCluster[bCluster]; thatCry++)
       {
         float sigmaNoiseOfThat=0;
@@ -1267,15 +1274,15 @@ void doFinalPlots()
   for (int sliceX=0; sliceX<numAeffBins; sliceX++)  {//looping on the X axis, at constant Aeff
     for (int binY=0; binY<numDtBins_; binY++)  {// looping in Delta t bins
       dtSliceVSAeffAny_[sliceX]   ->SetBinContent( (binY+1), (dtVSAeffHistAny_->GetBinContent((sliceX+1),(binY+1))) ); 
-      dtSliceVSAeffEB_[sliceX] ->SetBinContent( (binY+1), (dtVSAeffHistEB_->GetBinContent((sliceX+1),(binY+1))) ); 
-      dtSliceVSAeffEE_[sliceX] ->SetBinContent( (binY+1), (dtVSAeffHistEE_->GetBinContent((sliceX+1),(binY+1))) ); 
+      dtSliceVSAeffEB_[sliceX]    ->SetBinContent( (binY+1), (dtVSAeffHistEB_->GetBinContent((sliceX+1),(binY+1))) ); 
+      dtSliceVSAeffEE_[sliceX]    ->SetBinContent( (binY+1), (dtVSAeffHistEE_->GetBinContent((sliceX+1),(binY+1))) ); 
       dtSliceVSAeffAnyPeak_[sliceX] ->SetBinContent( (binY+1), (dtVSAeffHistAnyPeak_->GetBinContent((sliceX+1),(binY+1))) ); 
       dtSliceVSAeffEBPeak_[sliceX] ->SetBinContent( (binY+1), (dtVSAeffHistEBPeak_->GetBinContent((sliceX+1),(binY+1))) ); 
       dtSliceVSAeffEEPeak_[sliceX] ->SetBinContent( (binY+1), (dtVSAeffHistEEPeak_->GetBinContent((sliceX+1),(binY+1))) ); 
     }// end loop on Ybins 
 
     // do slices RMS and fitting for  Any 
-    if( dtSliceVSAeffAny_[sliceX] -> Integral()  > 10 ){
+    if( dtSliceVSAeffAny_[sliceX] -> Integral()  > 20 ){
       // extract RMS and sigma for each Aeff=const slice
       float RMS       = dtSliceVSAeffAny_[sliceX] -> GetRMS();
       float RMSErr    = dtSliceVSAeffAny_[sliceX] -> GetRMSError();
@@ -1284,6 +1291,7 @@ void doFinalPlots()
       
       TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
       gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
+      gauss                    ->SetParameter(0,0);          // initialize on central value
       dtSliceVSAeffAny_[sliceX]->Fit("dtFit");
       float sigma     = gauss -> GetParameter(2);
       float sigmaErr  = gauss -> GetParError(2);
@@ -1292,7 +1300,7 @@ void doFinalPlots()
     }// slices for Any
 
     // do slices RMS and fitting for EB
-    if( dtSliceVSAeffEB_[sliceX] -> Integral()  > 10 ){
+    if( dtSliceVSAeffEB_[sliceX] -> Integral()  > 20 ){
       // extract RMS and sigma for each Aeff=const slice
       float RMS       = dtSliceVSAeffEB_[sliceX] -> GetRMS();
       float RMSErr    = dtSliceVSAeffEB_[sliceX] -> GetRMSError();
@@ -1301,6 +1309,7 @@ void doFinalPlots()
       
       TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
       gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
+      gauss                    ->SetParameter(0,0);          // initialize on central value
       dtSliceVSAeffEB_[sliceX]->Fit("dtFit");
       float sigma     = gauss -> GetParameter(2);
       float sigmaErr  = gauss -> GetParError(2);
@@ -1309,7 +1318,7 @@ void doFinalPlots()
     }// slices for EB
 
     // do slices RMS and fitting for EE
-    if( dtSliceVSAeffEE_[sliceX] -> Integral()  > 10 ){
+    if( dtSliceVSAeffEE_[sliceX] -> Integral()  > 20 ){
       // extract RMS and sigma for each Aeff=const slice
       float RMS       = dtSliceVSAeffEE_[sliceX] -> GetRMS();
       float RMSErr    = dtSliceVSAeffEE_[sliceX] -> GetRMSError();
@@ -1318,6 +1327,7 @@ void doFinalPlots()
       
       TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
       gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
+      gauss                    ->SetParameter(0,0);          // initialize on central value
       dtSliceVSAeffEE_[sliceX]->Fit("dtFit");
       float sigma     = gauss -> GetParameter(2);
       float sigmaErr  = gauss -> GetParError(2);
@@ -1328,7 +1338,7 @@ void doFinalPlots()
     // **** Peak fits ****
     
     // do slices RMS and fitting for any peak
-    if( dtSliceVSAeffAnyPeak_[sliceX] -> Integral()  > 10 ){
+    if( dtSliceVSAeffAnyPeak_[sliceX] -> Integral()  > 20 ){
       // extract RMS and sigma for each Aeff=const slice
       float RMS       = dtSliceVSAeffAnyPeak_[sliceX] -> GetRMS();
       float RMSErr    = dtSliceVSAeffAnyPeak_[sliceX] -> GetRMSError();
@@ -1337,6 +1347,7 @@ void doFinalPlots()
       
       TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
       gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
+      gauss                    ->SetParameter(0,0);          // initialize on central value
       dtSliceVSAeffAnyPeak_[sliceX]->Fit("dtFit");
       float sigma     = gauss -> GetParameter(2);
       float sigmaErr  = gauss -> GetParError(2);
@@ -1345,7 +1356,7 @@ void doFinalPlots()
     }// slices for any peak
     
     // do slices RMS and fitting for EB
-    if( dtSliceVSAeffEBPeak_[sliceX] -> Integral()  > 10 ){
+    if( dtSliceVSAeffEBPeak_[sliceX] -> Integral()  > 20 ){
       // extract RMS and sigma for each Aeff=const slice
       float RMS       = dtSliceVSAeffEBPeak_[sliceX] -> GetRMS();
       float RMSErr    = dtSliceVSAeffEBPeak_[sliceX] -> GetRMSError();
@@ -1354,6 +1365,7 @@ void doFinalPlots()
       
       TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
       gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
+      gauss                    ->SetParameter(0,0);          // initialize on central value
       dtSliceVSAeffEBPeak_[sliceX]->Fit("dtFit");
       float sigma     = gauss -> GetParameter(2);
       float sigmaErr  = gauss -> GetParError(2);
@@ -1362,7 +1374,7 @@ void doFinalPlots()
     }// slices for EB
     
     // do slices RMS and fitting for EE
-    if( dtSliceVSAeffEEPeak_[sliceX] -> Integral()  > 10 ){
+    if( dtSliceVSAeffEEPeak_[sliceX] -> Integral()  > 20 ){
       // extract RMS and sigma for each Aeff=const slice
       float RMS       = dtSliceVSAeffEEPeak_[sliceX] -> GetRMS();
       float RMSErr    = dtSliceVSAeffEEPeak_[sliceX] -> GetRMSError();
@@ -1371,6 +1383,7 @@ void doFinalPlots()
       
       TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
       gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
+      gauss                    ->SetParameter(0,0);          // initialize on central value
       dtSliceVSAeffEEPeak_[sliceX]->Fit("dtFit");
       float sigma     = gauss -> GetParameter(2);
       float sigmaErr  = gauss -> GetParError(2);
