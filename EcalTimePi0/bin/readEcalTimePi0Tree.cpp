@@ -31,7 +31,7 @@ typedef std::set<std::pair<int,int> > SetOfIntPairs;
 #define EndcapLimit  3.0
 #define ADCtoGeVEB   0.039
 #define ADCtoGeVEE   0.063
-#define numAeffBins  250
+#define numAeffBins  100
 
 struct ClusterTime {
   int   numCry;
@@ -71,16 +71,17 @@ float minAmpliOverSigma_   = 7;    // dimensionless
 float maxChi2NDF_ = 20;  //TODO: gf configurable
 
 // parameters for histograms and ranges
-int AeffMax_    = 250;
+int AeffMax_    = 100;
 int numDtBins_  = 75;
 int DtMax_      = 15; // useful to catch tails also at low Aeff (<10)
 
 // Consts
-const float sigmaNoiseEB        = 1.06; // ADC 
-const float sigmaNoiseEE        = 2.10; // ADC
+const float sigmaNoiseEB        = 0.75;  // ADC ; using high frequency noise
+const float sigmaNoiseEE        = 1.58; // ADC ; using high frequency noise
 const float timingResParamN     = 35.1; // ns
 const float timingResParamConst = 0.020; //ns
-
+// EB noise from Jean: https://espace.cern.ch/cmsccecal/ECAL%20PFG%20and%20offline%20weekly/default.aspx?InstanceID=35&Paged=Next&p_StartTimeUTC=20090603T140000Z&View={38FE356C-17A7-4C7D-987B-8302CABFAD4F}
+// EE noise from Jean: https://espace.cern.ch/cmsccecal/ECAL%20PFG%20and%20offline%20weekly/default.aspx?InstanceID=44&Paged=Next&p_StartTimeUTC=20090603T140000Z&View={38FE356C-17A7-4C7D-987B-8302CABFAD4F}
 // -------- Histograms -------------------------------------
 // xtals
 TH1F* xtalEnergyHist_;
@@ -389,19 +390,19 @@ void initializeHists()
   dtVSAeffProfAny_ = new TProfile("#Delta(t)  VS  A_{eff}/#sigma_{N} prof","#Delta(t) VS A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
   for (int v=0; v<numAeffBins; v++){// build histograms for RMS and sigma of DeltaT for Any
     float binLeft=(v*AeffMax_/numAeffBins); float binRight=((v+1)*AeffMax_/numAeffBins);
-    sprintf (buffer_, "#Deltat bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
+    sprintf (buffer_, "Aeff bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
     dtSliceVSAeffAny_[v] = new TH1F(buffer_,buffer_,numDtBins_,-DtMax_,DtMax_);  }
   dtRMSVSAeffAny_  = new TH1F("RMS(#Delta(t)) VS   A_{eff}", "RMS(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; RMS(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
   dtSigmaAeffAny_  = new TH1F("#sigma(#Delta(t)) VS   A_{eff}", "#sigma(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
   for (int v=0; v<numAeffBins; v++){// build histograms for RMS and sigma of DeltaT for EB
     float binLeft=(v*AeffMax_/numAeffBins); float binRight=((v+1)*AeffMax_/numAeffBins);
-    sprintf (buffer_, "EB: #Deltat bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
+    sprintf (buffer_, "EB: Aeff bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
     dtSliceVSAeffEB_[v] = new TH1F(buffer_,buffer_,numDtBins_,-DtMax_,DtMax_);  }
   dtRMSVSAeffEB_  = new TH1F("EB: RMS(#Delta(t)) VS   A_{eff}", "EB: RMS(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; RMS(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
   dtSigmaAeffEB_  = new TH1F("EB: #sigma(#Delta(t)) VS   A_{eff}", "EB: #sigma(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
   for (int v=0; v<numAeffBins; v++){// build histograms for RMS and sigma of DeltaT for EE
     float binLeft=(v*AeffMax_/numAeffBins); float binRight=((v+1)*AeffMax_/numAeffBins);
-    sprintf (buffer_, "EE: #Deltat bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
+    sprintf (buffer_, "EE: Aeff bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
     dtSliceVSAeffEE_[v] = new TH1F(buffer_,buffer_,numDtBins_,-DtMax_,DtMax_);  }
   dtRMSVSAeffEE_  = new TH1F("EE: RMS(#Delta(t)) VS   A_{eff}", "EE: RMS(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; RMS(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
   dtSigmaAeffEE_  = new TH1F("EE: #sigma(#Delta(t)) VS   A_{eff}", "EE: #sigma(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
@@ -447,8 +448,8 @@ void initializeHists()
     float binLeft=(v*AeffMax_/numAeffBins); float binRight=((v+1)*AeffMax_/numAeffBins);
     sprintf (buffer_, "EBPeak: #Deltat bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
     dtSliceVSAeffEBPeak_[v] = new TH1F(buffer_,buffer_,numDtBins_,-DtMax_,DtMax_);  }
-  dtRMSVSAeffEBPeak_  = new TH1F("EB: RMS(#Delta(t)) VS   A_{eff}", "EBPeak: RMS(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; RMS(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
-  dtSigmaAeffEBPeak_  = new TH1F("EB: #sigma(#Delta(t)) VS   A_{eff}", "EBPeak: #sigma(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
+  dtRMSVSAeffEBPeak_  = new TH1F("EBpeak: RMS(#Delta(t)) VS   A_{eff}", "EBPeak: RMS(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; RMS(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
+  dtSigmaAeffEBPeak_  = new TH1F("EBpeak: #sigma(#Delta(t)) VS   A_{eff}", "EBPeak: #sigma(#Delta(t)) VS   A_{eff} peak; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
   for (int v=0; v<numAeffBins; v++){// build histograms for RMS and sigma of DeltaT for EE
     float binLeft=(v*AeffMax_/numAeffBins); float binRight=((v+1)*AeffMax_/numAeffBins);
     sprintf (buffer_, "EEPeak: #Deltat bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
@@ -472,12 +473,12 @@ void initializeHists()
   dtPullChi2CutDoubleClusterHistAny_ = new TH1F("DeltaTPullChi2CutDoubleClusterAny","#Delta(t)/#sigma(t) between two clusters EB/EE (pull) with #Chi^{2} cut",100,-5,5);
   dtVsPtDoubleClusterHistAny_ = new TH2F("DeltaTVSPtDoubleClusterAny","#Delta(t)  between two clusters EB/EE VS P_{t}(di-photon) ",50,0,10,50,-25,25);
 
-  dtDoubleClusterHistPi0Peak_  = new TH1F("DeltaTDoubleClusterPi0Peak","#Delta(t) between two clusters in #pi^{0} mass peak EB/EE",100,-25,25);
-  dtDoubleClusterHistPi0PeakEE_= new TH1F("DeltaTDoubleClusterPi0PeakEE","#Delta(t) between two EE clusters in #pi^{0} mass peak",100,-25,25);
-  dtDoubleClusterHistPi0PeakEB_= new TH1F("DeltaTDoubleClusterPi0PeakEB","#Delta(t) between two EB clusters in #pi^{0} mass peak",100,-25,25);
-  dtPullDoubleClusterHistPi0Peak_  = new TH1F("DeltaTPullDoubleClusterPeak","#Delta(t)/#sigma(t) between two clusters EB/EE (pull)",100,-5,5);
-  dtPullDoubleClusterHistPi0PeakEE_= new TH1F("DeltaTPullDoubleClusterPeakEE","#Delta(t)/#sigma(t) between two clusters EE (pull)",100,-5,5);
-  dtPullDoubleClusterHistPi0PeakEB_= new TH1F("DeltaTPullDoubleClusterPeakEB","#Delta(t)/#sigma(t) between two clusters EB (pull)",100,-5,5);
+  dtDoubleClusterHistPi0Peak_  = new TH1F("DeltaTDoubleClusterPi0Peak","#Delta(t) between two clusters under #pi^{0} mass peak EB/EE; #Delta(#Delta(t) [ns]t) [ns]",100,-25,25);
+  dtDoubleClusterHistPi0PeakEE_= new TH1F("DeltaTDoubleClusterPi0PeakEE","#Delta(t) between two EE clusters under #pi^{0} mass peak; #Delta(t) [ns]",100,-25,25);
+  dtDoubleClusterHistPi0PeakEB_= new TH1F("DeltaTDoubleClusterPi0PeakEB","#Delta(t) between two EB clusters under #pi^{0} mass peak; #Delta(t) [ns]",100,-25,25);
+  dtPullDoubleClusterHistPi0Peak_  = new TH1F("DeltaTPullDoubleClusterPeak","#Delta(t)/#sigma(t) between two clusters EB/EE  under #pi^{0} mass peak  (pull)",100,-5,5);
+  dtPullDoubleClusterHistPi0PeakEE_= new TH1F("DeltaTPullDoubleClusterPeakEE","#Delta(t)/#sigma(t) between two clusters EE  under #pi^{0} mass peak (pull)",100,-5,5);
+  dtPullDoubleClusterHistPi0PeakEB_= new TH1F("DeltaTPullDoubleClusterPeakEB","#Delta(t)/#sigma(t) between two clusters EB  under #pi^{0} mass peak (pull)",100,-5,5);
   dtPullChi2CutDoubleClusterHistPi0Peak_  = new TH1F("DeltaTPullCHi2CutDoubleClusterPeak","#Delta(t)/#sigma(t) between two clusters EB/EE (pull) with #Chi^{2} cut",100,-5,5);
   dtPullChi2CutDoubleClusterHistPi0PeakEE_= new TH1F("DeltaTPullCHi2CutDoubleClusterPeakEE","#Delta(t)/#sigma(t) between two clusters EE (pull) with #Chi^{2} cut",100,-5,5);
   dtPullChi2CutDoubleClusterHistPi0PeakEB_= new TH1F("DeltaTPullCHi2CutDoubleClusterPeakEB","#Delta(t)/#sigma(t) between two clusters EB (pull) with #Chi^{2} cut",100,-5,5);
