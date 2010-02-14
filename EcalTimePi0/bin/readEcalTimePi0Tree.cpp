@@ -77,7 +77,9 @@ int DtMax_      = 15; // useful to catch tails also at low Aeff (<10)
 
 // Consts
 const float sigmaNoiseEB        = 0.75;  // ADC ; using high frequency noise
-const float sigmaNoiseEE        = 1.58; // ADC ; using high frequency noise
+const float sigmaNoiseEE        = 1.58;  // ADC ; using high frequency noise
+//const float sigmaNoiseEB        = 1.06;  // ADC ; using total single-sample noise
+//const float sigmaNoiseEE        = 2.10;  // ADC ; using total single-sample noise
 const float timingResParamN     = 35.1; // ns
 const float timingResParamConst = 0.020; //ns
 // EB noise from Jean: https://espace.cern.ch/cmsccecal/ECAL%20PFG%20and%20offline%20weekly/default.aspx?InstanceID=35&Paged=Next&p_StartTimeUTC=20090603T140000Z&View={38FE356C-17A7-4C7D-987B-8302CABFAD4F}
