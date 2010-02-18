@@ -76,12 +76,14 @@ int numDtBins_  = 75;
 int DtMax_      = 15; // useful to catch tails also at low Aeff (<10)
 
 // Consts
-const float sigmaNoiseEB        = 0.75;  // ADC ; using high frequency noise
-const float sigmaNoiseEE        = 1.58;  // ADC ; using high frequency noise
-//const float sigmaNoiseEB        = 1.06;  // ADC ; using total single-sample noise
-//const float sigmaNoiseEE        = 2.10;  // ADC ; using total single-sample noise
-const float timingResParamN     = 35.1; // ns
-const float timingResParamConst = 0.020; //ns
+//const float sigmaNoiseEB        = 0.75;  // ADC ; using high frequency noise
+//const float sigmaNoiseEE        = 1.58;  // ADC ; using high frequency noise
+const float sigmaNoiseEB        = 1.06;  // ADC ; using total single-sample noise
+const float sigmaNoiseEE        = 2.10;  // ADC ; using total single-sample noise
+const float timingResParamN     = 35.1; // ns ; Fig. 2 from CFT-09-006
+const float timingResParamConst = 0.020; //ns ;   "
+//const float timingResParamN     = 31.5; // ns ; Fig. 5 from CFT-09-006
+//const float timingResParamConst = 0.38; //ns ;   "
 // EB noise from Jean: https://espace.cern.ch/cmsccecal/ECAL%20PFG%20and%20offline%20weekly/default.aspx?InstanceID=35&Paged=Next&p_StartTimeUTC=20090603T140000Z&View={38FE356C-17A7-4C7D-987B-8302CABFAD4F}
 // EE noise from Jean: https://espace.cern.ch/cmsccecal/ECAL%20PFG%20and%20offline%20weekly/default.aspx?InstanceID=44&Paged=Next&p_StartTimeUTC=20090603T140000Z&View={38FE356C-17A7-4C7D-987B-8302CABFAD4F}
 // -------- Histograms -------------------------------------
@@ -192,6 +194,9 @@ TH1F*  singleClusterChi2HistEBPeak_;
 TH1F*  singleClusterChi2NDFHistEBPeak_;
 TH1F*  singleClusterChi2HistEEPeak_;
 TH1F*  singleClusterChi2NDFHistEEPeak_;
+TH1F*  dtPullSingleClusterHistPi0Peak_;
+TH1F*  dtPullSingleClusterHistPi0PeakEE_;
+TH1F*  dtPullSingleClusterHistPi0PeakEB_;
 
 // double cluster resolution
 TH1F* dtDoubleClusterHistAny_;
@@ -417,9 +422,9 @@ void initializeHists()
   singleClusterChi2HistEE_ = new TH1F("clusterChi2EE","#Chi^{2} of crystal times in a cluster (EE)",numChi2Bins,0,chi2Max);
   singleClusterChi2NDFHistEE_ = new TH1F("clusterChi2NDFEE","#Chi^{2}/NDF of crystal times in a cluster (EE)",numChi2NDFBins,0,chi2NDFMax);
 
-  deltaTCrysVsAmplitudeAny_ = new TH2F("deltaTCrysVsAmplitudeAny","#Delta(t_{cry2}-t_{cry1}), A/#sigma_{cry1} > 15 vs. A/#sigma_{cry2} (EB/EE);A_{2}/#sigma_{2};ns",50,0,100,1000,-50,50);
-  deltaTCrysVsAmplitudeEB_ = new TH2F("deltaTCrysVsAmplitudeEB","#Delta(t_{cry2}-t_{cry1}), A/#sigma_{cry1} > 15 vs. A/#sigma_{cry2} (EB);A_{2}/#sigma_{2};ns",50,0,100,1000,-50,50);
-  deltaTCrysVsAmplitudeEE_ = new TH2F("deltaTCrysVsAmplitudeEE","#Delta(t_{cry2}-t_{cry1}), A/#sigma_{cry1} > 15 vs. A/#sigma_{cry2} (EE);A_{2}/#sigma_{2};ns",50,0,100,1000,-50,50);
+  deltaTCrysVsAmplitudeAny_ = new TH2F("deltaTCrysVsAmplitudeAny","#Delta(t_{cry2}-t_{cry1}), A/#sigma_{cry1} > 30 vs. A/#sigma_{cry2} (EB/EE);A_{2}/#sigma_{2};ns",50,0,100,1000,-50,50);
+  deltaTCrysVsAmplitudeEB_ = new TH2F("deltaTCrysVsAmplitudeEB","#Delta(t_{cry2}-t_{cry1}), A/#sigma_{cry1} > 30 vs. A/#sigma_{cry2} (EB);A_{2}/#sigma_{2};ns",50,0,100,1000,-50,50);
+  deltaTCrysVsAmplitudeEE_ = new TH2F("deltaTCrysVsAmplitudeEE","#Delta(t_{cry2}-t_{cry1}), A/#sigma_{cry1} > 30 vs. A/#sigma_{cry2} (EE);A_{2}/#sigma_{2};ns",50,0,100,1000,-50,50);
 
   // Initialize histograms -- selection on pi0 candidates 
   diPhotonPeakOccupancyAny_     = new TH2F("#pi_{0} occupancy (di-photon peak)","di-photon peak;#eta;#phi",50,-3.5,3.5,50,-1*TMath::Pi(),TMath::Pi());
@@ -467,6 +472,9 @@ void initializeHists()
   singleClusterChi2NDFHistEBPeak_ = new TH1F("clusterChi2NDFEBPeak","#Chi^{2}/NDF of crystal times in a cluster (EB peak)",numChi2NDFBins,0,chi2NDFMax);
   singleClusterChi2HistEEPeak_ = new TH1F("clusterChi2EEPeak","#Chi^{2} of crystal times in a cluster (EE peak)",numChi2Bins,0,chi2Max);
   singleClusterChi2NDFHistEEPeak_ = new TH1F("clusterChi2NDFEEPeak","#Chi^{2}/NDF of crystal times in a cluster (EE peak)",numChi2NDFBins,0,chi2NDFMax);
+  dtPullSingleClusterHistPi0Peak_  = new TH1F("DeltaTPullSingleClusterPeak","#Delta(t)/#sigma(t) between two crystals EB/EE  under #pi^{0} mass peak (pull)",100,-5,5);
+  dtPullSingleClusterHistPi0PeakEB_  = new TH1F("DeltaTPullSingleClusterPeakEB","#Delta(t)/#sigma(t) between two crystals EB  under #pi^{0} mass peak (pull)",100,-5,5);
+  dtPullSingleClusterHistPi0PeakEE_  = new TH1F("DeltaTPullSingleClusterPeakEE","#Delta(t)/#sigma(t) between two crystals EE  under #pi^{0} mass peak (pull)",100,-5,5);
 
   // should these DeltaT be vary in [-DtMax_, DtMax_] ? Once fixed/understood
   // Initialize histograms -- double cluster resolution
@@ -708,6 +716,9 @@ void writeHists()
   singleClusterChi2NDFHistEBPeak_->Write();
   singleClusterChi2HistEEPeak_->Write();
   singleClusterChi2NDFHistEEPeak_->Write();
+  dtPullSingleClusterHistPi0Peak_->Write();
+  dtPullSingleClusterHistPi0PeakEB_->Write();
+  dtPullSingleClusterHistPi0PeakEE_->Write();
 
   // write out 1-d control plots for DeltaT RMS and sigma for any peak
   TDirectory *singleClusResolutionSlicesPeak = singleClusResolutionPi0Clusters->mkdir("dtslices-anyPeak");
@@ -769,15 +780,15 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex)
       sigmaNoiseOfThis=sigmaNoiseEE;
       thisIsInEB=false;    }
     else    {  std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
-    float ampliOfThis = treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] / sigmaNoiseOfThis; 
-    if( ampliOfThis < minAmpliOverSigma_) continue;
+    float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] / sigmaNoiseOfThis; 
+    if( ampliOverSigOfThis < minAmpliOverSigma_) continue;
 
     numCrystals++;
     float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry];
-    float sigmaOfThis = sqrt(pow(timingResParamN/ampliOfThis,2)+pow(timingResParamConst,2));
+    float sigmaOfThis = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
 
     //std::cout << "GFdeb eampli: " << treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] //gfdebug
-    //          << " ampliOfThis: " << ampliOfThis
+    //          << " ampliOverSigOfThis: " << ampliOverSigOfThis
     //          << " timeOfThis: " << timeOfThis
     //          << " sigmaOfThis: " << sigmaOfThis
     //          << std::endl;//gfdebug
@@ -806,11 +817,11 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex)
 	}
 	else    {  std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
 	
-	float ampliOfThis = treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] / sigmaNoiseOfThis; 
-	if( ampliOfThis < minAmpliOverSigma_) continue;
+	float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] / sigmaNoiseOfThis; 
+	if( ampliOverSigOfThis < minAmpliOverSigma_) continue;
 	
 	float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry];
-	float sigmaOfThis = sqrt(pow(timingResParamN/ampliOfThis,2)+pow(timingResParamConst,2));
+	float sigmaOfThis = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
 	
 	chi2 += pow( (timeOfThis-bestTime)/sigmaOfThis, 2);
 	
@@ -892,8 +903,10 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
       else if (treeVars_.xtalInBCIy[bCluster][thisCry]  !=-999999)   {sigmaNoiseOfThis=sigmaNoiseEE; thisIsInEB=false;}
       else {std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
 
-      float ampliOfThis = treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry] / sigmaNoiseOfThis; 
-      if( ampliOfThis < minAmpliOverSigma_) continue;
+      float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry] / sigmaNoiseOfThis; 
+      float ampliOfThis = treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry]; 
+      float sigmaOfThis = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
+      if( ampliOverSigOfThis < minAmpliOverSigma_) continue;
 
       // loop on the other cry among the components of a basic cluster
       for(int thatCry=thisCry+1; thatCry<treeVars_.nXtalsInCluster[bCluster]; thatCry++)
@@ -903,35 +916,38 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
         else if (treeVars_.xtalInBCIy[bCluster][thatCry]  !=-999999)   sigmaNoiseOfThat=sigmaNoiseEE;
         else {std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
 
-        float ampliOfThat = treeVars_.xtalInBCAmplitudeADC[bCluster][thatCry] / sigmaNoiseOfThat; 
+        float ampliOverSigOfThat = treeVars_.xtalInBCAmplitudeADC[bCluster][thatCry] / sigmaNoiseOfThat; 
+        float ampliOfThat = treeVars_.xtalInBCAmplitudeADC[bCluster][thatCry];
+        float sigmaOfThat = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
 
         float Aeff = ampliOfThis * ampliOfThat / sqrt( pow(ampliOfThis,2) + pow(ampliOfThat,2) );
         float dt  = treeVars_.xtalInBCTime[bCluster][thisCry] - treeVars_.xtalInBCTime[bCluster][thatCry]; 
+        float errorDt = sqrt( pow(sigmaOfThis,2) + pow(sigmaOfThat,2));
 
         // Insert deltaT vs. ampli plots here
-        if(ampliOfThis > 15 && ampliOfThat > 1) // at least require the 2nd cry to have 1 ampli/sigma
+        if(ampliOverSigOfThis > 30 && ampliOverSigOfThat > 1) // at least require the 2nd cry to have 1 ampli/sigma
         {
-          deltaTCrysVsAmplitudeAny_->Fill(ampliOfThat,-1*dt);
+          deltaTCrysVsAmplitudeAny_->Fill(ampliOverSigOfThat,-1*dt);
           if(thisIsInEB)
-            deltaTCrysVsAmplitudeEB_->Fill(ampliOfThat,-1*dt);
+            deltaTCrysVsAmplitudeEB_->Fill(ampliOverSigOfThat,-1*dt);
           else
-            deltaTCrysVsAmplitudeEE_->Fill(ampliOfThat,-1*dt);
+            deltaTCrysVsAmplitudeEE_->Fill(ampliOverSigOfThat,-1*dt);
         }
         
         // If cry below amp. threshold, skip it
-        if( ampliOfThat < minAmpliOverSigma_) continue;
+        if( ampliOverSigOfThat < minAmpliOverSigma_) continue;
 
 
         // for debug
-        //std::cout << "ampliOfThis: " << ampliOfThis << "\tampliOfThat: " << ampliOfThat
+        //std::cout << "ampliOverSigOfThis: " << ampliOverSigOfThis << "\tampliOverSigOfThat: " << ampliOverSigOfThat
         //          << "\n timeOfThis: " << treeVars_.xtalInBCTime[bCluster][thisCry] << "\ttimeOfThat: " << treeVars_.xtalInBCTime[bCluster][thatCry]
         //          << "\n Aeff: " << Aeff << "\tdt: " << dt 
         //          << std::endl;
 
         if(!isAfterPi0Selection)
         {
-          dtVSAeffHistAny_  -> Fill(Aeff, dt); 
-          dtVSAeffProfAny_  -> Fill(Aeff, dt); 
+          dtVSAeffHistAny_  -> Fill(Aeff, dt); //FIXME: average of sigmaEB/EE?
+          dtVSAeffProfAny_  -> Fill(Aeff, dt); //FIXME: average of sigmaEB/EE?
           if (thisIsInEB) {
             if      (Aeff < 6)   dtUpToQuarterGeVEB_->Fill(dt);
             else if (Aeff < 12)  dtUpToHalfGeVEB_   ->Fill(dt);
@@ -939,8 +955,8 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
             else if (Aeff < 48)  dtUpToTwoGeVEB_    ->Fill(dt);
             else                 dtUpOverTwoGeVEB_  ->Fill(dt);
 
-            dtVSAeffHistEB_ -> Fill(Aeff, dt); 
-            dtVSAeffProfEB_ -> Fill(Aeff, dt); 
+            dtVSAeffHistEB_ -> Fill(Aeff/sigmaNoiseEB, dt); 
+            dtVSAeffProfEB_ -> Fill(Aeff/sigmaNoiseEB, dt); 
           }
           else      {
             if      (Aeff < 6)   dtUpToThreeQuarterGeVEE_->Fill(dt);
@@ -949,13 +965,15 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
             else if (Aeff < 48)  dtUpToSixGeVEE_         ->Fill(dt);
             else                 dtUpOverSixGeVEE_       ->Fill(dt);
 
-            dtVSAeffHistEE_ -> Fill(Aeff, dt); 
-            dtVSAeffProfEE_ -> Fill(Aeff, dt); }
+            dtVSAeffHistEE_ -> Fill(Aeff/sigmaNoiseEE, dt); 
+            dtVSAeffProfEE_ -> Fill(Aeff/sigmaNoiseEE, dt);
+          }
         }
         else // clusters matching the pi0 mass
         {
-          dtVSAeffHistAnyPeak_  -> Fill(Aeff, dt); 
-          dtVSAeffProfAnyPeak_  -> Fill(Aeff, dt); 
+          dtVSAeffHistAnyPeak_  -> Fill(Aeff, dt); //FIXME: average of sigmaEB/EE?
+          dtVSAeffProfAnyPeak_  -> Fill(Aeff, dt); //FIXME: average of sigmaEB/EE?
+          dtPullSingleClusterHistPi0Peak_->Fill(dt/errorDt);
           if (thisIsInEB) {
             if      (Aeff < 6)   dtUpToQuarterGeVEBPeak_->Fill(dt);
             else if (Aeff < 12)  dtUpToHalfGeVEBPeak_   ->Fill(dt);
@@ -963,8 +981,9 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
             else if (Aeff < 48)  dtUpToTwoGeVEBPeak_    ->Fill(dt);
             else                 dtUpOverTwoGeVEBPeak_  ->Fill(dt);
 
-            dtVSAeffHistEBPeak_ -> Fill(Aeff, dt); 
-            dtVSAeffProfEBPeak_ -> Fill(Aeff, dt); 
+            dtVSAeffHistEBPeak_ -> Fill(Aeff/sigmaNoiseEB, dt); 
+            dtVSAeffProfEBPeak_ -> Fill(Aeff/sigmaNoiseEB, dt); 
+            dtPullSingleClusterHistPi0PeakEB_->Fill(dt/errorDt);
           }
           else      {
             if      (Aeff < 6)   dtUpToThreeQuarterGeVEEPeak_->Fill(dt);
@@ -973,8 +992,10 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
             else if (Aeff < 48)  dtUpToSixGeVEEPeak_         ->Fill(dt);
             else                 dtUpOverSixGeVEEPeak_       ->Fill(dt);
 
-            dtVSAeffHistEEPeak_ -> Fill(Aeff, dt); 
-            dtVSAeffProfEEPeak_ -> Fill(Aeff, dt); }
+            dtVSAeffHistEEPeak_ -> Fill(Aeff/sigmaNoiseEE, dt); 
+            dtVSAeffProfEEPeak_ -> Fill(Aeff/sigmaNoiseEE, dt);
+            dtPullSingleClusterHistPi0PeakEE_->Fill(dt/errorDt);
+          }
         } // else-if pi0 selection
 
       }// loop on thatCry
@@ -1271,7 +1292,7 @@ void doDoubleClusterResolutionPlots(SetOfIntPairs myBCpairs, bool isAfterPi0Sele
 
 
 // ---------------------------------------------------------------------------------------
-// ------------------ Function to do double cluster resolution studies -------------------
+// ------------------ Function to do slicing and fitting of plots ------------------------
 void doFinalPlots()
 {
   for (int sliceX=0; sliceX<numAeffBins; sliceX++)  {//looping on the X axis, at constant Aeff
