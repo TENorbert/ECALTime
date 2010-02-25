@@ -29,8 +29,10 @@ typedef std::set<std::pair<int,int> > SetOfIntPairs;
 
 #define BarrelLimit  1.479
 #define EndcapLimit  3.0
+
 #define ADCtoGeVEB   0.039
 #define ADCtoGeVEE   0.063
+
 #define numAeffBins  100
 
 struct ClusterTime {
@@ -46,7 +48,8 @@ EcalTimePi0TreeContent treeVars_;
 TFile* saving_;
 std::vector<std::string> listOfFiles_;
 bool speak_=false;
-char buffer_ [50];
+char buffer_ [75];
+std::string bufferTitle_; 
 // mass spectraVars
 float pi0MassEB_=0;
 float pi0WidthEB_=0;
@@ -146,9 +149,9 @@ TProfile* dtVSAeffProfAny_;
 TProfile* dtVSAeffProfEB_;
 TProfile* dtVSAeffProfEE_;
 
-TH1F*    dtRMSVSAeffAny_; TH1F*    dtSigmaAeffAny_;
-TH1F*    dtRMSVSAeffEB_;  TH1F*    dtSigmaAeffEB_;
-TH1F*    dtRMSVSAeffEE_;  TH1F*    dtSigmaAeffEE_;
+TH1F*  dtRMSVSAeffAny_; TH1F*  dtSigmaAeffAny_;
+TH1F*  dtRMSVSAeffEB_;  TH1F*  dtSigmaAeffEB_;
+TH1F*  dtRMSVSAeffEE_;  TH1F*  dtSigmaAeffEE_;
 TH1F*  singleClusterChi2HistAny_;
 TH1F*  singleClusterChi2NDFHistAny_;
 TH1F*  singleClusterChi2HistEB_;
@@ -216,6 +219,33 @@ TH1F* dtPullChi2CutDoubleClusterHistPi0PeakEB_;
 TH2F* dtVsPtDoubleClusterHistPi0Peak_;
 TH2F* dtVsPtDoubleClusterHistPi0PeakEE_;
 TH2F* dtVsPtDoubleClusterHistPi0PeakEB_;
+
+// double cluster studies VS Aeff
+TH2F* dtSeedsVsAeffDoubleClusterHist_;             TH1F*    dtSeedsSigmaAeffAny_;
+TH2F* dtSeedsVsAeffDoubleClusterHistEE_;           TH1F*    dtSeedsSigmaAeffEE_;
+TH2F* dtSeedsVsAeffDoubleClusterHistEB_;           TH1F*    dtSeedsSigmaAeffEB_;
+TH2F* dtSeedsVsAeffDoubleClusterHistPi0Peak_;      TH1F*    dtSeedsSigmaAeffPi0Peak_;
+TH2F* dtSeedsVsAeffDoubleClusterHistPi0PeakEE_;    TH1F*    dtSeedsSigmaAeffPi0PeakEE_;
+TH2F* dtSeedsVsAeffDoubleClusterHistPi0PeakEB_;    TH1F*    dtSeedsSigmaAeffPi0PeakEB_;
+TH2F* dtVsAeffDoubleClusterHist_;                  TH1F*    dtClustersSigmaAeffAny_;
+TH2F* dtVsAeffDoubleClusterHistEE_;                TH1F*    dtClustersSigmaAeffEE_;
+TH2F* dtVsAeffDoubleClusterHistEB_;                TH1F*    dtClustersSigmaAeffEB_;
+TH2F* dtVsAeffDoubleClusterHistPi0Peak_;           TH1F*    dtClustersSigmaAeffPi0Peak_;
+TH2F* dtVsAeffDoubleClusterHistPi0PeakEE_;         TH1F*    dtClustersSigmaAeffPi0PeakEE_;
+TH2F* dtVsAeffDoubleClusterHistPi0PeakEB_;         TH1F*    dtClustersSigmaAeffPi0PeakEB_;
+
+TH1F* dtSeedsSlicesVsAeffDoubleClusterHist_[numAeffBins];         
+TH1F* dtSeedsSlicesVsAeffDoubleClusterHistEE_[numAeffBins];       
+TH1F* dtSeedsSlicesVsAeffDoubleClusterHistEB_[numAeffBins];       
+TH1F* dtSeedsSlicesVsAeffDoubleClusterHistPi0Peak_[numAeffBins];  
+TH1F* dtSeedsSlicesVsAeffDoubleClusterHistPi0PeakEE_[numAeffBins];
+TH1F* dtSeedsSlicesVsAeffDoubleClusterHistPi0PeakEB_[numAeffBins];
+TH1F* dtSlicesVsAeffDoubleClusterHist_[numAeffBins];              
+TH1F* dtSlicesVsAeffDoubleClusterHistEE_[numAeffBins];            
+TH1F* dtSlicesVsAeffDoubleClusterHistEB_[numAeffBins];            
+TH1F* dtSlicesVsAeffDoubleClusterHistPi0Peak_[numAeffBins];       
+TH1F* dtSlicesVsAeffDoubleClusterHistPi0PeakEE_[numAeffBins];     
+TH1F* dtSlicesVsAeffDoubleClusterHistPi0PeakEB_[numAeffBins];     
 
 
 
@@ -333,8 +363,8 @@ void parseArguments(int argc, char** argv)
 
 // ---------------------------------------------------------------------------------------
 // ------------------ Function to initialize the histograms ------------------------------
-void initializeHists()
-{
+void initializeHists(){
+//initializeHists
   int numChi2Bins = 400;
   int chi2Max = 200;
   int numChi2NDFBins = 200;
@@ -398,19 +428,22 @@ void initializeHists()
   for (int v=0; v<numAeffBins; v++){// build histograms for RMS and sigma of DeltaT for Any
     float binLeft=(v*AeffMax_/numAeffBins); float binRight=((v+1)*AeffMax_/numAeffBins);
     sprintf (buffer_, "Aeff bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
-    dtSliceVSAeffAny_[v] = new TH1F(buffer_,buffer_,numDtBins_,-DtMax_,DtMax_);  }
+    bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
+    dtSliceVSAeffAny_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  }
   dtRMSVSAeffAny_  = new TH1F("RMS(#Delta(t)) VS   A_{eff}", "RMS(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; RMS(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
   dtSigmaAeffAny_  = new TH1F("#sigma(#Delta(t)) VS   A_{eff}", "#sigma(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
   for (int v=0; v<numAeffBins; v++){// build histograms for RMS and sigma of DeltaT for EB
     float binLeft=(v*AeffMax_/numAeffBins); float binRight=((v+1)*AeffMax_/numAeffBins);
     sprintf (buffer_, "EB: Aeff bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
-    dtSliceVSAeffEB_[v] = new TH1F(buffer_,buffer_,numDtBins_,-DtMax_,DtMax_);  }
+    bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
+    dtSliceVSAeffEB_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  }
   dtRMSVSAeffEB_  = new TH1F("EB: RMS(#Delta(t)) VS   A_{eff}", "EB: RMS(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; RMS(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
   dtSigmaAeffEB_  = new TH1F("EB: #sigma(#Delta(t)) VS   A_{eff}", "EB: #sigma(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
   for (int v=0; v<numAeffBins; v++){// build histograms for RMS and sigma of DeltaT for EE
     float binLeft=(v*AeffMax_/numAeffBins); float binRight=((v+1)*AeffMax_/numAeffBins);
     sprintf (buffer_, "EE: Aeff bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
-    dtSliceVSAeffEE_[v] = new TH1F(buffer_,buffer_,numDtBins_,-DtMax_,DtMax_);  }
+    bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
+    dtSliceVSAeffEE_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  }
   dtRMSVSAeffEE_  = new TH1F("EE: RMS(#Delta(t)) VS   A_{eff}", "EE: RMS(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; RMS(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
   dtSigmaAeffEE_  = new TH1F("EE: #sigma(#Delta(t)) VS   A_{eff}", "EE: #sigma(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
   dtVSAeffProfEB_  = new TProfile("EB:  #Delta(t)   VS  A_{eff}/#sigma_{N} prof","EB:  #Delta(t)  VS  A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
@@ -448,19 +481,22 @@ void initializeHists()
   for (int v=0; v<numAeffBins; v++){// build histograms for RMS and sigma of DeltaT for Any
     float binLeft=(v*AeffMax_/numAeffBins); float binRight=((v+1)*AeffMax_/numAeffBins);
     sprintf (buffer_, "Peak: #Deltat bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
-    dtSliceVSAeffAnyPeak_[v] = new TH1F(buffer_,buffer_,numDtBins_,-DtMax_,DtMax_);  }
+    bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
+    dtSliceVSAeffAnyPeak_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  }
   dtRMSVSAeffAnyPeak_  = new TH1F("RMS(#Delta(t)) VS   A_{eff}", "Peak: RMS(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; RMS(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
   dtSigmaAeffAnyPeak_  = new TH1F("#sigma(#Delta(t)) VS   A_{eff}", "Peak: #sigma(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
   for (int v=0; v<numAeffBins; v++){// build histograms for RMS and sigma of DeltaT for EB
     float binLeft=(v*AeffMax_/numAeffBins); float binRight=((v+1)*AeffMax_/numAeffBins);
     sprintf (buffer_, "EBPeak: #Deltat bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
-    dtSliceVSAeffEBPeak_[v] = new TH1F(buffer_,buffer_,numDtBins_,-DtMax_,DtMax_);  }
+    bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
+    dtSliceVSAeffEBPeak_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  }
   dtRMSVSAeffEBPeak_  = new TH1F("EBpeak: RMS(#Delta(t)) VS   A_{eff}", "EBPeak: RMS(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; RMS(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
   dtSigmaAeffEBPeak_  = new TH1F("EBpeak: #sigma(#Delta(t)) VS   A_{eff}", "EBPeak: #sigma(#Delta(t)) VS   A_{eff} peak; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
   for (int v=0; v<numAeffBins; v++){// build histograms for RMS and sigma of DeltaT for EE
     float binLeft=(v*AeffMax_/numAeffBins); float binRight=((v+1)*AeffMax_/numAeffBins);
     sprintf (buffer_, "EEPeak: #Deltat bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
-    dtSliceVSAeffEEPeak_[v] = new TH1F(buffer_,buffer_,numDtBins_,-DtMax_,DtMax_);  }
+    bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
+    dtSliceVSAeffEEPeak_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  }
   dtRMSVSAeffEEPeak_  = new TH1F("EEPeak: RMS(#Delta(t)) VS   A_{eff}", "EE: RMS(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; RMS(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
   dtSigmaAeffEEPeak_  = new TH1F("EEPeak: #sigma(#Delta(t)) VS   A_{eff}", "EE: #sigma(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
   dtVSAeffProfAnyPeak_ = new TProfile("Peak: #Delta(t) VS A_{eff}/#sigma_{N} prof","Peak: #Delta(t) VS A_{eff}/#sigma_{N} prof",numAeffBins,0.,AeffMax_,-DtMax_,DtMax_);
@@ -495,7 +531,98 @@ void initializeHists()
   dtVsPtDoubleClusterHistPi0Peak_  = new TH2F("DeltaTVSPtDoubleClusterPeak","#Delta(t) between two clusters EB/EE VS P_{t}(#pi_{0}) ",50,0,10,50,-25,25);
   dtVsPtDoubleClusterHistPi0PeakEE_= new TH2F("DeltaTVSPtDoubleClusterPeakEE","#Delta(t) between two clusters EE VS P_{t}(#pi_{0}) ",50,0,10,50,-25,25);
   dtVsPtDoubleClusterHistPi0PeakEB_= new TH2F("DeltaTVSPtDoubleClusterPeakEB","#Delta(t) between two clusters EB VS P_{t}(#pi_{0}) ",50,0,10,50,-25,25);
-}
+
+  dtSeedsVsAeffDoubleClusterHist_  = new TH2F("DeltaTSeedsVSAeffDoubleClusterPeak","#Delta(t) between clusters seeds VS A_{eff} of seeds) ",numAeffBins,0,AeffMax_,numDtBins_,-DtMax_,DtMax_);
+  dtSeedsVsAeffDoubleClusterHistEE_= new TH2F("DeltaTSeedsVSAeffDoubleClusterPeakEE","#Delta(t) between clusters seeds EE VS A_{eff} of seeds",numAeffBins,0,AeffMax_,numDtBins_,-DtMax_,DtMax_);
+  dtSeedsVsAeffDoubleClusterHistEB_= new TH2F("DeltaTSeedsVSAeffDoubleClusterPeakEB","#Delta(t) between clusters seeds EB VS VS A_{eff} of seeds",numAeffBins,0,AeffMax_,numDtBins_,-DtMax_,DtMax_);
+
+  dtSeedsVsAeffDoubleClusterHistPi0Peak_  = new TH2F("DeltaTSeedsVSAeffDoubleClusterPeak","#Delta(t) between clusters seeds VS A_{eff} of seeds",numAeffBins,0,AeffMax_,numDtBins_,-DtMax_,DtMax_);
+  dtSeedsVsAeffDoubleClusterHistPi0PeakEE_= new TH2F("DeltaTSeedsVSAeffDoubleClusterPeakEE","#Delta(t) between clusters seeds VS A_{eff} of seeds",numAeffBins,0,AeffMax_,numDtBins_,-DtMax_,DtMax_);
+  dtSeedsVsAeffDoubleClusterHistPi0PeakEB_= new TH2F("DeltaTSeedsVSAeffDoubleClusterPeakEB","#Delta(t) between clusters seeds VS A_{eff} of seeds",numAeffBins,0,AeffMax_,numDtBins_,-DtMax_,DtMax_);
+
+
+  dtVsAeffDoubleClusterHist_  = new TH2F("DeltaTVSAeffDoubleClusterPeak","#Delta(t) between clusters VS A_{eff} of seeds) ",numAeffBins,0,AeffMax_,numDtBins_,-DtMax_,DtMax_);
+  dtVsAeffDoubleClusterHistEE_= new TH2F("DeltaTVSAeffDoubleClusterPeakEE","#Delta(t) between clusters EE VS A_{eff} of seeds",numAeffBins,0,AeffMax_,numDtBins_,-DtMax_,DtMax_);
+  dtVsAeffDoubleClusterHistEB_= new TH2F("DeltaTVSAeffDoubleClusterPeakEB","#Delta(t) between clusters EB VS A_{eff} of seeds",numAeffBins,0,AeffMax_,numDtBins_,-DtMax_,DtMax_);
+
+  dtVsAeffDoubleClusterHistPi0Peak_  = new TH2F("DeltaTVSAeffDoubleClusterPeak","#Delta(t) between clusters VS A_{eff} of seeds",numAeffBins,0,AeffMax_,numDtBins_,-DtMax_,DtMax_);
+  dtVsAeffDoubleClusterHistPi0PeakEE_= new TH2F("DeltaTVSAeffDoubleClusterPeakEE","#Delta(t) between clusters VS A_{eff} of seeds",numAeffBins,0,AeffMax_,numDtBins_,-DtMax_,DtMax_);
+  dtVsAeffDoubleClusterHistPi0PeakEB_= new TH2F("DeltaTVSAeffDoubleClusterPeakEB","#Delta(t) between clusters VS A_{eff} of seeds",numAeffBins,0,AeffMax_,numDtBins_,-DtMax_,DtMax_);
+
+  
+  // double cluster studies VS Aeff
+  dtSeedsSigmaAeffAny_= new TH1F("#sigma(#Delta(t)) VS A_{eff} (seeds)", "#sigma(#Delta(t)) VS A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
+  dtSeedsSigmaAeffEE_= new TH1F("EE #sigma(#Delta(t)) VS A_{eff} (seeds)", "EE #sigma(#Delta(t)) VS A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
+  dtSeedsSigmaAeffEB_= new TH1F("EB #sigma(#Delta(t)) VS A_{eff} (seeds)", "EB #sigma(#Delta(t)) VS A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
+  dtSeedsSigmaAeffPi0Peak_= new TH1F("Peak #sigma(#Delta(t)) VS A_{eff} (seeds)", "Peak #sigma(#Delta(t)) VS A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
+  dtSeedsSigmaAeffPi0PeakEE_= new TH1F("EE Peak #sigma(#Delta(t)) VS A_{eff} (seeds)", "EE Peak #sigma(#Delta(t)) VS A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
+  dtSeedsSigmaAeffPi0PeakEB_= new TH1F("EB Peak #sigma(#Delta(t)) VS A_{eff} (seeds)", "EB Peak #sigma(#Delta(t)) VS A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
+  dtClustersSigmaAeffAny_= new TH1F("#sigma(#Delta(t)) VS A_{eff} (clusters)", "#sigma(#Delta(t)) VS A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
+  dtClustersSigmaAeffEE_= new TH1F("EE #sigma(#Delta(t)) VS A_{eff} (clusters)", "EE #sigma(#Delta(t)) VS A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
+  dtClustersSigmaAeffEB_= new TH1F("EB #sigma(#Delta(t)) VS A_{eff} (clusters)", "EB #sigma(#Delta(t)) VS A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
+  dtClustersSigmaAeffPi0Peak_= new TH1F("EE Peak #sigma(#Delta(t)) VS A_{eff} (clusters)", "EE Peak #sigma(#Delta(t)) VS A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
+  dtClustersSigmaAeffPi0PeakEE_= new TH1F("EE Peak #sigma(#Delta(t)) VS A_{eff} (clusters)", "EE Peak #sigma(#Delta(t)) VS A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
+  dtClustersSigmaAeffPi0PeakEB_= new TH1F("EB Peak #sigma(#Delta(t)) VS A_{eff} (clusters)", "EB Peak #sigma(#Delta(t)) VS A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",numAeffBins,0.,AeffMax_);  
+
+  
+  for (int v=0; v<numAeffBins; v++){// build slice histograms DeltaT Seeds/Cluster VS Aeff
+    float binLeft=(v*AeffMax_/numAeffBins); float binRight=((v+1)*AeffMax_/numAeffBins);
+
+    // slices for seeds
+    sprintf (buffer_, "#Deltat seeds bin %d, A_{eff} [%4.1f,%4.1f)", v+1, binLeft, binRight);
+    bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
+    dtSeedsSlicesVsAeffDoubleClusterHist_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  
+
+    sprintf (buffer_, "EE #Deltat seeds bin %d, A_{eff} [%4.1f,%4.1f)", v+1, binLeft, binRight);
+    bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
+    dtSeedsSlicesVsAeffDoubleClusterHistEE_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  
+
+    sprintf (buffer_, "EB #Deltat seeds bin %d, A_{eff} [%4.1f,%4.1f)", v+1, binLeft, binRight);
+    bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
+    dtSeedsSlicesVsAeffDoubleClusterHistEB_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  
+
+    sprintf (buffer_, "Peak #Deltat seeds bin %d, A_{eff} [%4.1f,%4.1f)", v+1, binLeft, binRight);
+    bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
+    dtSeedsSlicesVsAeffDoubleClusterHistPi0Peak_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  
+
+    sprintf (buffer_, "Peak EE #Deltat seeds bin %d, A_{eff} [%4.1f,%4.1f)", v+1, binLeft, binRight);
+    bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
+    dtSeedsSlicesVsAeffDoubleClusterHistPi0PeakEE_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  
+
+    sprintf (buffer_, "Peak EB #Deltat seeds bin %d, A_{eff} [%4.1f,%4.1f)", v+1, binLeft, binRight);
+    bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
+    dtSeedsSlicesVsAeffDoubleClusterHistPi0PeakEB_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  
+
+
+    // slices for clusters
+    sprintf (buffer_, "#Deltat cluster bin %d, A_{eff} [%4.1f,%4.1f)", v+1, binLeft, binRight);
+    bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
+    dtSlicesVsAeffDoubleClusterHist_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  
+
+    sprintf (buffer_, "EE #Deltat cluster bin %d, A_{eff} [%4.1f,%4.1f)", v+1, binLeft, binRight);
+    bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
+    dtSlicesVsAeffDoubleClusterHistEE_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  
+
+    sprintf (buffer_, "EB #Deltat cluster bin %d, A_{eff} [%4.1f,%4.1f)", v+1, binLeft, binRight);
+    bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
+    dtSlicesVsAeffDoubleClusterHistEB_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  
+
+    sprintf (buffer_, "Peak #Deltat cluster bin %d, A_{eff} [%4.1f,%4.1f)", v+1, binLeft, binRight);
+    bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
+    dtSlicesVsAeffDoubleClusterHistPi0Peak_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  
+
+    sprintf (buffer_, "Peak EE #Deltat cluster bin %d, A_{eff} [%4.1f,%4.1f)", v+1, binLeft, binRight);
+    bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
+    dtSlicesVsAeffDoubleClusterHistPi0PeakEE_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  
+
+    sprintf (buffer_, "Peak EB #Deltat cluster bin %d, A_{eff} [%4.1f,%4.1f)", v+1, binLeft, binRight);
+    bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
+    dtSlicesVsAeffDoubleClusterHistPi0PeakEB_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  
+
+  }//end loop to inizialize cluster dt slices histograms 
+
+}//end initializeHists
+
 
 
 // ---------------------------------------------------------------------------------------
@@ -756,6 +883,96 @@ void writeHists()
   dtVsPtDoubleClusterHistPi0Peak_  ->Write();
   dtVsPtDoubleClusterHistPi0PeakEE_->Write();
   dtVsPtDoubleClusterHistPi0PeakEB_->Write();
+
+  dtSeedsVsAeffDoubleClusterHist_  ->Write();
+  dtSeedsVsAeffDoubleClusterHistEE_->Write();
+  dtSeedsVsAeffDoubleClusterHistEB_->Write();
+  dtVsAeffDoubleClusterHist_  ->Write();
+  dtVsAeffDoubleClusterHistEE_->Write();
+  dtVsAeffDoubleClusterHistEB_->Write();
+  dtSeedsSigmaAeffAny_->Write();
+  dtSeedsSigmaAeffEE_->Write();
+  dtSeedsSigmaAeffEB_->Write();
+  dtClustersSigmaAeffAny_->Write();
+  dtClustersSigmaAeffEE_->Write();
+  dtClustersSigmaAeffEB_->Write();
+ 
+  // write out 1-d control plots for DeltaT cluster-SEEDS RMS and sigma
+  TDirectory *doubleClusSeedsResolutionSlices = doubleClusResolution->mkdir("dtSeedsSlices-Any");
+  doubleClusSeedsResolutionSlices->cd();
+  for (int v=0; v<numAeffBins; v++){    dtSeedsSlicesVsAeffDoubleClusterHist_[v] -> Write();  }
+
+  TDirectory *doubleClusSeedsResolutionSlicesEE = doubleClusResolution->mkdir("dtSeedsSlices-EE");
+  doubleClusSeedsResolutionSlicesEE->cd();
+  for (int v=0; v<numAeffBins; v++){    dtSeedsSlicesVsAeffDoubleClusterHistEE_[v] -> Write();  }
+
+  TDirectory *doubleClusSeedsResolutionSlicesEB = doubleClusResolution->mkdir("dtSeedsSlices-EB");
+  doubleClusSeedsResolutionSlicesEB->cd();
+  for (int v=0; v<numAeffBins; v++){    dtSeedsSlicesVsAeffDoubleClusterHistEB_[v] -> Write();  }
+
+
+  // write out 1-d control plots for DeltaT cluster (combining cry info) RMS and sigma
+  TDirectory *doubleClusSeedsResolution = doubleClusResolution->mkdir("dtClustersSlices-Any");
+  doubleClusSeedsResolution->cd();
+  for (int v=0; v<numAeffBins; v++){    dtSlicesVsAeffDoubleClusterHist_[v] -> Write();  }
+
+  TDirectory *doubleClusSeedsResolutionEE = doubleClusResolution->mkdir("dtClustersSlices-EE");
+  doubleClusSeedsResolutionEE->cd();
+  for (int v=0; v<numAeffBins; v++){    dtSlicesVsAeffDoubleClusterHistEE_[v] -> Write();  }
+
+  TDirectory *doubleClusSeedsResolutionEB = doubleClusResolution->mkdir("dtClustersSlices-EB");
+  doubleClusSeedsResolutionEB->cd();
+  for (int v=0; v<numAeffBins; v++){    dtSlicesVsAeffDoubleClusterHistEB_[v] -> Write();  }
+
+
+
+
+  // write out double cluster pi0peak resolution plots
+  TDirectory *doubleClusResolutionPi0Clusters = saving_->mkdir("double-resolution-pi0");
+  doubleClusResolutionPi0Clusters->cd();
+  dtSeedsVsAeffDoubleClusterHistPi0Peak_  ->Write();
+  dtSeedsVsAeffDoubleClusterHistPi0PeakEE_->Write();
+  dtSeedsVsAeffDoubleClusterHistPi0PeakEB_->Write();
+  dtVsAeffDoubleClusterHistPi0Peak_  ->Write();
+  dtVsAeffDoubleClusterHistPi0PeakEE_->Write();
+  dtVsAeffDoubleClusterHistPi0PeakEB_->Write();
+
+  dtSeedsSigmaAeffPi0Peak_->Write();
+  dtSeedsSigmaAeffPi0PeakEE_->Write();
+  dtSeedsSigmaAeffPi0PeakEB_->Write();
+  dtClustersSigmaAeffPi0Peak_->Write();
+  dtClustersSigmaAeffPi0PeakEE_->Write();
+  dtClustersSigmaAeffPi0PeakEB_->Write();
+
+  // write out 1-d control plots for DeltaT cluster-SEEDS RMS and sigma under the peak 
+  TDirectory *doubleClusSeedsResolutionSlicesPeak = doubleClusResolutionPi0Clusters->mkdir("dtSeedsSlices-Any");
+  doubleClusSeedsResolutionSlicesPeak->cd();
+  for (int v=0; v<numAeffBins; v++){    dtSeedsSlicesVsAeffDoubleClusterHistPi0Peak_[v] -> Write();  }
+
+  TDirectory *doubleClusSeedsResolutionSlicesEEPeak = doubleClusResolutionPi0Clusters->mkdir("dtSeedsSlices-EE");
+  doubleClusSeedsResolutionSlicesEEPeak->cd();
+  for (int v=0; v<numAeffBins; v++){    dtSeedsSlicesVsAeffDoubleClusterHistPi0PeakEE_[v] -> Write();  }
+
+  TDirectory *doubleClusSeedsResolutionSlicesEBPeak = doubleClusResolutionPi0Clusters->mkdir("dtSeedsSlices-EB");
+  doubleClusSeedsResolutionSlicesEBPeak->cd();
+  for (int v=0; v<numAeffBins; v++){    dtSeedsSlicesVsAeffDoubleClusterHistPi0PeakEB_[v] -> Write();  }
+
+
+  // write out 1-d control plots for DeltaT cluster (combining cry info) RMS and sigma under the peak 
+  TDirectory *doubleClusSeedsResolutionPeak = doubleClusResolutionPi0Clusters->mkdir("dtClustersSlices-Any");
+  doubleClusSeedsResolutionPeak->cd();
+  for (int v=0; v<numAeffBins; v++){    dtSlicesVsAeffDoubleClusterHistPi0Peak_[v] -> Write();  }
+
+  TDirectory *doubleClusSeedsResolutionEEPeak = doubleClusResolutionPi0Clusters->mkdir("dtClustersSlices-EE");
+  doubleClusSeedsResolutionEEPeak->cd();
+  for (int v=0; v<numAeffBins; v++){    dtSlicesVsAeffDoubleClusterHistPi0PeakEE_[v] -> Write();  }
+
+  TDirectory *doubleClusSeedsResolutionEBPeak = doubleClusResolutionPi0Clusters->mkdir("dtClustersSlices-EB");
+  doubleClusSeedsResolutionEBPeak->cd();
+  for (int v=0; v<numAeffBins; v++){    dtSlicesVsAeffDoubleClusterHistPi0PeakEB_[v] -> Write();  }
+
+
+
 
 }
 
@@ -1200,6 +1417,24 @@ void doDoubleClusterResolutionPlots(SetOfIntPairs myBCpairs, bool isAfterPi0Sele
     {
       int bClusterA = pairItr->first;
       int bClusterB = pairItr->second;
+
+      // find seed of either clusters
+      int seedA=0; float ampliSeedA=-1e9;
+      for(int cryInBC=0; cryInBC<treeVars_.nXtalsInCluster[bClusterA]; cryInBC++){
+	if(treeVars_.xtalInBCAmplitudeADC[bClusterA][cryInBC]>ampliSeedA){
+	  ampliSeedA = treeVars_.xtalInBCAmplitudeADC[bClusterA][cryInBC];	  seedA      = cryInBC;	}// end if
+      }// loop on crystals of bClusterA
+      int seedB=0; float ampliSeedB=-1e9;
+      for(int cryInBC=0; cryInBC<treeVars_.nXtalsInCluster[bClusterB]; cryInBC++){
+	if(treeVars_.xtalInBCAmplitudeADC[bClusterB][cryInBC]>ampliSeedB){
+	  ampliSeedB = treeVars_.xtalInBCAmplitudeADC[bClusterB][cryInBC];	  seedB      = cryInBC;	}// end if
+      }// loop on crystals of bClusterB
+      
+      // calculate time difference of cluster seeds
+      float DtSeeds = treeVars_.xtalInBCTime[bClusterA][seedA] - treeVars_.xtalInBCTime[bClusterB][seedB];
+
+      // calculate Aeff for the cluster seeds pair
+      float aEffSeeds = ampliSeedA * ampliSeedB / sqrt(ampliSeedA*ampliSeedA + ampliSeedB*ampliSeedB);
       
       float eTA = treeVars_.clusterTransverseEnergy[bClusterA];
       float eTB = treeVars_.clusterTransverseEnergy[bClusterB];
@@ -1220,6 +1455,7 @@ void doDoubleClusterResolutionPlots(SetOfIntPairs myBCpairs, bool isAfterPi0Sele
       //  (which will cause the timeErr, time, etc. to be -999999)
       if(timeAndUncertClusterA.timeErr <= 0) // if something went wrong combining the times, bail out
 	continue;
+
       //std::pair<float,float> timeAndUncertClusterB = timeAndUncertSingleCluster(bClusterB);
       ClusterTime timeAndUncertClusterB = timeAndUncertSingleCluster(bClusterB);
       if(timeAndUncertClusterB.timeErr <= 0) // if something went wrong combining the times, bail out
@@ -1276,18 +1512,37 @@ void doDoubleClusterResolutionPlots(SetOfIntPairs myBCpairs, bool isAfterPi0Sele
 	  if(isEB) dtVsPtDoubleClusterHistPi0PeakEB_ ->Fill(Pt,Dt);
 	  else     dtVsPtDoubleClusterHistPi0PeakEE_ ->Fill(Pt,Dt);
 
+	  float sigma=sigmaNoiseEE; 
+	  if (isEB) sigma=sigmaNoiseEB;
+	  dtSeedsVsAeffDoubleClusterHistPi0Peak_ -> Fill(aEffSeeds/sigma, DtSeeds);
+	  dtVsAeffDoubleClusterHistPi0Peak_      -> Fill(aEffSeeds/sigma, Dt);
+	  if(isEB) 	  dtSeedsVsAeffDoubleClusterHistPi0PeakEB_ -> Fill(aEffSeeds/sigma, DtSeeds);
+	  else 	          dtSeedsVsAeffDoubleClusterHistPi0PeakEE_ -> Fill(aEffSeeds/sigma, DtSeeds);
+	  if(isEB) 	  dtVsAeffDoubleClusterHistPi0PeakEB_      -> Fill(aEffSeeds/sigma, Dt);
+	  else 	          dtVsAeffDoubleClusterHistPi0PeakEE_      -> Fill(aEffSeeds/sigma, Dt);
+
 	} // isAfterPi0Selection
       else
-	{
+	{// these are any cluster, not pi0 selected
 	  dtDoubleClusterHistAny_     ->Fill(Dt);
 	  dtPullDoubleClusterHistAny_ ->Fill(Dt/errorDt);
 	  dtVsPtDoubleClusterHistAny_ ->Fill(Pt,Dt);
+	  
+	  float sigma=sigmaNoiseEE; 
+	  if (isEB) sigma=sigmaNoiseEB;
+	  dtSeedsVsAeffDoubleClusterHist_ -> Fill(aEffSeeds/sigma, DtSeeds);
+	  dtVsAeffDoubleClusterHist_      -> Fill(aEffSeeds/sigma, Dt);
+	  if(isEB) 	  dtSeedsVsAeffDoubleClusterHistEB_ -> Fill(aEffSeeds/sigma, DtSeeds);
+	  else 	          dtSeedsVsAeffDoubleClusterHistEE_ -> Fill(aEffSeeds/sigma, DtSeeds);
+	  if(isEB) 	  dtVsAeffDoubleClusterHistEB_      -> Fill(aEffSeeds/sigma, Dt);
+	  else 	          dtVsAeffDoubleClusterHistEE_      -> Fill(aEffSeeds/sigma, Dt);
 
           if(chi2NormA < maxChi2NDF_ && chi2NormB < maxChi2NDF_ && chi2NormA > 0 && chi2NormB > 0)
             dtPullChi2CutDoubleClusterHistAny_ ->Fill(Dt/errorDt);
+
 	}// !isAfterPi0Selection
       
-    }//loop on pairs
+    }//loop on cluster pairs
 }// end doDoubleClusterResolutionPlots
 
 
@@ -1303,6 +1558,23 @@ void doFinalPlots()
       dtSliceVSAeffAnyPeak_[sliceX] ->SetBinContent( (binY+1), (dtVSAeffHistAnyPeak_->GetBinContent((sliceX+1),(binY+1))) ); 
       dtSliceVSAeffEBPeak_[sliceX] ->SetBinContent( (binY+1), (dtVSAeffHistEBPeak_->GetBinContent((sliceX+1),(binY+1))) ); 
       dtSliceVSAeffEEPeak_[sliceX] ->SetBinContent( (binY+1), (dtVSAeffHistEEPeak_->GetBinContent((sliceX+1),(binY+1))) ); 
+
+      // Dt slices for seeds/clusters in Aeff bins
+      dtSeedsSlicesVsAeffDoubleClusterHist_[sliceX]       ->SetBinContent( (binY+1), (dtSeedsVsAeffDoubleClusterHist_->GetBinContent((sliceX+1),(binY+1))) ); 
+      dtSeedsSlicesVsAeffDoubleClusterHistEE_[sliceX]     ->SetBinContent( (binY+1), (dtSeedsVsAeffDoubleClusterHistEE_->GetBinContent((sliceX+1),(binY+1))) ); 
+      dtSeedsSlicesVsAeffDoubleClusterHistEB_[sliceX]     ->SetBinContent( (binY+1), (dtSeedsVsAeffDoubleClusterHistEB_->GetBinContent((sliceX+1),(binY+1))) ); 
+      dtSlicesVsAeffDoubleClusterHist_[sliceX]            ->SetBinContent( (binY+1), (dtVsAeffDoubleClusterHist_->GetBinContent((sliceX+1),(binY+1))) ); 
+      dtSlicesVsAeffDoubleClusterHistEE_[sliceX]          ->SetBinContent( (binY+1), (dtVsAeffDoubleClusterHistEE_->GetBinContent((sliceX+1),(binY+1))) ); 
+      dtSlicesVsAeffDoubleClusterHistEB_[sliceX]          ->SetBinContent( (binY+1), (dtVsAeffDoubleClusterHistEB_->GetBinContent((sliceX+1),(binY+1))) ); 
+
+      // Dt slices for seeds/clusters in Aeff bins under pi0 peak
+      dtSeedsSlicesVsAeffDoubleClusterHistPi0Peak_[sliceX]       ->SetBinContent( (binY+1), (dtSeedsVsAeffDoubleClusterHistPi0Peak_->GetBinContent((sliceX+1),(binY+1))) ); 
+      dtSeedsSlicesVsAeffDoubleClusterHistPi0PeakEE_[sliceX]     ->SetBinContent( (binY+1), (dtSeedsVsAeffDoubleClusterHistPi0PeakEE_->GetBinContent((sliceX+1),(binY+1))) ); 
+      dtSeedsSlicesVsAeffDoubleClusterHistPi0PeakEB_[sliceX]     ->SetBinContent( (binY+1), (dtSeedsVsAeffDoubleClusterHistPi0PeakEB_->GetBinContent((sliceX+1),(binY+1))) ); 
+      dtSlicesVsAeffDoubleClusterHistPi0Peak_[sliceX]            ->SetBinContent( (binY+1), (dtVsAeffDoubleClusterHistPi0Peak_->GetBinContent((sliceX+1),(binY+1))) ); 
+      dtSlicesVsAeffDoubleClusterHistPi0PeakEE_[sliceX]          ->SetBinContent( (binY+1), (dtVsAeffDoubleClusterHistPi0PeakEE_->GetBinContent((sliceX+1),(binY+1))) ); 
+      dtSlicesVsAeffDoubleClusterHistPi0PeakEB_[sliceX]          ->SetBinContent( (binY+1), (dtVsAeffDoubleClusterHistPi0PeakEB_->GetBinContent((sliceX+1),(binY+1))) ); 
+
     }// end loop on Ybins 
 
     // do slices RMS and fitting for  Any 
@@ -1359,7 +1631,67 @@ void doFinalPlots()
       dtSigmaAeffEE_ -> SetBinError(sliceX+1, sigmaErr);
     }// slices for EE
 
-    // **** Peak fits ****
+    
+    // **** cluster fits ****    
+
+    // get sigma from fitting Cluster Seeds Any
+    if( dtSeedsSlicesVsAeffDoubleClusterHist_[sliceX] -> Integral()  > 20 ){
+      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(0,0);
+      dtSeedsSlicesVsAeffDoubleClusterHist_[sliceX]->Fit("dtFit");
+      float sigma = gauss -> GetParameter(2);                 float sigmaErr  = gauss -> GetParError(2);
+      dtSeedsSigmaAeffAny_ -> SetBinContent(sliceX+1, sigma); dtSeedsSigmaAeffAny_ -> SetBinError(sliceX+1, sigmaErr);
+    }// slices for Cluster Seeds Any
+    
+    // get sigma from fitting Cluster Seeds EE
+    if( dtSeedsSlicesVsAeffDoubleClusterHistEE_[sliceX] -> Integral()  > 20 ){
+      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(0,0);
+      dtSeedsSlicesVsAeffDoubleClusterHistEE_[sliceX]->Fit("dtFit");
+      float sigma = gauss -> GetParameter(2);                 float sigmaErr  = gauss -> GetParError(2);
+      dtSeedsSigmaAeffEE_ -> SetBinContent(sliceX+1, sigma); dtSeedsSigmaAeffEE_ -> SetBinError(sliceX+1, sigmaErr);
+    }// slices for Cluster Seeds EE
+
+    // get sigma from fitting Cluster Seeds EB
+    if( dtSeedsSlicesVsAeffDoubleClusterHistEB_[sliceX] -> Integral()  > 20 ){
+      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(0,0);
+      dtSeedsSlicesVsAeffDoubleClusterHistEB_[sliceX]->Fit("dtFit");
+      float sigma = gauss -> GetParameter(2);                 float sigmaErr  = gauss -> GetParError(2);
+      dtSeedsSigmaAeffEB_ -> SetBinContent(sliceX+1, sigma); dtSeedsSigmaAeffEB_ -> SetBinError(sliceX+1, sigmaErr);
+    }// slices for Cluster Seeds EB
+    
+
+
+    // get sigma from fitting Cluster (combined crystals) Any
+    if( dtSlicesVsAeffDoubleClusterHist_[sliceX] -> Integral()  > 20 ){
+      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(0,0);
+      dtSlicesVsAeffDoubleClusterHist_[sliceX]->Fit("dtFit");
+      float sigma = gauss -> GetParameter(2);                 float sigmaErr  = gauss -> GetParError(2);
+      dtClustersSigmaAeffAny_ -> SetBinContent(sliceX+1, sigma); dtClustersSigmaAeffAny_ -> SetBinError(sliceX+1, sigmaErr);
+    }// slices for Cluster (combined crystals) Any
+    
+    // get sigma from fitting Cluster (combined crystals) EE
+    if( dtSlicesVsAeffDoubleClusterHistEE_[sliceX] -> Integral()  > 20 ){
+      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(0,0);
+      dtSlicesVsAeffDoubleClusterHistEE_[sliceX]->Fit("dtFit");
+      float sigma = gauss -> GetParameter(2);                 float sigmaErr  = gauss -> GetParError(2);
+      dtClustersSigmaAeffEE_ -> SetBinContent(sliceX+1, sigma); dtClustersSigmaAeffEE_ -> SetBinError(sliceX+1, sigmaErr);
+    }// slices for Cluster (combined crystals) EE
+
+    // get sigma from fitting Cluster (combined crystals) EB
+    if( dtSlicesVsAeffDoubleClusterHistEB_[sliceX] -> Integral()  > 20 ){
+      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(0,0);
+      dtSlicesVsAeffDoubleClusterHistEB_[sliceX]->Fit("dtFit");
+      float sigma = gauss -> GetParameter(2);                 float sigmaErr  = gauss -> GetParError(2);
+      dtClustersSigmaAeffEB_ -> SetBinContent(sliceX+1, sigma); dtClustersSigmaAeffEB_ -> SetBinError(sliceX+1, sigmaErr);
+    }// slices for Cluster (combined crystals) EB
+    
+
+    // **** Peak fit for clusters ****
     
     // do slices RMS and fitting for any peak
     if( dtSliceVSAeffAnyPeak_[sliceX] -> Integral()  > 20 ){
@@ -1414,6 +1746,67 @@ void doFinalPlots()
       dtSigmaAeffEEPeak_ -> SetBinContent(sliceX+1, sigma);
       dtSigmaAeffEEPeak_ -> SetBinError(sliceX+1, sigmaErr);
     }// slices for EE
+
+
+    // get sigma from fitting Cluster Seeds Under the peak Any
+    if( dtSeedsSlicesVsAeffDoubleClusterHistPi0Peak_[sliceX] -> Integral()  > 20 ){
+      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(0,0);
+      dtSeedsSlicesVsAeffDoubleClusterHistPi0Peak_[sliceX]->Fit("dtFit");
+      float sigma = gauss -> GetParameter(2);                 float sigmaErr  = gauss -> GetParError(2);
+      dtSeedsSigmaAeffPi0Peak_ -> SetBinContent(sliceX+1, sigma); dtSeedsSigmaAeffPi0Peak_ -> SetBinError(sliceX+1, sigmaErr);
+    }// slices for Cluster Seeds Any
+    
+    // get sigma from fitting Cluster Seeds Under the peak EE
+    if( dtSeedsSlicesVsAeffDoubleClusterHistPi0PeakEE_[sliceX] -> Integral()  > 20 ){
+      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(0,0);
+      dtSeedsSlicesVsAeffDoubleClusterHistPi0PeakEE_[sliceX]->Fit("dtFit");
+      float sigma = gauss -> GetParameter(2);                 float sigmaErr  = gauss -> GetParError(2);
+      dtSeedsSigmaAeffPi0PeakEE_ -> SetBinContent(sliceX+1, sigma); dtSeedsSigmaAeffPi0PeakEE_ -> SetBinError(sliceX+1, sigmaErr);
+    }// slices for Cluster Seeds EE
+
+    // get sigma from fitting Cluster Seeds Under the peak EB
+    if( dtSeedsSlicesVsAeffDoubleClusterHistPi0PeakEB_[sliceX] -> Integral()  > 20 ){
+      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(0,0);
+      dtSeedsSlicesVsAeffDoubleClusterHistPi0PeakEB_[sliceX]->Fit("dtFit");
+      float sigma = gauss -> GetParameter(2);                 float sigmaErr  = gauss -> GetParError(2);
+      dtSeedsSigmaAeffPi0PeakEB_ -> SetBinContent(sliceX+1, sigma); dtSeedsSigmaAeffPi0PeakEB_ -> SetBinError(sliceX+1, sigmaErr);
+    }// slices for Cluster Seeds EB
+    
+
+
+    // get sigma from fitting Cluster (combined crystals) Under the peak Any
+    if( dtSlicesVsAeffDoubleClusterHistPi0Peak_[sliceX] -> Integral()  > 20 ){
+      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(0,0);
+      dtSlicesVsAeffDoubleClusterHistPi0Peak_[sliceX]->Fit("dtFit");
+      float sigma = gauss -> GetParameter(2);                 float sigmaErr  = gauss -> GetParError(2);
+      dtClustersSigmaAeffPi0Peak_ -> SetBinContent(sliceX+1, sigma); dtClustersSigmaAeffPi0Peak_ -> SetBinError(sliceX+1, sigmaErr);
+    }// slices for Cluster (combined crystals) Any
+    
+    // get sigma from fitting Cluster (combined crystals) Under the peak EE
+    if( dtSlicesVsAeffDoubleClusterHistPi0PeakEE_[sliceX] -> Integral()  > 20 ){
+      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(0,0);
+      dtSlicesVsAeffDoubleClusterHistPi0PeakEE_[sliceX]->Fit("dtFit");
+      float sigma = gauss -> GetParameter(2);                 float sigmaErr  = gauss -> GetParError(2);
+      dtClustersSigmaAeffPi0PeakEE_ -> SetBinContent(sliceX+1, sigma); dtClustersSigmaAeffPi0PeakEE_ -> SetBinError(sliceX+1, sigmaErr);
+    }// slices for Cluster (combined crystals) EE
+
+    // get sigma from fitting Cluster (combined crystals) Under the peak EB
+    if( dtSlicesVsAeffDoubleClusterHistPi0PeakEB_[sliceX] -> Integral()  > 20 ){
+      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(0,0);
+      dtSlicesVsAeffDoubleClusterHistPi0PeakEB_[sliceX]->Fit("dtFit");
+      float sigma = gauss -> GetParameter(2);                 float sigmaErr  = gauss -> GetParError(2);
+      dtClustersSigmaAeffPi0PeakEB_ -> SetBinContent(sliceX+1, sigma); dtClustersSigmaAeffPi0PeakEB_ -> SetBinError(sliceX+1, sigmaErr);
+    }// slices for Cluster (combined crystals) EB
+    
+
+
+
 
 
   }// end loop on Xslices
