@@ -75,18 +75,30 @@ float minAmpliOverSigma_   = 7;    // dimensionless
 
 float maxChi2NDF_ = 20;  //TODO: gf configurable
 
-std::string fitOption_(""); // default: use chi2 method
-//std::string fitOption_("L"); // use likelihood method
+int  minEntriesForFit_ = 7;
+bool limitFit_(true); 
+//std::string fitOption_(""); // default: use chi2 method
+std::string fitOption_("L"); // use likelihood method
+
 
 //parameters for histograms and ranges
 
-double AeffBins_[41] = {0,                          // set of fine bins for large stats
+// double AeffBins_[41] = {0,                          // set of fine bins for large stats
+//  			1 ,2 ,3 ,4 ,5 ,6 ,7 ,8 ,9 ,10,
+//  			11,12,13,14,15,16,17,18,19,20,
+//  			22,24,26,28,30,32,34,36,38,40,
+//  			44,48,52,56,60,68,76,84,110,150};
+// int    AeffNBins_    = 40;
+// int    AeffMax_      = 150;
+
+double AeffBins_[35] = {0,                          // set of fine bins for large stats
  			1 ,2 ,3 ,4 ,5 ,6 ,7 ,8 ,9 ,10,
  			11,12,13,14,15,16,17,18,19,20,
- 			22,24,26,28,30,32,34,36,38,40,
- 			44,48,52,56,60,68,76,84,110,150};
-int    AeffNBins_    = 40;
-int    AeffMax_      = 150;
+ 			22,24,26,28,30,
+                        32,36,40,46,52,
+                        58,74,86,120};
+int    AeffNBins_    = 34;
+int    AeffMax_      = 120;
 
 // double AeffBins_[21] = {0,                          // set of coarser bins for smaller stats
 //  			2 ,4 ,6 ,8 ,10,
@@ -1213,8 +1225,6 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
 
         if(!isAfterPi0Selection)
         {
-          dtVSAeffHistAny_  -> Fill(Aeff, dt); //FIXME: average of sigmaEB/EE?
-          dtVSAeffProfAny_  -> Fill(Aeff, dt); //FIXME: average of sigmaEB/EE?
           if (thisIsInEB) {
             if      (Aeff < 6)   dtUpToQuarterGeVEB_->Fill(dt);
             else if (Aeff < 12)  dtUpToHalfGeVEB_   ->Fill(dt);
@@ -1224,6 +1234,10 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
 
             dtVSAeffHistEB_ -> Fill(Aeff/sigmaNoiseEB, dt); 
             dtVSAeffProfEB_ -> Fill(Aeff/sigmaNoiseEB, dt); 
+	    
+	    dtVSAeffHistAny_  -> Fill(Aeff/sigmaNoiseEB, dt);
+	    dtVSAeffProfAny_  -> Fill(Aeff/sigmaNoiseEB, dt);
+
           }
           else      {
             if      (Aeff < 6)   dtUpToThreeQuarterGeVEE_->Fill(dt);
@@ -1234,6 +1248,10 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
 
             dtVSAeffHistEE_ -> Fill(Aeff/sigmaNoiseEE, dt); 
             dtVSAeffProfEE_ -> Fill(Aeff/sigmaNoiseEE, dt);
+
+	    dtVSAeffHistAny_  -> Fill(Aeff/sigmaNoiseEE, dt);
+	    dtVSAeffProfAny_  -> Fill(Aeff/sigmaNoiseEE, dt);
+
           }
         }
         else // clusters matching the pi0 mass
@@ -1628,7 +1646,7 @@ void doFinalPlots()
     }// end loop on Ybins 
 
     // do slices RMS and fitting for  Any 
-    if( dtSliceVSAeffAny_[sliceX] -> Integral()  > 15 ){
+    if( dtSliceVSAeffAny_[sliceX] -> Integral()  >= minEntriesForFit_ ){
       // extract RMS and sigma for each Aeff=const slice
       float RMS       = dtSliceVSAeffAny_[sliceX] -> GetRMS();
       float RMSErr    = dtSliceVSAeffAny_[sliceX] -> GetRMSError();
@@ -1637,8 +1655,10 @@ void doFinalPlots()
       
       TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
       gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
-      gauss                    ->SetParameter(0,0);          // initialize on central value
-      dtSliceVSAeffAny_[sliceX]->Fit("dtFit",fitOption_.c_str());
+      gauss                    ->SetParameter(1,0);    // initialize mean on central value
+      //TFitResultPtr Fit(TF1 *f1 ,Option_t *option ,Option_t *goption, Double_t xxmin, Double_t xxmax)
+      if (!limitFit_) dtSliceVSAeffAny_[sliceX]->Fit("dtFit",fitOption_.c_str());
+      else            dtSliceVSAeffAny_[sliceX]->Fit("dtFit",fitOption_.c_str(),"",3*RMS,+3*RMS);
       float sigma     = gauss -> GetParameter(2);
       float sigmaErr  = gauss -> GetParError(2);
       dtSigmaAeffAny_ -> SetBinContent(sliceX+1, sigma);
@@ -1646,17 +1666,18 @@ void doFinalPlots()
     }// slices for Any
 
     // do slices RMS and fitting for EB
-    if( dtSliceVSAeffEB_[sliceX] -> Integral()  > 15 ){
+    if( dtSliceVSAeffEB_[sliceX] -> Integral()  >= minEntriesForFit_ ){
       // extract RMS and sigma for each Aeff=const slice
       float RMS       = dtSliceVSAeffEB_[sliceX] -> GetRMS();
       float RMSErr    = dtSliceVSAeffEB_[sliceX] -> GetRMSError();
       dtRMSVSAeffEB_ -> SetBinContent(sliceX+1, RMS);
       dtRMSVSAeffEB_ -> SetBinError(sliceX+1, RMSErr);
       
-      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
+      TF1 *gauss = new TF1("dtFitEB","gaus",-DtMax_,DtMax_); // require min number entries
       gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
-      gauss                    ->SetParameter(0,0);          // initialize on central value
-      dtSliceVSAeffEB_[sliceX]->Fit("dtFit",fitOption_.c_str());
+      gauss                    ->SetParameter(1,0);    // initialize mean on central value
+      if (!limitFit_) dtSliceVSAeffEB_[sliceX]->Fit("dtFitEB",fitOption_.c_str());
+      else            dtSliceVSAeffEB_[sliceX]->Fit("dtFitEB",fitOption_.c_str(),"",3*RMS,+3*RMS);
       float sigma     = gauss -> GetParameter(2);
       float sigmaErr  = gauss -> GetParError(2);
       dtSigmaAeffEB_ -> SetBinContent(sliceX+1, sigma);
@@ -1664,17 +1685,19 @@ void doFinalPlots()
     }// slices for EB
 
     // do slices RMS and fitting for EE
-    if( dtSliceVSAeffEE_[sliceX] -> Integral()  > 15 ){
+    if( dtSliceVSAeffEE_[sliceX] -> Integral()  >= minEntriesForFit_ ){
       // extract RMS and sigma for each Aeff=const slice
       float RMS       = dtSliceVSAeffEE_[sliceX] -> GetRMS();
       float RMSErr    = dtSliceVSAeffEE_[sliceX] -> GetRMSError();
       dtRMSVSAeffEE_ -> SetBinContent(sliceX+1, RMS);
       dtRMSVSAeffEE_ -> SetBinError(sliceX+1, RMSErr);
       
-      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
+      TF1 *gauss = new TF1("dtFitEE","gaus",-DtMax_,DtMax_); // require min number entries
       gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
-      gauss                    ->SetParameter(0,0);          // initialize on central value
-      dtSliceVSAeffEE_[sliceX]->Fit("dtFit",fitOption_.c_str());
+      gauss                    ->SetParameter(1,0);    // initialize on central value
+      if (!limitFit_ && 0) dtSliceVSAeffEE_[sliceX]->Fit("dtFitEE",fitOption_.c_str());
+      else            dtSliceVSAeffEE_[sliceX]->Fit("dtFitEE",fitOption_.c_str(),"",-3*RMS,+3*RMS);
+      dtSliceVSAeffEE_[sliceX]->Fit("dtFitEE",fitOption_.c_str(),"",-3*RMS,+3*RMS);
       float sigma     = gauss -> GetParameter(2);
       float sigmaErr  = gauss -> GetParError(2);
       dtSigmaAeffEE_ -> SetBinContent(sliceX+1, sigma);
@@ -1685,28 +1708,28 @@ void doFinalPlots()
     // **** cluster fits ****    
 
     // get sigma from fitting Cluster Seeds Any
-    if( dtSeedsSlicesVsAeffDoubleClusterHist_[sliceX] -> Integral()  > 15 ){
-      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
-      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(0,0);
-      dtSeedsSlicesVsAeffDoubleClusterHist_[sliceX]->Fit("dtFit",fitOption_.c_str());
+    if( dtSeedsSlicesVsAeffDoubleClusterHist_[sliceX] -> Integral()  >= minEntriesForFit_ ){
+      TF1 *gauss = new TF1("dtFitClus","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(1,0);
+      dtSeedsSlicesVsAeffDoubleClusterHist_[sliceX]->Fit("dtFitClus",fitOption_.c_str());
       float sigma = gauss -> GetParameter(2);                 float sigmaErr  = gauss -> GetParError(2);
       dtSeedsSigmaAeffAny_ -> SetBinContent(sliceX+1, sigma); dtSeedsSigmaAeffAny_ -> SetBinError(sliceX+1, sigmaErr);
     }// slices for Cluster Seeds Any
     
     // get sigma from fitting Cluster Seeds EE
-    if( dtSeedsSlicesVsAeffDoubleClusterHistEE_[sliceX] -> Integral()  > 15 ){
-      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
-      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(0,0);
-      dtSeedsSlicesVsAeffDoubleClusterHistEE_[sliceX]->Fit("dtFit",fitOption_.c_str());
+    if( dtSeedsSlicesVsAeffDoubleClusterHistEE_[sliceX] -> Integral()  >= minEntriesForFit_ ){
+      TF1 *gauss = new TF1("dtFitClusEE","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(1,0);
+      dtSeedsSlicesVsAeffDoubleClusterHistEE_[sliceX]->Fit("dtFitClusEE",fitOption_.c_str());
       float sigma = gauss -> GetParameter(2);                 float sigmaErr  = gauss -> GetParError(2);
       dtSeedsSigmaAeffEE_ -> SetBinContent(sliceX+1, sigma); dtSeedsSigmaAeffEE_ -> SetBinError(sliceX+1, sigmaErr);
     }// slices for Cluster Seeds EE
 
     // get sigma from fitting Cluster Seeds EB
-    if( dtSeedsSlicesVsAeffDoubleClusterHistEB_[sliceX] -> Integral()  > 15 ){
-      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
-      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(0,0);
-      dtSeedsSlicesVsAeffDoubleClusterHistEB_[sliceX]->Fit("dtFit",fitOption_.c_str());
+    if( dtSeedsSlicesVsAeffDoubleClusterHistEB_[sliceX] -> Integral()  >= minEntriesForFit_ ){
+      TF1 *gauss = new TF1("dtFitClusEB","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(1,0);
+      dtSeedsSlicesVsAeffDoubleClusterHistEB_[sliceX]->Fit("dtFitClusEB",fitOption_.c_str());
       float sigma = gauss -> GetParameter(2);                 float sigmaErr  = gauss -> GetParError(2);
       dtSeedsSigmaAeffEB_ -> SetBinContent(sliceX+1, sigma); dtSeedsSigmaAeffEB_ -> SetBinError(sliceX+1, sigmaErr);
     }// slices for Cluster Seeds EB
@@ -1714,28 +1737,28 @@ void doFinalPlots()
 
 
     // get sigma from fitting Cluster (combined crystals) Any
-    if( dtSlicesVsAeffDoubleClusterHist_[sliceX] -> Integral()  > 15 ){
-      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
-      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(0,0);
-      dtSlicesVsAeffDoubleClusterHist_[sliceX]->Fit("dtFit",fitOption_.c_str());
+    if( dtSlicesVsAeffDoubleClusterHist_[sliceX] -> Integral()  >= minEntriesForFit_ ){
+      TF1 *gauss = new TF1("dtFitClusComb","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(1,0);
+      dtSlicesVsAeffDoubleClusterHist_[sliceX]->Fit("dtFitClusComb",fitOption_.c_str());
       float sigma = gauss -> GetParameter(2);                 float sigmaErr  = gauss -> GetParError(2);
       dtClustersSigmaAeffAny_ -> SetBinContent(sliceX+1, sigma); dtClustersSigmaAeffAny_ -> SetBinError(sliceX+1, sigmaErr);
     }// slices for Cluster (combined crystals) Any
     
     // get sigma from fitting Cluster (combined crystals) EE
-    if( dtSlicesVsAeffDoubleClusterHistEE_[sliceX] -> Integral()  > 15 ){
-      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
-      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(0,0);
-      dtSlicesVsAeffDoubleClusterHistEE_[sliceX]->Fit("dtFit",fitOption_.c_str());
+    if( dtSlicesVsAeffDoubleClusterHistEE_[sliceX] -> Integral()  >= minEntriesForFit_ ){
+      TF1 *gauss = new TF1("dtFitClusCombEE","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(1,0);
+      dtSlicesVsAeffDoubleClusterHistEE_[sliceX]->Fit("dtFitClusCombEE",fitOption_.c_str());
       float sigma = gauss -> GetParameter(2);                 float sigmaErr  = gauss -> GetParError(2);
       dtClustersSigmaAeffEE_ -> SetBinContent(sliceX+1, sigma); dtClustersSigmaAeffEE_ -> SetBinError(sliceX+1, sigmaErr);
     }// slices for Cluster (combined crystals) EE
 
     // get sigma from fitting Cluster (combined crystals) EB
-    if( dtSlicesVsAeffDoubleClusterHistEB_[sliceX] -> Integral()  > 15 ){
-      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
-      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(0,0);
-      dtSlicesVsAeffDoubleClusterHistEB_[sliceX]->Fit("dtFit",fitOption_.c_str());
+    if( dtSlicesVsAeffDoubleClusterHistEB_[sliceX] -> Integral()  >= minEntriesForFit_ ){
+      TF1 *gauss = new TF1("dtFitClusCombEB","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(1,0);
+      dtSlicesVsAeffDoubleClusterHistEB_[sliceX]->Fit("dtFitClusCombEB",fitOption_.c_str());
       float sigma = gauss -> GetParameter(2);                 float sigmaErr  = gauss -> GetParError(2);
       dtClustersSigmaAeffEB_ -> SetBinContent(sliceX+1, sigma); dtClustersSigmaAeffEB_ -> SetBinError(sliceX+1, sigmaErr);
     }// slices for Cluster (combined crystals) EB
@@ -1744,17 +1767,17 @@ void doFinalPlots()
     // **** Peak fit for clusters ****
     
     // do slices RMS and fitting for any peak
-    if( dtSliceVSAeffAnyPeak_[sliceX] -> Integral()  > 15 ){
+    if( dtSliceVSAeffAnyPeak_[sliceX] -> Integral()  >= minEntriesForFit_ ){
       // extract RMS and sigma for each Aeff=const slice
       float RMS       = dtSliceVSAeffAnyPeak_[sliceX] -> GetRMS();
       float RMSErr    = dtSliceVSAeffAnyPeak_[sliceX] -> GetRMSError();
       dtRMSVSAeffAnyPeak_ -> SetBinContent(sliceX+1, RMS);
       dtRMSVSAeffAnyPeak_ -> SetBinError(sliceX+1, RMSErr);
       
-      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
+      TF1 *gauss = new TF1("dtFitPeak","gaus",-DtMax_,DtMax_); // require min number entries
       gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
-      gauss                    ->SetParameter(0,0);          // initialize on central value
-      dtSliceVSAeffAnyPeak_[sliceX]->Fit("dtFit",fitOption_.c_str());
+      gauss                    ->SetParameter(1,0);    // initialize on central value
+      dtSliceVSAeffAnyPeak_[sliceX]->Fit("dtFitPeak",fitOption_.c_str());
       float sigma     = gauss -> GetParameter(2);
       float sigmaErr  = gauss -> GetParError(2);
       dtSigmaAeffAnyPeak_ -> SetBinContent(sliceX+1, sigma);
@@ -1762,17 +1785,17 @@ void doFinalPlots()
     }// slices for any peak
     
     // do slices RMS and fitting for EB
-    if( dtSliceVSAeffEBPeak_[sliceX] -> Integral()  > 15 ){
+    if( dtSliceVSAeffEBPeak_[sliceX] -> Integral()  >= minEntriesForFit_ ){
       // extract RMS and sigma for each Aeff=const slice
       float RMS       = dtSliceVSAeffEBPeak_[sliceX] -> GetRMS();
       float RMSErr    = dtSliceVSAeffEBPeak_[sliceX] -> GetRMSError();
       dtRMSVSAeffEBPeak_ -> SetBinContent(sliceX+1, RMS);
       dtRMSVSAeffEBPeak_ -> SetBinError(sliceX+1, RMSErr);
       
-      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
+      TF1 *gauss = new TF1("dtFitPeakEB","gaus",-DtMax_,DtMax_); // require min number entries
       gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
-      gauss                    ->SetParameter(0,0);          // initialize on central value
-      dtSliceVSAeffEBPeak_[sliceX]->Fit("dtFit",fitOption_.c_str());
+      gauss                    ->SetParameter(1,0);    // initialize on central value
+      dtSliceVSAeffEBPeak_[sliceX]->Fit("dtFitPeakEB",fitOption_.c_str());
       float sigma     = gauss -> GetParameter(2);
       float sigmaErr  = gauss -> GetParError(2);
       dtSigmaAeffEBPeak_ -> SetBinContent(sliceX+1, sigma);
@@ -1780,17 +1803,17 @@ void doFinalPlots()
     }// slices for EB
     
     // do slices RMS and fitting for EE
-    if( dtSliceVSAeffEEPeak_[sliceX] -> Integral()  > 15 ){
+    if( dtSliceVSAeffEEPeak_[sliceX] -> Integral()  >= minEntriesForFit_ ){
       // extract RMS and sigma for each Aeff=const slice
       float RMS       = dtSliceVSAeffEEPeak_[sliceX] -> GetRMS();
       float RMSErr    = dtSliceVSAeffEEPeak_[sliceX] -> GetRMSError();
       dtRMSVSAeffEEPeak_ -> SetBinContent(sliceX+1, RMS);
       dtRMSVSAeffEEPeak_ -> SetBinError(sliceX+1, RMSErr);
       
-      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
+      TF1 *gauss = new TF1("dtFitPeakEE","gaus",-DtMax_,DtMax_); // require min number entries
       gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
-      gauss                    ->SetParameter(0,0);          // initialize on central value
-      dtSliceVSAeffEEPeak_[sliceX]->Fit("dtFit",fitOption_.c_str());
+      gauss                    ->SetParameter(1,0);    // initialize on central value
+      dtSliceVSAeffEEPeak_[sliceX]->Fit("dtFitPeakEE",fitOption_.c_str());
       float sigma     = gauss -> GetParameter(2);
       float sigmaErr  = gauss -> GetParError(2);
       dtSigmaAeffEEPeak_ -> SetBinContent(sliceX+1, sigma);
@@ -1799,28 +1822,28 @@ void doFinalPlots()
 
 
     // get sigma from fitting Cluster Seeds Under the peak Any
-    if( dtSeedsSlicesVsAeffDoubleClusterHistPi0Peak_[sliceX] -> Integral()  > 15 ){
-      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
-      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(0,0);
-      dtSeedsSlicesVsAeffDoubleClusterHistPi0Peak_[sliceX]->Fit("dtFit",fitOption_.c_str());
+    if( dtSeedsSlicesVsAeffDoubleClusterHistPi0Peak_[sliceX] -> Integral()  >= minEntriesForFit_ ){
+      TF1 *gauss = new TF1("dtFitSeed","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(1,0);
+      dtSeedsSlicesVsAeffDoubleClusterHistPi0Peak_[sliceX]->Fit("dtFitSeed",fitOption_.c_str());
       float sigma = gauss -> GetParameter(2);                 float sigmaErr  = gauss -> GetParError(2);
       dtSeedsSigmaAeffPi0Peak_ -> SetBinContent(sliceX+1, sigma); dtSeedsSigmaAeffPi0Peak_ -> SetBinError(sliceX+1, sigmaErr);
     }// slices for Cluster Seeds Any
     
     // get sigma from fitting Cluster Seeds Under the peak EE
-    if( dtSeedsSlicesVsAeffDoubleClusterHistPi0PeakEE_[sliceX] -> Integral()  > 15 ){
-      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
-      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(0,0);
-      dtSeedsSlicesVsAeffDoubleClusterHistPi0PeakEE_[sliceX]->Fit("dtFit");
+    if( dtSeedsSlicesVsAeffDoubleClusterHistPi0PeakEE_[sliceX] -> Integral()  >= minEntriesForFit_ ){
+      TF1 *gauss = new TF1("dtFitSeedEE","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(1,0);
+      dtSeedsSlicesVsAeffDoubleClusterHistPi0PeakEE_[sliceX]->Fit("dtFitSeedEE");
       float sigma = gauss -> GetParameter(2);                 float sigmaErr  = gauss -> GetParError(2);
       dtSeedsSigmaAeffPi0PeakEE_ -> SetBinContent(sliceX+1, sigma); dtSeedsSigmaAeffPi0PeakEE_ -> SetBinError(sliceX+1, sigmaErr);
     }// slices for Cluster Seeds EE
 
     // get sigma from fitting Cluster Seeds Under the peak EB
-    if( dtSeedsSlicesVsAeffDoubleClusterHistPi0PeakEB_[sliceX] -> Integral()  > 15 ){
-      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
-      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(0,0);
-      dtSeedsSlicesVsAeffDoubleClusterHistPi0PeakEB_[sliceX]->Fit("dtFit");
+    if( dtSeedsSlicesVsAeffDoubleClusterHistPi0PeakEB_[sliceX] -> Integral()  >= minEntriesForFit_ ){
+      TF1 *gauss = new TF1("dtFitSeedEB","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(1,0);
+      dtSeedsSlicesVsAeffDoubleClusterHistPi0PeakEB_[sliceX]->Fit("dtFitSeedEB");
       float sigma = gauss -> GetParameter(2);                 float sigmaErr  = gauss -> GetParError(2);
       dtSeedsSigmaAeffPi0PeakEB_ -> SetBinContent(sliceX+1, sigma); dtSeedsSigmaAeffPi0PeakEB_ -> SetBinError(sliceX+1, sigmaErr);
     }// slices for Cluster Seeds EB
@@ -1828,28 +1851,28 @@ void doFinalPlots()
 
 
     // get sigma from fitting Cluster (combined crystals) Under the peak Any
-    if( dtSlicesVsAeffDoubleClusterHistPi0Peak_[sliceX] -> Integral()  > 15 ){
-      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
-      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(0,0);
-      dtSlicesVsAeffDoubleClusterHistPi0Peak_[sliceX]->Fit("dtFit");
+    if( dtSlicesVsAeffDoubleClusterHistPi0Peak_[sliceX] -> Integral()  >= minEntriesForFit_ ){
+      TF1 *gauss = new TF1("dtFitSeedComb","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(1,0);
+      dtSlicesVsAeffDoubleClusterHistPi0Peak_[sliceX]->Fit("dtFitSeedComb");
       float sigma = gauss -> GetParameter(2);                 float sigmaErr  = gauss -> GetParError(2);
       dtClustersSigmaAeffPi0Peak_ -> SetBinContent(sliceX+1, sigma); dtClustersSigmaAeffPi0Peak_ -> SetBinError(sliceX+1, sigmaErr);
     }// slices for Cluster (combined crystals) Any
     
     // get sigma from fitting Cluster (combined crystals) Under the peak EE
-    if( dtSlicesVsAeffDoubleClusterHistPi0PeakEE_[sliceX] -> Integral()  > 15 ){
-      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
-      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(0,0);
-      dtSlicesVsAeffDoubleClusterHistPi0PeakEE_[sliceX]->Fit("dtFit");
+    if( dtSlicesVsAeffDoubleClusterHistPi0PeakEE_[sliceX] -> Integral()  >= minEntriesForFit_ ){
+      TF1 *gauss = new TF1("dtFitSeedCombEE","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(1,0);
+      dtSlicesVsAeffDoubleClusterHistPi0PeakEE_[sliceX]->Fit("dtFitSeedCombEE");
       float sigma = gauss -> GetParameter(2);                 float sigmaErr  = gauss -> GetParError(2);
       dtClustersSigmaAeffPi0PeakEE_ -> SetBinContent(sliceX+1, sigma); dtClustersSigmaAeffPi0PeakEE_ -> SetBinError(sliceX+1, sigmaErr);
     }// slices for Cluster (combined crystals) EE
 
     // get sigma from fitting Cluster (combined crystals) Under the peak EB
-    if( dtSlicesVsAeffDoubleClusterHistPi0PeakEB_[sliceX] -> Integral()  > 15 ){
-      TF1 *gauss = new TF1("dtFit","gaus",-DtMax_,DtMax_); // require min number entries
-      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(0,0);
-      dtSlicesVsAeffDoubleClusterHistPi0PeakEB_[sliceX]->Fit("dtFit");
+    if( dtSlicesVsAeffDoubleClusterHistPi0PeakEB_[sliceX] -> Integral()  >= minEntriesForFit_ ){
+      TF1 *gauss = new TF1("dtFitSeedCombEB","gaus",-DtMax_,DtMax_); // require min number entries
+      gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(1,0);
+      dtSlicesVsAeffDoubleClusterHistPi0PeakEB_[sliceX]->Fit("dtFitSeedCombEB");
       float sigma = gauss -> GetParameter(2);                 float sigmaErr  = gauss -> GetParError(2);
       dtClustersSigmaAeffPi0PeakEB_ -> SetBinContent(sliceX+1, sigma); dtClustersSigmaAeffPi0PeakEB_ -> SetBinError(sliceX+1, sigmaErr);
     }// slices for Cluster (combined crystals) EB
