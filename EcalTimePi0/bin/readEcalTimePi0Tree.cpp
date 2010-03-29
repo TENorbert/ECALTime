@@ -1657,8 +1657,8 @@ void doFinalPlots()
       gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
       gauss                    ->SetParameter(1,0);    // initialize mean on central value
       //TFitResultPtr Fit(TF1 *f1 ,Option_t *option ,Option_t *goption, Double_t xxmin, Double_t xxmax)
-      if (!limitFit_) {dtSliceVSAeffAny_[sliceX]->Fit("dtFit",fitOption_.c_str());std::cout << "fitted WO limits" << std::endl;}
-      else            {dtSliceVSAeffAny_[sliceX]->Fit("dtFit",fitOption_.c_str(),"",-3*RMS,+3*RMS);std::cout << "fitted with limits Any, RMS is " << RMS << std::endl;}
+      if (!limitFit_) dtSliceVSAeffAny_[sliceX]->Fit("dtFit",fitOption_.c_str());
+      else            dtSliceVSAeffAny_[sliceX]->Fit("dtFit",fitOption_.c_str(),"",-3*RMS,+3*RMS);
       float sigma     = gauss -> GetParameter(2);
       float sigmaErr  = gauss -> GetParError(2);
       dtSigmaAeffAny_ -> SetBinContent(sliceX+1, sigma);
@@ -1676,8 +1676,8 @@ void doFinalPlots()
       TF1 *gauss = new TF1("dtFitEB","gaus",-DtMax_,DtMax_); // require min number entries
       gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
       gauss                    ->SetParameter(1,0);    // initialize mean on central value
-      if (!limitFit_) {dtSliceVSAeffEB_[sliceX]->Fit("dtFitEB",fitOption_.c_str());std::cout << "fitted WO limits" << std::endl;}
-      else            {dtSliceVSAeffEB_[sliceX]->Fit("dtFitEB",fitOption_.c_str(),"",-3*RMS,+3*RMS);std::cout << "fitted with limits EB, RMS is " << RMS << std::endl;}
+      if (!limitFit_) dtSliceVSAeffEB_[sliceX]->Fit("dtFitEB",fitOption_.c_str());
+      else            dtSliceVSAeffEB_[sliceX]->Fit("dtFitEB",fitOption_.c_str(),"",-3*RMS,+3*RMS);
       float sigma     = gauss -> GetParameter(2);
       float sigmaErr  = gauss -> GetParError(2);
       dtSigmaAeffEB_ -> SetBinContent(sliceX+1, sigma);
@@ -1695,8 +1695,8 @@ void doFinalPlots()
       TF1 *gauss = new TF1("dtFitEE","gaus",-DtMax_,DtMax_); // require min number entries
       gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
       gauss                    ->SetParameter(1,0);    // initialize on central value
-      if (!limitFit_) {dtSliceVSAeffEE_[sliceX]->Fit("dtFitEE",fitOption_.c_str());std::cout << "fitted WO limits" << std::endl;}
-      else            {dtSliceVSAeffEE_[sliceX]->Fit("dtFitEE",fitOption_.c_str(),"",-3*RMS,+3*RMS);std::cout << "fitted with limits EE, RMS is: " << RMS << std::endl;}
+      if (!limitFit_) dtSliceVSAeffEE_[sliceX]->Fit("dtFitEE",fitOption_.c_str());
+      else            dtSliceVSAeffEE_[sliceX]->Fit("dtFitEE",fitOption_.c_str(),"",-3*RMS,+3*RMS);
       dtSliceVSAeffEE_[sliceX]->Fit("dtFitEE",fitOption_.c_str(),"",-3*RMS,+3*RMS);
       float sigma     = gauss -> GetParameter(2);
       float sigmaErr  = gauss -> GetParError(2);
