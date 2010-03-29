@@ -1697,7 +1697,6 @@ void doFinalPlots()
       gauss                    ->SetParameter(1,0);    // initialize on central value
       if (!limitFit_) dtSliceVSAeffEE_[sliceX]->Fit("dtFitEE",fitOption_.c_str());
       else            dtSliceVSAeffEE_[sliceX]->Fit("dtFitEE",fitOption_.c_str(),"",-3*RMS,+3*RMS);
-      dtSliceVSAeffEE_[sliceX]->Fit("dtFitEE",fitOption_.c_str(),"",-3*RMS,+3*RMS);
       float sigma     = gauss -> GetParameter(2);
       float sigmaErr  = gauss -> GetParError(2);
       dtSigmaAeffEE_ -> SetBinContent(sliceX+1, sigma);
