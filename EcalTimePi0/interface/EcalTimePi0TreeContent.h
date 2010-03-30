@@ -120,6 +120,8 @@ struct EcalTimePi0TreeContent
   float xtalInBCEnergy[MAXC][MAXXTALINC];
   float xtalInBCTime[MAXC][MAXXTALINC];
   float xtalInBCAmplitudeADC[MAXC][MAXXTALINC];
+  //  float xtalInBCChi2[MAXC][MAXXTALINC];
+  //  float xtalInBCOutOfTimeChi2[MAXC][MAXXTALINC];
     
   // crystal variables
   int nXtals;

@@ -14,7 +14,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.cc,v 1.11 2010/01/29 22:45:22 franzoni Exp $
+// $Id: EcalTimePi0Tree.cc,v 1.12 2010/01/31 14:23:44 franzoni Exp $
 //
 //
 
@@ -410,6 +410,8 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
 	   // thisamp is the EB amplitude of the current rechit
 	   double thisamp  = myhit.energy () ;
 	   double thistime = myhit.time ();
+	   //double thisChi2 = myhit.chi2 ();
+	   //double thisOutOfTimeChi2 = myhit.chi2 ();
 	   if (thisamp > 0.027) //cut on energy->number of crystals in cluster above 3sigma noise; gf: desirable?
 	     { 
 	       numXtalsinCluster++ ; 
@@ -453,6 +455,8 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
 	   myTreeVariables_.xtalInBCIy[numberOfClusters][numberOfXtalsInCluster]=          -999999; 
 	   myTreeVariables_.xtalInBCFlag[numberOfClusters][numberOfXtalsInCluster]=        myhit.recoFlag(); 
 	   myTreeVariables_.xtalInBCAmplitudeADC[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp/(icalconst*adcToGeV);
+	   //myTreeVariables_.xtalInBCChi2[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp/(icalconst*adcToGeV);
+	   //myTreeVariables_.xtalInBCOutOfTimeChi2[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp/(icalconst*adcToGeV);
 	   
 	   // legacy - to be removed
 	   //energySum += (float) thisamp ; // GFdoc incrementing energy of SC

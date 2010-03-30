@@ -1661,6 +1661,9 @@ void doFinalPlots()
       else            dtSliceVSAeffAny_[sliceX]->Fit("dtFit",fitOption_.c_str(),"",-3*RMS,+3*RMS);
       float sigma     = gauss -> GetParameter(2);
       float sigmaErr  = gauss -> GetParError(2);
+      if(limitFit_)   dtSliceVSAeffAny_[sliceX]->Fit("dtFit",fitOption_.c_str(),"",-2*sigma,+2*sigma);
+      sigma     = gauss -> GetParameter(2);
+      sigmaErr  = gauss -> GetParError(2);
       dtSigmaAeffAny_ -> SetBinContent(sliceX+1, sigma);
       dtSigmaAeffAny_ -> SetBinError(sliceX+1, sigmaErr);
     }// slices for Any
@@ -1680,6 +1683,9 @@ void doFinalPlots()
       else            dtSliceVSAeffEB_[sliceX]->Fit("dtFitEB",fitOption_.c_str(),"",-3*RMS,+3*RMS);
       float sigma     = gauss -> GetParameter(2);
       float sigmaErr  = gauss -> GetParError(2);
+      if (limitFit_)   dtSliceVSAeffEB_[sliceX]->Fit("dtFitEB",fitOption_.c_str(),"",-2*sigma,+2*sigma);
+      sigma     = gauss -> GetParameter(2);
+      sigmaErr  = gauss -> GetParError(2);
       dtSigmaAeffEB_ -> SetBinContent(sliceX+1, sigma);
       dtSigmaAeffEB_ -> SetBinError(sliceX+1, sigmaErr);
     }// slices for EB
@@ -1699,6 +1705,9 @@ void doFinalPlots()
       else            dtSliceVSAeffEE_[sliceX]->Fit("dtFitEE",fitOption_.c_str(),"",-3*RMS,+3*RMS);
       float sigma     = gauss -> GetParameter(2);
       float sigmaErr  = gauss -> GetParError(2);
+      if(limitFit_) dtSliceVSAeffEE_[sliceX]->Fit("dtFitEE",fitOption_.c_str(),"",-2*sigma,+2*sigma);
+      sigma     = gauss -> GetParameter(2);
+      sigmaErr  = gauss -> GetParError(2);
       dtSigmaAeffEE_ -> SetBinContent(sliceX+1, sigma);
       dtSigmaAeffEE_ -> SetBinError(sliceX+1, sigmaErr);
     }// slices for EE
