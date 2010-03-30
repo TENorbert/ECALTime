@@ -14,7 +14,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.cc,v 1.12 2010/01/31 14:23:44 franzoni Exp $
+// $Id: EcalTimePi0Tree.cc,v 1.13 2010/03/30 19:06:36 franzoni Exp $
 //
 //
 
@@ -410,8 +410,8 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
 	   // thisamp is the EB amplitude of the current rechit
 	   double thisamp  = myhit.energy () ;
 	   double thistime = myhit.time ();
-	   //double thisChi2 = myhit.chi2 ();
-	   //double thisOutOfTimeChi2 = myhit.chi2 ();
+	   double thisChi2 = myhit.chi2 ();
+	   double thisOutOfTimeChi2 = myhit.outOfTimeChi2 ();
 	   if (thisamp > 0.027) //cut on energy->number of crystals in cluster above 3sigma noise; gf: desirable?
 	     { 
 	       numXtalsinCluster++ ; 
@@ -446,18 +446,27 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
 	   myTreeVariables_.xtalAmplitudeADC[numberOfXtals] = (float) thisamp/(icalconst*adcToGeV);
 	   
 	   // xtal variables inside a barrel basic cluster 
-	   myTreeVariables_.xtalInBCEnergy[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp;
-	   myTreeVariables_.xtalInBCTime[numberOfClusters][numberOfXtalsInCluster]=        (float) (myhit.time ()); 
-	   myTreeVariables_.xtalInBCHashedIndex[numberOfClusters][numberOfXtalsInCluster]= EBDetId (detitr -> first).hashedIndex () ; 
-	   myTreeVariables_.xtalInBCIEta[numberOfClusters][numberOfXtalsInCluster]=        EBDetId((detitr -> first)).ieta();
-	   myTreeVariables_.xtalInBCIPhi[numberOfClusters][numberOfXtalsInCluster]=        EBDetId((detitr -> first)).iphi();
-	   myTreeVariables_.xtalInBCIx[numberOfClusters][numberOfXtalsInCluster]=          -999999; 
-	   myTreeVariables_.xtalInBCIy[numberOfClusters][numberOfXtalsInCluster]=          -999999; 
-	   myTreeVariables_.xtalInBCFlag[numberOfClusters][numberOfXtalsInCluster]=        myhit.recoFlag(); 
-	   myTreeVariables_.xtalInBCAmplitudeADC[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp/(icalconst*adcToGeV);
-	   //myTreeVariables_.xtalInBCChi2[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp/(icalconst*adcToGeV);
-	   //myTreeVariables_.xtalInBCOutOfTimeChi2[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp/(icalconst*adcToGeV);
-	   
+	   myTreeVariables_.xtalInBCEnergy[numberOfClusters][numberOfXtalsInCluster]=       (float) thisamp;
+	   myTreeVariables_.xtalInBCTime[numberOfClusters][numberOfXtalsInCluster]=         (float) (myhit.time ()); 
+	   myTreeVariables_.xtalInBCHashedIndex[numberOfClusters][numberOfXtalsInCluster]=  EBDetId (detitr -> first).hashedIndex () ; 
+	   myTreeVariables_.xtalInBCIEta[numberOfClusters][numberOfXtalsInCluster]=         EBDetId((detitr -> first)).ieta();
+	   myTreeVariables_.xtalInBCIPhi[numberOfClusters][numberOfXtalsInCluster]=         EBDetId((detitr -> first)).iphi();
+	   myTreeVariables_.xtalInBCIx[numberOfClusters][numberOfXtalsInCluster]=           -999999; 
+	   myTreeVariables_.xtalInBCIy[numberOfClusters][numberOfXtalsInCluster]=           -999999; 
+	   myTreeVariables_.xtalInBCFlag[numberOfClusters][numberOfXtalsInCluster]=         myhit.recoFlag(); 
+	   myTreeVariables_.xtalInBCAmplitudeADC[numberOfClusters][numberOfXtalsInCluster]= (float) thisamp/(icalconst*adcToGeV);
+	   myTreeVariables_.xtalInBCChi2[numberOfClusters][numberOfXtalsInCluster]=         thisChi2;
+	   myTreeVariables_.xtalInBCOutOfTimeChi2[numberOfClusters][numberOfXtalsInCluster]=thisOutOfTimeChi2;
+	   myTreeVariables_.xtalInBCE1OverE9[numberOfClusters][numberOfXtalsInCluster]=EcalSeverityLevelAlgo::spikeFromNeighbours( EBDetId((detitr -> first)),
+																   (*theBarrelEcalRecHits),
+																   0.5,   //GeV, threshold Et to calculated E1OverE9 
+																   EcalSeverityLevelAlgo::kE1OverE9
+																   );
+	   myTreeVariables_.xtalInBCSwissCross[numberOfClusters][numberOfXtalsInCluster]=EcalSeverityLevelAlgo::spikeFromNeighbours( EBDetId((detitr -> first)),
+																     (*theBarrelEcalRecHits),
+																     0.5,   //GeV, threshold Et to calculated SwissCross 
+																     EcalSeverityLevelAlgo::kSwissCross);
+
 	   // legacy - to be removed
 	   //energySum += (float) thisamp ; // GFdoc incrementing energy of SC
 	   
@@ -675,6 +684,9 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
 	     // thisamp is the EE amplitude of the current rechit
 	     double thisamp  = myhit.energy () ;
 	     double thistime = myhit.time ();
+	     double thisChi2 = myhit.chi2 ();
+	     double thisOutOfTimeChi2 = myhit.outOfTimeChi2 ();
+
              if (thisamp > 0.027) //cut on energy->number of crystals in cluster above 3sigma noise
                { 
                  numXtalsinCluster++ ; //xtals in cluster above 3sigma noise  
@@ -722,8 +734,19 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
 	      myTreeVariables_.xtalInBCIy[numberOfClusters][numberOfXtalsInCluster]=          EEDetId((detitr -> first)).iy();
 	      myTreeVariables_.xtalInBCFlag[numberOfClusters][numberOfXtalsInCluster]=         myhit.recoFlag(); 
 	      myTreeVariables_.xtalInBCAmplitudeADC[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp/(icalconst*adcToGeV);
-
-             if (XtalMap.find (raw) != XtalMap.end ())
+	      myTreeVariables_.xtalInBCChi2[numberOfClusters][numberOfXtalsInCluster]=         thisChi2;
+	      myTreeVariables_.xtalInBCOutOfTimeChi2[numberOfClusters][numberOfXtalsInCluster]=thisOutOfTimeChi2;
+	      myTreeVariables_.xtalInBCE1OverE9[numberOfClusters][numberOfXtalsInCluster]=EcalSeverityLevelAlgo::spikeFromNeighbours( EEDetId((detitr -> first)),
+																      (*theEndcapEcalRecHits),
+																      0.5,   //GeV, threshold Et to calculated E1OverE9 
+																      EcalSeverityLevelAlgo::kE1OverE9
+																      );
+	      myTreeVariables_.xtalInBCSwissCross[numberOfClusters][numberOfXtalsInCluster]=EcalSeverityLevelAlgo::spikeFromNeighbours( EEDetId((detitr -> first)),
+																	(*theEndcapEcalRecHits),
+																	0.5,   //GeV, threshold Et to calculated SwissCross 
+																	EcalSeverityLevelAlgo::kSwissCross
+																	);
+	      if (XtalMap.find (raw) != XtalMap.end ())
                myTreeVariables_.xtalTkLength[numberOfXtals] = XtalMap.find (raw)->second ;
              else
                myTreeVariables_.xtalTkLength[numberOfXtals] = -1. ;
@@ -996,78 +1019,4 @@ EcalTimePi0Tree::determineTriggers (const edm::Event& iEvent, const edm::EventSe
   return l1Triggers;
 }
 // -------------------------------------------------------------------------------------------------------------
-
-
-/* for the future?
-void
-EcalTimePi0Tree::dumpDCCHeaders ()
-{
-  Handle<EcalRawDataCollection> DCCHeaders;
-  iEvent.getByLabel("ecalEBunpacker", DCCHeaders);
-  if(!DCCHeaders.isValid())
-    LogWarning("EcalCosmicsHists") << "DCC headers not available";
-
-  //make the bx histos right here
-  //TODO: Right now we are filling histos for errors...
-  int orbit = -100;
-  int bx = -100;
-  int runType = -100;
-
-  for(EcalRawDataCollection::const_iterator headerItr= DCCHeaders->begin();headerItr != DCCHeaders->end(); 
-      ++headerItr) {
-    EcalDCCHeaderBlock::EcalDCCEventSettings settings = headerItr->getEventSettings();
-    int myorbit = headerItr->getOrbit();
-    int mybx = headerItr->getBX();
-    int myRunType = headerItr->getRunType();
-    int FEDid = headerItr->fedId();
-    TH2F* dccRuntypeHist = FEDsAndDCCRuntypeVsBxHists_[FEDid];
-    if(dccRuntypeHist==0)
-    {
-      initHists(FEDid);
-      dccRuntypeHist = FEDsAndDCCRuntypeVsBxHists_[FEDid];
-    }
-    dccRuntypeHist->Fill(mybx,myRunType);
-    
-    if (bx == -100)
-    {
-      bx = mybx;
-    }
-    else if (bx != mybx)
-    {
-      LogWarning("EcalCosmicsHists") << "This header has a conflicting bx OTHERS were " << bx << " here " << mybx;
-      dccBXErrorByFEDHist_->Fill(headerItr->fedId());
-      if(bx != -100)
-      {
-        dccErrorVsBxHist_->Fill(bx,0);
-      }
-    }
-
-    if (runType == -100)
-    {
-      runType = myRunType;
-    }
-    else if (runType != myRunType)
-    {
-      LogWarning("EcalCosmicsHists") << "This header has a conflicting runType OTHERS were " << bx << " here " << mybx;
-      dccRuntypeErrorByFEDHist_->Fill(headerItr->fedId());
-      if(bx != -100)
-        dccErrorVsBxHist_->Fill(bx,2);
-    }
-    
-    
-    if (orbit == -100)
-    {
-      orbit = myorbit;
-    }
-    else if (orbit != myorbit)
-    {
-      LogWarning("EcalCosmicsHists") << "This header has a conflicting orbit; OTHERS were " << orbit << " here " << myorbit;
-      dccOrbitErrorByFEDHist_->Fill(headerItr->fedId());
-      if(bx != -100)
-        dccErrorVsBxHist_->Fill(bx,1);
-    }
-  }
-  
-} //PG dumpDCCHeaders
-*/
 

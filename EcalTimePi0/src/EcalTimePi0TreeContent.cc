@@ -113,6 +113,8 @@ void setBranchAddresses(TTree* chain, EcalTimePi0TreeContent& treeVars)
     chain -> SetBranchAddress("xtalTkLength",       treeVars.xtalTkLength);
     chain -> SetBranchAddress("xtalTkLengthCurved", treeVars.xtalTkLengthCurved);
     chain -> SetBranchAddress("xtalAmplitudeADC",   treeVars.xtalAmplitudeADC);
+    //    chain -> SetBranchAddress("xtalInBCChi2",       treeVars.xtalInBCChi2);//gfdelete
+    //    chain -> SetBranchAddress("xtalInBCOutOfTimeChi2",treeVars.xtalInBCOutOfTimeChi2);//gfdelete
 
 
     // xtal variables inside a cluster
@@ -127,6 +129,10 @@ void setBranchAddresses(TTree* chain, EcalTimePi0TreeContent& treeVars)
     chain -> SetBranchAddress("xtalInBCEnergy", treeVars.xtalInBCEnergy);
     chain -> SetBranchAddress("xtalInBCTime", treeVars.xtalInBCTime);
     chain -> SetBranchAddress("xtalInBCAmplitudeADC", treeVars.xtalInBCAmplitudeADC);
+    chain -> SetBranchAddress("xtalInBCChi2", treeVars.xtalInBCChi2);
+    chain -> SetBranchAddress("xtalInBCOutOfTimeChi2", treeVars.xtalInBCOutOfTimeChi2);
+    chain -> SetBranchAddress("xtalInBCE1OverE9", treeVars.xtalInBCE1OverE9);
+    chain -> SetBranchAddress("xtalInBCSwissCross", treeVars.xtalInBCSwissCross);
 
   } // ECAL VARIABLES
   //*/  
@@ -589,6 +595,8 @@ void setBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
     chain -> Branch("xtalTkLength",       treeVars.xtalTkLength,             "xtalTkLength[nXtals]/F");
     chain -> Branch("xtalTkLengthCurved", treeVars.xtalTkLengthCurved, "xtalTkLengthCurved[nXtals]/F");
     chain -> Branch("xtalAmplitudeADC",   treeVars.xtalAmplitudeADC,     "xtalAmplitudeADC[nXtals]/F");
+//     chain -> Branch("xtalInBCChi2",   treeVars.xtalInBCChi2,     "xtalInBCChi2[nXtals]/F");//gfdelete
+//     chain -> Branch("xtalInBCOutOfTimeChi2",   treeVars.xtalInBCOutOfTimeChi2,     "xtalInBCOutOfTimeChi2[nXtals]/F");//gfdelete
 
     // xtal variables inside a cluster
     // strange: MAXXTALINC needs be replaced by explicit "9"; not understood gf
@@ -603,6 +611,10 @@ void setBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
     chain -> Branch("xtalInBCEnergy",       treeVars.xtalInBCEnergy,       "xtalInBCEnergy[nClusters][9]/F");
     chain -> Branch("xtalInBCTime",         treeVars.xtalInBCTime,         "xtalInBCTime[nClusters][9]/F");
     chain -> Branch("xtalInBCAmplitudeADC", treeVars.xtalInBCAmplitudeADC, "xtalInBCAmplitudeADC[nClusters][9]/F");
+    chain -> Branch("xtalInBCChi2", treeVars.xtalInBCChi2, "xtalInBCChi2[nClusters][9]/F");
+    chain -> Branch("xtalInBCOutOfTimeChi2", treeVars.xtalInBCOutOfTimeChi2, "xtalInBCOutOfTimeChi2[nClusters][9]/F");
+    chain -> Branch("xtalInBCE1OverE9", treeVars.xtalInBCE1OverE9, "xtalInBCE1OverE9[nClusters][9]/F");
+    chain -> Branch("xtalInBCSwissCross", treeVars.xtalInBCSwissCross, "xtalInBCSwissCross[nClusters][9]/F");
 
   } // ECAL VARIABLES  
   //*/  
@@ -1093,6 +1105,8 @@ void initializeBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
     treeVars.xtalTkLength[i] = 0.;
     treeVars.xtalTkLengthCurved[i] = 0.;
     treeVars.xtalAmplitudeADC[i] = 0.;
+//     treeVars.xtalInBCChi2[i] = 0.;//gfdelete
+//     treeVars.xtalInBCOutOfTimeChi2[i] = 0.;//gfdelete
     }
 
 
@@ -1110,6 +1124,10 @@ void initializeBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
 	treeVars.xtalInBCEnergy[cl][cryInClu]=0;
 	treeVars.xtalInBCTime[cl][cryInClu]=0;
 	treeVars.xtalInBCAmplitudeADC[cl][cryInClu]=0;
+	treeVars.xtalInBCChi2[cl][cryInClu]=0;
+	treeVars.xtalInBCOutOfTimeChi2[cl][cryInClu]=0;
+	treeVars.xtalInBCE1OverE9[cl][cryInClu]=0;
+	treeVars.xtalInBCSwissCross[cl][cryInClu]=0;
       }}
 
   } // ECAL VARIABLES

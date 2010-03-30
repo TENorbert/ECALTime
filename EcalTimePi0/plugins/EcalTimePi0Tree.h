@@ -17,7 +17,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.h,v 1.3 2010/01/26 17:32:41 scooper Exp $
+// $Id: EcalTimePi0Tree.h,v 1.4 2010/01/27 17:52:23 scooper Exp $
 //
 //
 
@@ -88,6 +88,8 @@ Implementation:
 #include "Geometry/EcalAlgo/interface/EcalBarrelGeometry.h"
 #include "RecoCaloTools/Navigation/interface/CaloNavigator.h"
 #include "Geometry/CaloGeometry/interface/CaloSubdetectorGeometry.h"
+
+#include "RecoLocalCalo/EcalRecAlgos/interface/EcalSeverityLevelAlgo.h"
 //
 #include "ECALTime/EcalTimePi0/interface/EcalTimePi0TreeContent.h"
 
@@ -101,7 +103,7 @@ class EcalTimePi0Tree : public edm::EDAnalyzer
 
    protected:
 
-      virtual void beginJob (const edm::EventSetup&) {} ;
+      virtual void beginJob () {} ;
       virtual void analyze (const edm::Event&, const edm::EventSetup&) ;
       virtual void endJob () ;
       virtual void beginRun(edm::Run const &, edm::EventSetup const &) ;
