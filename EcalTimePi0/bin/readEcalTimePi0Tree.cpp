@@ -18,6 +18,7 @@
 #include "TH1.h"
 #include "TH2.h"
 #include "TProfile.h"
+#include "TGraphErrors.h"
 #include "TF1.h"
 #include "TMath.h"
 #include "TFile.h"
@@ -81,7 +82,8 @@ bool limitFit_(true);
 std::string fitOption_("L"); // use likelihood method
 
 
-//parameters for histograms and ranges
+
+//parameters for histograms binning and ranges ///////////////////////////////////////////
 
 // double AeffBins_[41] = {0,                          // set of fine bins for large stats
 //  			1 ,2 ,3 ,4 ,5 ,6 ,7 ,8 ,9 ,10,
@@ -100,6 +102,11 @@ double AeffBins_[35] = {0,                          // set of fine bins for larg
 int    AeffNBins_    = 34;
 int    AeffMax_      = 120;
 
+// defining arrays large enough; number of actual bins to define TGraphErrors comes from AeffNBins_ 
+float  AeffBinCentersAny_[256]; float  AeffBinCentersErrAny_[256]; float  sigmaAeffAny_[256]; float  sigmaAeffErrAny_[256];
+float  AeffBinCentersEB_[256];  float  AeffBinCentersErrEB_[256];  float  sigmaAeffEB_[256];  float  sigmaAeffErrEB_[256];
+float  AeffBinCentersEE_[256];  float  AeffBinCentersErrEE_[256];  float  sigmaAeffEE_[256];  float  sigmaAeffErrEE_[256];
+
 // double AeffBins_[21] = {0,                          // set of coarser bins for smaller stats
 //  			2 ,4 ,6 ,8 ,10,
 //  			12,14,16,18,20,
@@ -107,6 +114,7 @@ int    AeffMax_      = 120;
 //  			48,56,68,84,150};
 // int    AeffNBins_    = 20;
 // int    AeffMax_      = 150;
+
 
 
 int numDtBins_  = 75;
@@ -177,10 +185,13 @@ TH1F*   dtUpOverSixGeVEE_;
 
 TH2F*   dtVSAeffHistAny_;
 TH1F*   dtSliceVSAeffAny_[numAeffBins];
+TH1F*   AeffSliceAny_[numAeffBins];
 TH2F*   dtVSAeffHistEB_;
 TH1F*   dtSliceVSAeffEB_[numAeffBins];
+TH1F*   AeffSliceEB_[numAeffBins];
 TH2F*   dtVSAeffHistEE_;
 TH1F*   dtSliceVSAeffEE_[numAeffBins];
+TH1F*   AeffSliceEE_[numAeffBins];
 TProfile* dtVSAeffProfAny_;
 TProfile* dtVSAeffProfEB_;
 TProfile* dtVSAeffProfEE_;
@@ -483,7 +494,11 @@ void initializeHists(){
     float binLeft=AeffBins_[v]; float binRight=AeffBins_[v+1];
     sprintf (buffer_, "Aeff bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
     bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
-    dtSliceVSAeffAny_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_); }//end loop
+    dtSliceVSAeffAny_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_); 
+    AeffBinCentersAny_[v]=0; AeffBinCentersErrAny_[v]=0; sigmaAeffAny_[v]=0; sigmaAeffErrAny_[v]=0;
+    bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; A_{eff} bin center");
+    AeffSliceAny_[v] = new TH1F(bufferTitle_.c_str(),bufferTitle_.c_str(),20,binLeft,binRight);
+  }//end loop
   dtRMSVSAeffAny_  = new TH1F("RMS(#Delta(t)) VS   A_{eff}", "RMS(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; RMS(#Delta(t)) [ns]",AeffNBins_,AeffBins_);  
   dtSigmaAeffAny_  = new TH1F("#sigma(#Delta(t)) VS   A_{eff}", "#sigma(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",AeffNBins_,AeffBins_);  
   for (int v=0; v<AeffNBins_; v++){// build histograms for RMS and sigma of DeltaT for EB
@@ -491,7 +506,11 @@ void initializeHists(){
     float binLeft=AeffBins_[v]; float binRight=AeffBins_[v+1];
     sprintf (buffer_, "EB: Aeff bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
     bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
-    dtSliceVSAeffEB_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  }
+    dtSliceVSAeffEB_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  
+    AeffBinCentersEB_[v]=0; AeffBinCentersErrEB_[v]=0; sigmaAeffEB_[v]=0;  sigmaAeffErrEB_[v]=0;
+    bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; A_{eff} bin center");
+    AeffSliceEB_[v] = new TH1F(bufferTitle_.c_str(),bufferTitle_.c_str(),20,binLeft,binRight);
+  }//end loop
   dtRMSVSAeffEB_  = new TH1F("EB: RMS(#Delta(t)) VS   A_{eff}", "EB: RMS(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; RMS(#Delta(t)) [ns]",AeffNBins_,AeffBins_);  
   dtSigmaAeffEB_  = new TH1F("EB: #sigma(#Delta(t)) VS   A_{eff}", "EB: #sigma(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",AeffNBins_,AeffBins_);  
   for (int v=0; v<AeffNBins_; v++){// build histograms for RMS and sigma of DeltaT for EE
@@ -499,7 +518,10 @@ void initializeHists(){
     float binLeft=AeffBins_[v]; float binRight=AeffBins_[v+1];
     sprintf (buffer_, "EE: Aeff bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
     bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
-    dtSliceVSAeffEE_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  }
+    dtSliceVSAeffEE_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  
+    AeffBinCentersEE_[v]=0; AeffBinCentersErrEE_[v]=0; sigmaAeffEE_[v]=0;  sigmaAeffErrEE_[v]=0;
+    AeffSliceEE_[v] = new TH1F(bufferTitle_.c_str(),bufferTitle_.c_str(),20,binLeft,binRight);
+  }//end loop
   dtRMSVSAeffEE_  = new TH1F("EE: RMS(#Delta(t)) VS   A_{eff}", "EE: RMS(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; RMS(#Delta(t)) [ns]",AeffNBins_,AeffBins_);  
   dtSigmaAeffEE_  = new TH1F("EE: #sigma(#Delta(t)) VS   A_{eff}", "EE: #sigma(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",AeffNBins_,AeffBins_);  
   dtVSAeffProfEB_  = new TProfile("EB:  #Delta(t)   VS  A_{eff}/#sigma_{N} prof","EB:  #Delta(t)  VS  A_{eff}/#sigma_{N} prof",AeffNBins_,AeffBins_,-DtMax_,DtMax_);
@@ -839,10 +861,31 @@ void writeHists()
 
   dtRMSVSAeffAny_    -> Write();
   dtSigmaAeffAny_    -> Write();
-  dtSigmaAeffEB_     -> Write();
-  dtSigmaAeffEE_     -> Write();
+  TGraphErrors *     dtSigmaAeffGraphAny_ = new TGraphErrors(AeffNBins_ , AeffBinCentersAny_, sigmaAeffAny_, AeffBinCentersErrAny_, sigmaAeffErrAny_);
+  dtSigmaAeffGraphAny_->SetName("sigmaVsAeff Any");
+  dtSigmaAeffGraphAny_->SetTitle(dtSigmaAeffAny_->GetTitle());
+  dtSigmaAeffGraphAny_->GetXaxis()->SetTitle(dtSigmaAeffAny_->GetXaxis()->GetTitle());
+  dtSigmaAeffGraphAny_->GetYaxis()->SetTitle(dtSigmaAeffAny_->GetYaxis()->GetTitle());
+  dtSigmaAeffGraphAny_->Write();
+
   dtRMSVSAeffEB_     -> Write();
+  dtSigmaAeffEB_     -> Write();
+  TGraphErrors *     dtSigmaAeffGraphEB_ = new TGraphErrors(AeffNBins_ , AeffBinCentersEB_, sigmaAeffEB_, AeffBinCentersErrEB_, sigmaAeffErrEB_);
+  dtSigmaAeffGraphEB_->SetName("sigmaVsAeff EB");
+  dtSigmaAeffGraphEB_->SetTitle(dtSigmaAeffEB_->GetTitle());
+  dtSigmaAeffGraphEB_->GetXaxis()->SetTitle(dtSigmaAeffEB_->GetXaxis()->GetTitle());
+  dtSigmaAeffGraphEB_->GetYaxis()->SetTitle(dtSigmaAeffEB_->GetYaxis()->GetTitle());
+  dtSigmaAeffGraphEB_->Write();
+
   dtRMSVSAeffEE_     -> Write();
+  dtSigmaAeffEE_     -> Write();
+  TGraphErrors *     dtSigmaAeffGraphEE_ = new TGraphErrors(AeffNBins_ , AeffBinCentersEE_, sigmaAeffEE_, AeffBinCentersErrEE_, sigmaAeffErrEE_);
+  dtSigmaAeffGraphEE_->SetName("sigmaVsAeff EE");
+  dtSigmaAeffGraphEE_->SetTitle(dtSigmaAeffEE_->GetTitle());
+  dtSigmaAeffGraphEE_->GetXaxis()->SetTitle(dtSigmaAeffEE_->GetXaxis()->GetTitle());
+  dtSigmaAeffGraphEE_->GetYaxis()->SetTitle(dtSigmaAeffEE_->GetYaxis()->GetTitle());
+  dtSigmaAeffGraphEE_->Write();
+
 
   singleClusterChi2HistAny_->Write();
   singleClusterChi2NDFHistAny_->Write();
@@ -1238,6 +1281,21 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
 	    dtVSAeffHistAny_  -> Fill(Aeff/sigmaNoiseEB, dt);
 	    dtVSAeffProfAny_  -> Fill(Aeff/sigmaNoiseEB, dt);
 
+	    int bin = dtVSAeffHistAny_ -> FindBin(Aeff/sigmaNoiseEB,-DtMax_); // finding bin at the minumum Y
+	    //int binTMP=bin; 
+	    bin-=(AeffNBins_+2);// removing bins of Y underflows
+	    bin-=1; // removing bin of X underflow for minumum valid Y 
+	    bin = ((bin-1)% AeffNBins_)+1;
+	    //std::cout << "Aeff/sigmaNoiseEB: " << Aeff/sigmaNoiseEB << " " << binTMP << " " << bin << std::endl;
+	    if(0<=bin && bin<AeffNBins_) AeffSliceAny_[bin]->Fill(Aeff/sigmaNoiseEB);
+
+	    bin = dtVSAeffHistEB_ -> FindBin(Aeff/sigmaNoiseEB,-DtMax_); // finding bin at the minumum Y
+	    //binTMP=bin; 
+	    bin-=(AeffNBins_+2);// removing bins of Y underflows
+	    bin-=1; // removing bin of X underflow for minumum valid Y 
+	    bin = ((bin-1)% AeffNBins_)+1;
+	    //std::cout << "Aeff/sigmaNoiseEB: " << Aeff/sigmaNoiseEB << " " << binTMP << " " << bin << std::endl;
+	    if(0<=bin && bin<AeffNBins_) AeffSliceEB_[bin]->Fill(Aeff/sigmaNoiseEB);
           }
           else      {
             if      (Aeff < 6)   dtUpToThreeQuarterGeVEE_->Fill(dt);
@@ -1252,6 +1310,21 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
 	    dtVSAeffHistAny_  -> Fill(Aeff/sigmaNoiseEE, dt);
 	    dtVSAeffProfAny_  -> Fill(Aeff/sigmaNoiseEE, dt);
 
+	    int bin = dtVSAeffHistAny_ -> FindBin(Aeff/sigmaNoiseEE,-DtMax_); // finding bin at the minumum Y
+	    //int binTMP=bin; 
+	    bin-=(AeffNBins_+2);// removing bins of Y underflows
+	    bin-=1; // removing bin of X underflow for minumum valid Y 
+	    bin = ((bin-1)% AeffNBins_)+1;
+	    //std::cout << "Aeff/sigmaNoiseEE: " << Aeff/sigmaNoiseEE << " " << binTMP << " " << bin << std::endl;
+	    if(0<=bin && bin<AeffNBins_) AeffSliceAny_[bin]->Fill(Aeff/sigmaNoiseEE);
+
+	    bin = dtVSAeffHistEE_ -> FindBin(Aeff/sigmaNoiseEE,-DtMax_);  // finding bin at the minumum Y
+	    //binTMP=bin; 
+	    bin-=(AeffNBins_+2);// removing bins of Y underflows
+	    bin-=1; // removing bin of X underflow for minumum valid Y 
+	    bin = ((bin-1)% AeffNBins_)+1;
+	    //std::cout << "Aeff/sigmaNoiseEE: " << Aeff/sigmaNoiseEE << " " << binTMP << " " << bin <<  " " << AeffSliceEE_[bin]->FindBin(Aeff/sigmaNoiseEE) << std::endl;
+	    if(0<=bin && bin<AeffNBins_) AeffSliceEE_[bin]->Fill(Aeff/sigmaNoiseEE);
           }
         }
         else // clusters matching the pi0 mass
@@ -1664,8 +1737,13 @@ void doFinalPlots()
       if(limitFit_)   dtSliceVSAeffAny_[sliceX]->Fit("dtFit",fitOption_.c_str(),"",-2*sigma,+2*sigma);
       sigma     = gauss -> GetParameter(2);
       sigmaErr  = gauss -> GetParError(2);
-      dtSigmaAeffAny_ -> SetBinContent(sliceX+1, sigma);
-      dtSigmaAeffAny_ -> SetBinError(sliceX+1, sigmaErr);
+      // setting histogram and arrays with sigmas and their errros + abcsissa bins
+      dtSigmaAeffAny_ -> SetBinContent(sliceX+1, sigma);    sigmaAeffAny_[sliceX]=sigma;
+      dtSigmaAeffAny_ -> SetBinError(sliceX+1, sigmaErr);   sigmaAeffErrAny_[sliceX]=sigmaErr;
+      //       AeffBinCentersAny_[sliceX]    = dtSigmaAeffAny_->GetXaxis()->GetBinCenter(sliceX+1);
+      //       AeffBinCentersErrAny_[sliceX] = dtSigmaAeffAny_->GetXaxis()->GetBinWidth(sliceX+1)/2;
+      AeffBinCentersAny_[sliceX]    = AeffSliceAny_[sliceX]->GetMean();
+      AeffBinCentersErrAny_[sliceX] = AeffSliceAny_[sliceX]->GetMeanError();
     }// slices for Any
 
     // do slices RMS and fitting for EB
@@ -1686,8 +1764,13 @@ void doFinalPlots()
       if (limitFit_)   dtSliceVSAeffEB_[sliceX]->Fit("dtFitEB",fitOption_.c_str(),"",-2*sigma,+2*sigma);
       sigma     = gauss -> GetParameter(2);
       sigmaErr  = gauss -> GetParError(2);
-      dtSigmaAeffEB_ -> SetBinContent(sliceX+1, sigma);
-      dtSigmaAeffEB_ -> SetBinError(sliceX+1, sigmaErr);
+      // settnig histogram and arrays with sigmas and their errros + abcsissa bins
+      dtSigmaAeffEB_ -> SetBinContent(sliceX+1, sigma);    sigmaAeffEB_[sliceX]=sigma;
+      dtSigmaAeffEB_ -> SetBinError(sliceX+1, sigmaErr);   sigmaAeffErrEB_[sliceX]=sigmaErr;
+      //       AeffBinCentersEB_[sliceX]    = dtSigmaAeffEB_->GetXaxis()->GetBinCenter(sliceX+1);
+      //       AeffBinCentersErrEB_[sliceX] = dtSigmaAeffEB_->GetXaxis()->GetBinWidth(sliceX+1)/2;
+      AeffBinCentersEB_[sliceX]    = AeffSliceEB_[sliceX]->GetMean();
+      AeffBinCentersErrEB_[sliceX] = AeffSliceEB_[sliceX]->GetMeanError();
     }// slices for EB
 
     // do slices RMS and fitting for EE
@@ -1708,8 +1791,13 @@ void doFinalPlots()
       if(limitFit_) dtSliceVSAeffEE_[sliceX]->Fit("dtFitEE",fitOption_.c_str(),"",-2*sigma,+2*sigma);
       sigma     = gauss -> GetParameter(2);
       sigmaErr  = gauss -> GetParError(2);
-      dtSigmaAeffEE_ -> SetBinContent(sliceX+1, sigma);
-      dtSigmaAeffEE_ -> SetBinError(sliceX+1, sigmaErr);
+      // setting histogram and arrays with sigmas and their errros + abcsissa bins
+      dtSigmaAeffEE_ -> SetBinContent(sliceX+1, sigma);  sigmaAeffEE_[sliceX]=sigma;
+      dtSigmaAeffEE_ -> SetBinError(sliceX+1, sigmaErr); sigmaAeffErrEE_[sliceX]=sigmaErr;
+      //       AeffBinCentersEE_[sliceX]    = dtSigmaAeffEE_->GetXaxis()->GetBinCenter(sliceX+1);
+      //       AeffBinCentersErrEE_[sliceX] = dtSigmaAeffEE_->GetXaxis()->GetBinWidth(sliceX+1)/2;
+      AeffBinCentersEE_[sliceX]    = AeffSliceEE_[sliceX]->GetMean();
+      AeffBinCentersErrEE_[sliceX] = AeffSliceEE_[sliceX]->GetMeanError();
     }// slices for EE
 
     
