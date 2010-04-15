@@ -27,6 +27,9 @@ struct EcalTimePi0TreeContent
   
   
   unsigned int runId;
+  unsigned int lumiSection;
+  unsigned int orbit;
+  unsigned int bx;
   unsigned int eventId;
   unsigned int eventNaiveId;
   unsigned int timeStampLow;
