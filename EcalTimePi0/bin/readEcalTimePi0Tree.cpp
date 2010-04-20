@@ -65,6 +65,8 @@ std::string outputRootName_ = "outputHistos.root";
 int   numEvents_      = -1;
 unsigned int  minRun_ = 0;
 unsigned int  maxRun_ = 9999999;
+unsigned int  minLS_ = 0;
+unsigned int  maxLS_ = 9999999;
 float eTGammaMinEB_   = 0.2;
 float s4s9GammaMinEB_ = 0.85;
 float eTPi0MinEB_     = 0.65;
@@ -314,6 +316,8 @@ void parseArguments(int argc, char** argv)
   std::string stringNumEvents        = "--n";
   std::string stringMinRun           = "--minRun";
   std::string stringMaxRun           = "--maxRun";
+  std::string stringMinLS            = "--minLS";
+  std::string stringMaxLS            = "--maxLS";
 
 
   //gf: support development
@@ -353,8 +357,18 @@ void parseArguments(int argc, char** argv)
       numEvents_=atoi(argv[v+1]);
       v++;
     }
+    else if (argv[v] == stringMaxLS) { // set last LS of interval to be considered 
+      std::cout << "max LS number" << std::endl;
+      maxLS_=atoi(argv[v+1]);
+      v++;
+    }
+    else if (argv[v] == stringMinLS) { // set first LS of interval to be considered 
+      std::cout << "min LS number" << std::endl;
+      minLS_=atoi(argv[v+1]);
+      v++;
+    }
     else if (argv[v] == stringMaxRun) { // set last run of interval to be considered 
-      std::cout << "max run number" << std::endl;
+      std::cout << "max LS number" << std::endl;
       maxRun_=atoi(argv[v+1]);
       v++;
     }
@@ -2040,6 +2054,8 @@ int main (int argc, char** argv)
   std::cout << "\teTPi0MinEE: "     <<  eTPi0MinEE_ << std::endl;
   std::cout << "\tminRun: "         <<  minRun_ << std::endl;
   std::cout << "\tmaxRun: "         <<  maxRun_ << std::endl;
+  std::cout << "\tminLS: "          <<  minLS_ << std::endl;
+  std::cout << "\tmaxLS: "          <<  maxLS_ << std::endl;
 	
   setBranchAddresses (chain, treeVars_);
 
@@ -2066,6 +2082,9 @@ int main (int argc, char** argv)
     
     // do analysis if the run is in the desired range  
     if( treeVars_.runId<minRun_  || maxRun_<treeVars_.runId) continue;
+    
+    // do analysis if the LS is in the desired range  
+    if( treeVars_.lumiSection<minLS_  || maxLS_<treeVars_.lumiSection) continue;
     
     // if evet being actually processed, increment counter of analyzed events
     eventCounter++;
