@@ -345,10 +345,12 @@ void parseArguments(int argc, char** argv)
       std::cout << " --eTPi0MinEB min eT for EB pi0 candidate" << std::endl;
       std::cout << " --eTGammaMinEE: min eT for EE gammas" << std::endl;
       std::cout << " --s4s9GammaMinEE: min EE shower shape" << std::endl;
-      std::cout << " --eTPi0MinEE min eT for EE pi0 candidate" << std::endl;
-      std::cout << " --minAOverSigma min ampli considered for time" << std::endl;
-      std::cout << " --minRun lowest run number considered" << std::endl;
-      std::cout << " --maxRun highest run number considered" << std::endl;
+      std::cout << " --eTPi0MinEE: min eT for EE pi0 candidate" << std::endl;
+      std::cout << " --minAOverSigma: min ampli considered for time" << std::endl;
+      std::cout << " --minRun: lowest run number considered" << std::endl;
+      std::cout << " --maxRun: highest run number considered" << std::endl;
+      std::cout << " --minLS: lowest lumi section number considered" << std::endl;
+      std::cout << " --maxLS: highest lumi section number considered" << std::endl;
       exit(1);      }
 
 
