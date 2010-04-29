@@ -14,7 +14,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.cc,v 1.14 2010/03/30 22:19:24 franzoni Exp $
+// $Id: EcalTimePi0Tree.cc,v 1.15 2010/04/15 16:25:41 franzoni Exp $
 //
 //
 
@@ -107,16 +107,6 @@ EcalTimePi0Tree::~EcalTimePi0Tree ()
 void EcalTimePi0Tree::analyze (const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
   ++naiveId_ ;
-//	  std::cout << ("EcalTimePi0Tree gftest") << "event " << iEvent.id ().event () << "   "
-//	    << "naiveEvent " <<naiveId_ << "\n" << std::endl;  
-//    << "	ls " << iEvent.id().luminosityBlock() 
-//    << "	bx " << iEvent.bunchCrossing()
-//    << "	orbit " << iEvent.orbitNumber()
-//    << std::endl;	
-
-  myTreeVariables_.bx          = iEvent.bunchCrossing();
-  myTreeVariables_.lumiSection = iEvent.id().luminosityBlock();
-  myTreeVariables_.orbit       = iEvent.orbitNumber();
     
 
   // Geometry
@@ -222,11 +212,22 @@ void EcalTimePi0Tree::analyze (const edm::Event& iEvent, const edm::EventSetup& 
 
   // GFdoc initialize variables to 0/false
   initializeBranches(tree_, myTreeVariables_);
-
-  myTreeVariables_.runId = iEvent.id ().run () ;
-  myTreeVariables_.eventId = iEvent.id ().event () ;
-  myTreeVariables_.eventNaiveId = naiveId_ ;
-  myTreeVariables_.timeStampLow = ( 0xFFFFFFFF & iEvent.time ().value () ) ;
+  
+//   std::cout << ("EcalTimePi0Tree gftest") << "event " << iEvent.id ().event () << "   "
+//     //<< "naiveEvent " <<naiveId_ << "\n" << std::endl;  
+// 	    << "	ls " << iEvent.id().luminosityBlock() 
+// 	    << "	bx " << iEvent.bunchCrossing()
+// 	    << "	orbit " << iEvent.orbitNumber()
+// 	    << std::endl;	
+  
+  myTreeVariables_.bx          = iEvent.bunchCrossing();
+  myTreeVariables_.lumiSection = iEvent.id().luminosityBlock();
+  myTreeVariables_.orbit       = iEvent.orbitNumber();
+  
+  myTreeVariables_.runId         = iEvent.id ().run () ;
+  myTreeVariables_.eventId       = iEvent.id ().event () ;
+  myTreeVariables_.eventNaiveId  = naiveId_ ;
+  myTreeVariables_.timeStampLow  = ( 0xFFFFFFFF & iEvent.time ().value () ) ;
   myTreeVariables_.timeStampHigh = ( iEvent.time ().value () >> 32 ) ;
 
   // GFdoc GT information 
