@@ -127,12 +127,14 @@ int DtMax_      = 15; // useful to catch tails also at low Aeff (<10)
 // Consts
 //const float sigmaNoiseEB        = 0.75;  // ADC ; using high frequency noise
 //const float sigmaNoiseEE        = 1.58;  // ADC ; using high frequency noise
-const float sigmaNoiseEB        = 1.06;  // ADC ; using total single-sample noise
-const float sigmaNoiseEE        = 2.10;  // ADC ; using total single-sample noise
-const float timingResParamN     = 35.1; // ns ; Fig. 2 from CFT-09-006
-const float timingResParamConst = 0.020; //ns ;   "
-//const float timingResParamN     = 31.5; // ns ; Fig. 5 from CFT-09-006
-//const float timingResParamConst = 0.38; //ns ;   "
+const float sigmaNoiseEB          = 1.06;  // ADC ; using total single-sample noise
+const float sigmaNoiseEE          = 2.10;  // ADC ; using total single-sample noise
+// const float timingResParamN       = 35.1; // ns ; Fig. 2 from CFT-09-006
+// const float timingResParamConst   = 0.020; //ns ;   "
+const float timingResParamNEB     = 28.51;   // ns ; plots approved http://indico.cern.ch/conferenceDisplay.py?confId=92739
+const float timingResParamConstEB = 0.02565; //ns ;   "
+const float timingResParamNEE     = 31.84;   // ns ; Fig. 2 from CFT-09-006
+const float timingResParamConstEE = 0.01816;  //ns ;
 // EB noise from Jean: https://espace.cern.ch/cmsccecal/ECAL%20PFG%20and%20offline%20weekly/default.aspx?InstanceID=35&Paged=Next&p_StartTimeUTC=20090603T140000Z&View={38FE356C-17A7-4C7D-987B-8302CABFAD4F}
 // EE noise from Jean: https://espace.cern.ch/cmsccecal/ECAL%20PFG%20and%20offline%20weekly/default.aspx?InstanceID=44&Paged=Next&p_StartTimeUTC=20090603T140000Z&View={38FE356C-17A7-4C7D-987B-8302CABFAD4F}
 // -------- Histograms -------------------------------------
@@ -1105,17 +1107,22 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex)
   float weightTsum  = 0;
   float weightSum   = 0;
   int   numCrystals = 0;
-
+  float timingResParamN    =0;
+  float timingResParamConst=0;
   // loop on the cry components of a basic cluster; get timeBest and uncertainty 
   for(int thisCry=0; thisCry<treeVars_.nXtalsInCluster[bClusterIndex]; thisCry++)
   {
     bool  thisIsInEB=false;
     float sigmaNoiseOfThis=0;
     if(treeVars_.xtalInBCIEta[bClusterIndex][thisCry]!=-999999)       {
-      sigmaNoiseOfThis=sigmaNoiseEB;
+      sigmaNoiseOfThis   =sigmaNoiseEB;
+      timingResParamN    =timingResParamNEB;
+      timingResParamConst=timingResParamConstEB;
       thisIsInEB=true;    }
     else if(treeVars_.xtalInBCIy[bClusterIndex][thisCry]!=-999999)    {
       sigmaNoiseOfThis=sigmaNoiseEE;
+      timingResParamN    =timingResParamNEE;
+      timingResParamConst=timingResParamConstEE;
       thisIsInEB=false;    }
     else    {  std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
     float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] / sigmaNoiseOfThis; 
@@ -1232,15 +1239,30 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
     }
 
     
+
+
+
+
+    float timingResParamN=0;
+    float timingResParamConst=0;
+
     // loop on the cry components of a basic cluster
     for(int thisCry=0; thisCry<treeVars_.nXtalsInCluster[bCluster]; thisCry++)
     {
       bool  thisIsInEB=false;
       float sigmaNoiseOfThis=0;
-      if(treeVars_.xtalInBCIEta[bCluster][thisCry]      !=-999999)   {sigmaNoiseOfThis=sigmaNoiseEB; thisIsInEB=true;}
-      else if (treeVars_.xtalInBCIy[bCluster][thisCry]  !=-999999)   {sigmaNoiseOfThis=sigmaNoiseEE; thisIsInEB=false;}
+      if(treeVars_.xtalInBCIEta[bCluster][thisCry]      !=-999999)   {
+	sigmaNoiseOfThis=sigmaNoiseEB; 
+	timingResParamN    =timingResParamNEB;
+	timingResParamConst=timingResParamConstEB;
+	thisIsInEB=true;}
+      else if (treeVars_.xtalInBCIy[bCluster][thisCry]  !=-999999)   {
+	sigmaNoiseOfThis=sigmaNoiseEE; 
+	timingResParamN    =timingResParamNEE;
+	timingResParamConst=timingResParamConstEE;
+	thisIsInEB=false;}
       else {std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
-
+      
       float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry] / sigmaNoiseOfThis; 
       float ampliOfThis = treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry]; 
       float sigmaOfThis = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
@@ -2094,7 +2116,7 @@ int main (int argc, char** argv)
     speak_=false;
     if (entry<10 || entry%10000==0) speak_=true;
 
-    if (speak_)  std::cout << "\n\n------> reading entry " << entry << " <------\n" ; 
+    if (speak_)  std::cout << "\n\n------> reading entry " << entry << "\tLS: " << treeVars_.lumiSection << " <------\n" ; 
     if (speak_)  std::cout << "  found " << treeVars_.nSuperClusters << " superclusters" << std::endl ;
     if (speak_)  std::cout << "  found " << treeVars_.nClusters << " basic clusters" << std::endl ;
     if (speak_)  std::cout << "  found " << treeVars_.nXtals << " crystals\n" ;    
