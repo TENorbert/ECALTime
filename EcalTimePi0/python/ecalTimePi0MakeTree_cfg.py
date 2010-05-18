@@ -17,7 +17,7 @@ process.load("Geometry.MuonNumbering.muonNumberingInitialization_cfi") # gfwork:
 # Global Tag
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 #process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_noesprefer_cff")
-process.GlobalTag.globaltag = 'GR09_31X_V5P::All' # gfwork: update this? 
+process.GlobalTag.globaltag = 'GR_R_35X_V8A::All' # gfwork: update this? 
 
 
 # Trigger
@@ -155,10 +155,10 @@ process.source = cms.Source(
     "PoolSource",
     skipEvents = cms.untracked.uint32(0),
 
-     fileNames = (cms.untracked.vstring("file:/data/franzoni/data/pi0TimeAnalysis/FE37D88F-D6E6-DE11-92D0-000423D9989E.root"
+#     fileNames = (cms.untracked.vstring("file:/data/franzoni/data/pi0TimeAnalysis/FE37D88F-D6E6-DE11-92D0-000423D9989E.root"
     
-#     fileNames = (cms.untracked.vstring(
-#              "/store/express/BeamCommissioning09/ExpressPhysics/FEVT/v2/000/124/020/FE37D88F-D6E6-DE11-92D0-000423D9989E.root",
+     fileNames = (cms.untracked.vstring(
+              "/store/express/BeamCommissioning09/ExpressPhysics/FEVT/v2/000/124/020/FE37D88F-D6E6-DE11-92D0-000423D9989E.root",
 #              "/store/express/BeamCommissioning09/ExpressPhysics/FEVT/v2/000/124/020/FE2CF646-CBE6-DE11-A65B-001D09F251FE.root",
 #              "/store/express/BeamCommissioning09/ExpressPhysics/FEVT/v2/000/124/020/F2514441-D3E6-DE11-901C-000423D944F0.root",
 #              "/store/express/BeamCommissioning09/ExpressPhysics/FEVT/v2/000/124/020/F2487F56-CDE6-DE11-8D0F-001D09F2A690.root",
