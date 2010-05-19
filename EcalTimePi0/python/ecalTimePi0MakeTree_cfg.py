@@ -125,7 +125,7 @@ process.ecalTimePi0Tree.endcapClusterShapeAssociationCollection = cms.InputTag("
 
 process.dumpEvContent = cms.EDAnalyzer("EventContentAnalyzer")
 
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(300))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(1000))
 
 process.p = cms.Path(
     process.multi5x5BasicClustersTimePi0Barrel *
