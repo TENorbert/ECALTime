@@ -14,7 +14,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.cc,v 1.16 2010/04/29 22:17:29 franzoni Exp $
+// $Id: EcalTimePi0Tree.cc,v 1.17 2010/05/19 12:38:16 franzoni Exp $
 //
 //
 
@@ -70,6 +70,7 @@ EcalTimePi0Tree::EcalTimePi0Tree (const edm::ParameterSet& iConfig) :
   barrelSuperClusterCollection_            (iConfig.getParameter<edm::InputTag> ("barrelSuperClusterCollection")),
   endcapSuperClusterCollection_            (iConfig.getParameter<edm::InputTag> ("endcapSuperClusterCollection")),
   muonCollection_                          (iConfig.getParameter<edm::InputTag> ("muonCollection")),
+  vertexCollection_                        (iConfig.getParameter<edm::InputTag> ("vertexCollection")),
   l1GMTReadoutRecTag_   (iConfig.getUntrackedParameter<std::string> ("L1GlobalReadoutRecord","gtDigis")),
   runNum_               (iConfig.getUntrackedParameter<int> ("runNum")),
   fileName_             (iConfig.getUntrackedParameter<std::string> ("fileName", std::string ("EcalTimePi0Tree"))),
@@ -237,7 +238,8 @@ void EcalTimePi0Tree::analyze (const edm::Event& iEvent, const edm::EventSetup& 
 
   //gfdevel
   Handle<reco::VertexCollection> recVtxs;
-  iEvent.getByLabel("offlinePrimaryVertices", recVtxs);
+  //  iEvent.getByLabel (endcapBasicClusterCollection_, pEndcapBasicClusters) ;
+  iEvent.getByLabel(vertexCollection_, recVtxs);
   const reco::VertexCollection * theRecVtxs = recVtxs.product();
 
   // GFdoc GT information 

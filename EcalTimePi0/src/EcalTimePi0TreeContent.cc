@@ -141,6 +141,7 @@ void setBranchAddresses(TTree* chain, EcalTimePi0TreeContent& treeVars)
     chain -> SetBranchAddress("xtalInBCFlag", treeVars.xtalInBCFlag);
     chain -> SetBranchAddress("xtalInBCEnergy", treeVars.xtalInBCEnergy);
     chain -> SetBranchAddress("xtalInBCTime", treeVars.xtalInBCTime);
+    chain -> SetBranchAddress("xtalInBCTimeErr", treeVars.xtalInBCTimeErr);
     chain -> SetBranchAddress("xtalInBCAmplitudeADC", treeVars.xtalInBCAmplitudeADC);
     chain -> SetBranchAddress("xtalInBCChi2", treeVars.xtalInBCChi2);
     chain -> SetBranchAddress("xtalInBCOutOfTimeChi2", treeVars.xtalInBCOutOfTimeChi2);
@@ -637,6 +638,7 @@ void setBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
     chain -> Branch("xtalInBCFlag",         treeVars.xtalInBCFlag,         "xtalInBCFlag[nClusters][9]/I");
     chain -> Branch("xtalInBCEnergy",       treeVars.xtalInBCEnergy,       "xtalInBCEnergy[nClusters][9]/F");
     chain -> Branch("xtalInBCTime",         treeVars.xtalInBCTime,         "xtalInBCTime[nClusters][9]/F");
+    chain -> Branch("xtalInBCTimeErr",      treeVars.xtalInBCTimeErr,      "xtalInBCTimeErr[nClusters][9]/F");
     chain -> Branch("xtalInBCAmplitudeADC", treeVars.xtalInBCAmplitudeADC, "xtalInBCAmplitudeADC[nClusters][9]/F");
     chain -> Branch("xtalInBCChi2", treeVars.xtalInBCChi2, "xtalInBCChi2[nClusters][9]/F");
     chain -> Branch("xtalInBCOutOfTimeChi2", treeVars.xtalInBCOutOfTimeChi2, "xtalInBCOutOfTimeChi2[nClusters][9]/F");
@@ -1164,6 +1166,7 @@ void initializeBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
 	treeVars.xtalInBCFlag[cl][cryInClu]=0;
 	treeVars.xtalInBCEnergy[cl][cryInClu]=0;
 	treeVars.xtalInBCTime[cl][cryInClu]=0;
+	treeVars.xtalInBCTimeErr[cl][cryInClu]=0;
 	treeVars.xtalInBCAmplitudeADC[cl][cryInClu]=0;
 	treeVars.xtalInBCChi2[cl][cryInClu]=0;
 	treeVars.xtalInBCOutOfTimeChi2[cl][cryInClu]=0;

@@ -4,6 +4,9 @@ ecalTimePi0Tree = cms.EDFilter("EcalTimePi0Tree",
     barrelEcalRecHitCollection = cms.InputTag("ecalRecHit","EcalRecHitsEB"),
     endcapEcalRecHitCollection = cms.InputTag("ecalRecHit","EcalRecHitsEE"),
 
+    barrelEcalUncalRecHitCollection = cms.InputTag("ecalRatioUncalibRecHit","EcalUncalibRecHitsEB"),
+    endcapEcalUncalRecHitCollection = cms.InputTag("ecalRatioUncalibRecHit","EcalUncalibRecHitsEE"),
+
     # gf set correct cluster producrs
     # gf here SC are used, switch to BC for us
     barrelSuperClusterCollection = cms.InputTag("correctedHybridSuperClusters",""),
@@ -13,6 +16,8 @@ ecalTimePi0Tree = cms.EDFilter("EcalTimePi0Tree",
     barrelClusterShapeAssociationCollection = cms.InputTag("hybridSuperClusters","hybridShapeAssoc"),
     endcapClusterShapeAssociationCollection = cms.InputTag("multi5x5BasicClusters","multi5x5EndcapShapeAssoc"),
 
+    vertexCollection  = cms.InputTag("offlinePrimaryVertices",""),
+                               
     muonCollection = cms.InputTag("GLBMuons"),
     hbTreshold = cms.double(1.),                               
     l1GlobalReadoutRecord = cms.string('gtDigis'),

@@ -123,6 +123,7 @@ struct EcalTimePi0TreeContent
   int   xtalInBCFlag[MAXC][MAXXTALINC];
   float xtalInBCEnergy[MAXC][MAXXTALINC];
   float xtalInBCTime[MAXC][MAXXTALINC];
+  float xtalInBCTimeErr[MAXC][MAXXTALINC];
   float xtalInBCAmplitudeADC[MAXC][MAXXTALINC];
   float xtalInBCChi2[MAXC][MAXXTALINC];
   float xtalInBCOutOfTimeChi2[MAXC][MAXXTALINC];
