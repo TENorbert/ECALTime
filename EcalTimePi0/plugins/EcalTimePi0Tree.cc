@@ -14,7 +14,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.cc,v 1.15 2010/04/15 16:25:41 franzoni Exp $
+// $Id: EcalTimePi0Tree.cc,v 1.16 2010/04/29 22:17:29 franzoni Exp $
 //
 //
 
@@ -46,6 +46,10 @@ Implementation:
 
 #include "CondFormats/EcalObjects/interface/EcalADCToGeVConstant.h"
 #include "CondFormats/DataRecord/interface/EcalADCToGeVConstantRcd.h"
+
+// vertex stuff
+#include <DataFormats/VertexReco/interface/VertexFwd.h>
+#include "RecoVertex/VertexPrimitives/interface/TransientVertex.h"
 
 
 #include <vector>
@@ -230,6 +234,12 @@ void EcalTimePi0Tree::analyze (const edm::Event& iEvent, const edm::EventSetup& 
   myTreeVariables_.timeStampLow  = ( 0xFFFFFFFF & iEvent.time ().value () ) ;
   myTreeVariables_.timeStampHigh = ( iEvent.time ().value () >> 32 ) ;
 
+
+  //gfdevel
+  Handle<reco::VertexCollection> recVtxs;
+  iEvent.getByLabel("offlinePrimaryVertices", recVtxs);
+  const reco::VertexCollection * theRecVtxs = recVtxs.product();
+
   // GFdoc GT information 
   dump3Ginfo(iEvent, iSetup, myTreeVariables_) ;
 
@@ -237,6 +247,8 @@ void EcalTimePi0Tree::analyze (const edm::Event& iEvent, const edm::EventSetup& 
                    theBarrelEcalRecHits, theBarrelBasicClusters, theBarrelSuperClusters, lazyTools, XtalMap, XtalMapCurved, myTreeVariables_) ;
   dumpEndcapClusterInfo(theGeometry, theCaloTopology,
 			theEndcapEcalRecHits, theEndcapBasicClusters, theEndcapSuperClusters, lazyTools, XtalMap, XtalMapCurved, myTreeVariables_) ;
+
+  dumpVertexInfo(theRecVtxs, myTreeVariables_);
 
   tree_ -> Fill();
 }
@@ -837,6 +849,46 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
 
   return ;
 } // end dumpEndcapClusterInfo  
+
+
+
+void
+EcalTimePi0Tree::dumpVertexInfo(const reco::VertexCollection* recVtxs, EcalTimePi0TreeContent & myTreeVariables_){
+
+  // std::cout << "number of vertices: " << recVtxs->size() << std::endl;
+  int thisVertex=0;
+  myTreeVariables_.nVertices= recVtxs->size();
+
+  for(reco::VertexCollection::const_iterator v=recVtxs->begin(); 
+      v!=recVtxs->end() && thisVertex<MAXVTX; 
+      ++v){
+    //     std::cout << "INSIDE Recvtx "<< std::setw(3) << std::setfill(' ')
+    // 	      << "#trk " << std::setw(3) << v->tracksSize() 
+    // 	      << " chi2 " << std::setw(4) << v->chi2() 
+    // 	      << " ndof " << std::setw(3) << v->ndof() << std::endl 
+    // 	      << " x "  << std::setw(8) <<std::fixed << std::setprecision(4) << v->x() 
+    // 	      << " dx " << std::setw(8) << v->xError()<< std::endl
+    // 	      << " y "  << std::setw(8) << v->y() 
+    // 	      << " dy " << std::setw(8) << v->yError()<< std::endl
+    // 	      << " z "  << std::setw(8) << v->z() 
+    // 	      << " dz " << std::setw(8) << v->zError()
+    // 	      << std::endl;
+
+    for(int i=0; i<MAXVTX; i++) {
+      myTreeVariables_.vtxNTracks[i]=v->tracksSize();
+      myTreeVariables_.vtxChi2[i]=   v->chi2();
+      myTreeVariables_.vtxNdof[i]=   v->ndof();
+      myTreeVariables_.vtxX[i]=      v->x();
+      myTreeVariables_.vtxDx[i]=     v->xError();
+      myTreeVariables_.vtxY[i]=      v->y();
+      myTreeVariables_.vtxDy[i]=     v->yError();
+      myTreeVariables_.vtxZ[i]=      v->z();
+      myTreeVariables_.vtxDz[i]=     v->zError();
+  }
+
+  }
+
+}
 
 
 // GFdoc GT information, at present anf +-1 bx

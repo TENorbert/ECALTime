@@ -17,7 +17,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.h,v 1.4 2010/01/27 17:52:23 scooper Exp $
+// $Id: EcalTimePi0Tree.h,v 1.5 2010/03/30 22:19:24 franzoni Exp $
 //
 //
 
@@ -93,6 +93,9 @@ Implementation:
 //
 #include "ECALTime/EcalTimePi0/interface/EcalTimePi0TreeContent.h"
 
+// containers for vertices
+#include <DataFormats/VertexReco/interface/VertexFwd.h>
+
 
 class EcalTimePi0Tree : public edm::EDAnalyzer 
 {
@@ -135,6 +138,8 @@ class EcalTimePi0Tree : public edm::EDAnalyzer
                             const std::map<int,float> & XtalMapCurved,
                             EcalTimePi0TreeContent & myTreeVariables_) ;
 
+      void dumpVertexInfo(const reco::VertexCollection* recVtxs, EcalTimePi0TreeContent & myTreeVariables_);
+ 
       //! dump trigger information
       void dump3Ginfo (const edm::Event& iEvent, const edm::EventSetup& eventSetup,
                        EcalTimePi0TreeContent & myTreeVariables_) ;

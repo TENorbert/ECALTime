@@ -7,6 +7,7 @@
 #define MAXC 100
 #define MAXXTAL 250
 #define MAXXTALINC 9
+#define MAXVTX 5
 #define MAXHCALRECHITS 100
 #define MAXCALOTOWERS 100
 #define MAXMU 20
@@ -136,6 +137,18 @@ struct EcalTimePi0TreeContent
   float xtalTkLength[MAXXTAL];
   float xtalTkLengthCurved[MAXXTAL];
   float xtalAmplitudeADC[MAXXTAL];
+  
+  // vertex variables
+  int   nVertices;
+  int   vtxNTracks[MAXVTX];
+  float vtxChi2[MAXVTX];
+  float vtxNdof[MAXVTX];
+  float vtxX[MAXVTX];
+  float vtxDx[MAXVTX];
+  float vtxY[MAXVTX];
+  float vtxDy[MAXVTX];
+  float vtxZ[MAXVTX];
+  float vtxDz[MAXVTX];
 
   
   // hcal variables
