@@ -14,7 +14,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.cc,v 1.18 2010/05/19 14:41:16 franzoni Exp $
+// $Id: EcalTimePi0Tree.cc,v 1.19 2010/05/19 17:35:52 franzoni Exp $
 //
 //
 
@@ -495,8 +495,8 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
 	   if  (ptheBarrelUncalibratedEcalRecHits.isValid ()) 
 	     {
 	       EcalUncalibratedRecHitCollection::const_iterator theURH = theBarrelUncalibratedEcalRecHits->find(detitr->first);
-	       if(theURH != theBarrelUncalibratedEcalRecHits->end()) myTreeVariables_.xtalInBCTime[numberOfClusters][numberOfXtalsInCluster]= (*theURH).chi2();
-	       //std::cout << "EB error is: " << myTreeVariables_.xtalInBCTime[numberOfClusters][numberOfXtalsInCluster] << std::endl;
+	       if(theURH != theBarrelUncalibratedEcalRecHits->end()) myTreeVariables_.xtalInBCTimeErr[numberOfClusters][numberOfXtalsInCluster]= (*theURH).chi2() * 25;
+	       //std::cout << "EB error is: " << myTreeVariables_.xtalInBCTimeErr[numberOfClusters][numberOfXtalsInCluster] << std::endl;
 	     }
 	   else {	      std::cout << "no EB URH available" << std::endl;
 	   }
@@ -787,8 +787,8 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
 	   if  (ptheEndcapUncalibratedEcalRecHits.isValid ()) 
 	     {
 	       EcalUncalibratedRecHitCollection::const_iterator theURH = theEndcapUncalibratedEcalRecHits->find(detitr->first);
-	       if(theURH != theEndcapUncalibratedEcalRecHits->end()) myTreeVariables_.xtalInBCTime[numberOfClusters][numberOfXtalsInCluster]= (*theURH).chi2();
-	       // std::cout << "EE error is: " <<  myTreeVariables_.xtalInBCTime[numberOfClusters][numberOfXtalsInCluster]  << std::endl;
+	       if(theURH != theEndcapUncalibratedEcalRecHits->end()) myTreeVariables_.xtalInBCTimeErr[numberOfClusters][numberOfXtalsInCluster]= (*theURH).chi2() * 25;
+	       // std::cout << "EE error is: " <<  myTreeVariables_.xtalInBCTimeErr[numberOfClusters][numberOfXtalsInCluster]  << std::endl;
 	     }
 	   else {	      std::cout << "EE no URH available" << std::endl;
 	   }
