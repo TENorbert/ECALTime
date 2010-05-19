@@ -17,7 +17,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.h,v 1.6 2010/05/19 12:38:16 franzoni Exp $
+// $Id: EcalTimePi0Tree.h,v 1.7 2010/05/19 14:41:16 franzoni Exp $
 //
 //
 
@@ -119,25 +119,29 @@ class EcalTimePi0Tree : public edm::EDAnalyzer
       //! dump Cluster information
       //! has to run after dumpMUinfo, to have the XtalMap already filled
       void dumpBarrelClusterInfo(const CaloGeometry * theGeometry,
-                            const CaloTopology * theCaloTopology,
-                            const EcalRecHitCollection* theBarrelEcalRecHits,
-                            const reco::BasicClusterCollection* theBarrelBasicClusters,
-                            const reco::SuperClusterCollection* theBarrelSuperClusters,
-                            EcalClusterLazyTools* lazyTools,
-                            const std::map<int,float> & XtalMap,
-                            const std::map<int,float> & XtalMapCurved,
-                            EcalTimePi0TreeContent & myTreeVariables_) ;
+				 const CaloTopology * theCaloTopology,
+				 const EcalRecHitCollection* theBarrelEcalRecHits,
+				 edm::Handle<EcalUncalibratedRecHitCollection> ptheBarrelUncalibratedEcalRecHits,
+				 const EcalUncalibratedRecHitCollection* theBarrelUncalibratedEcalRecHits,
+				 const reco::BasicClusterCollection* theBarrelBasicClusters,
+				 const reco::SuperClusterCollection* theBarrelSuperClusters,
+				 EcalClusterLazyTools* lazyTools,
+				 const std::map<int,float> & XtalMap,
+				 const std::map<int,float> & XtalMapCurved,
+				 EcalTimePi0TreeContent & myTreeVariables_) ;
 
       void dumpEndcapClusterInfo(const CaloGeometry * theGeometry,
-                            const CaloTopology * theCaloTopology,
-                            const EcalRecHitCollection* theEndcapEcalRecHits,
-                            const reco::BasicClusterCollection* theEndcapBasicClusters,
-                            const reco::SuperClusterCollection* theEndcapSuperClusters,
-                            EcalClusterLazyTools* lazyTools,
-                            const std::map<int,float> & XtalMap,
-                            const std::map<int,float> & XtalMapCurved,
-                            EcalTimePi0TreeContent & myTreeVariables_) ;
-
+				 const CaloTopology * theCaloTopology,
+				 const EcalRecHitCollection* theEndcapEcalRecHits,
+				 edm::Handle<EcalUncalibratedRecHitCollection> ptheEndcapUncalibratedEcalRecHits,
+				 const EcalUncalibratedRecHitCollection* theEndcapUncalibratedEcalRecHits,
+				 const reco::BasicClusterCollection* theEndcapBasicClusters,
+				 const reco::SuperClusterCollection* theEndcapSuperClusters,
+				 EcalClusterLazyTools* lazyTools,
+				 const std::map<int,float> & XtalMap,
+				 const std::map<int,float> & XtalMapCurved,
+				 EcalTimePi0TreeContent & myTreeVariables_) ;
+      
       void dumpVertexInfo(const reco::VertexCollection* recVtxs, EcalTimePi0TreeContent & myTreeVariables_);
  
       //! dump trigger information
@@ -155,6 +159,8 @@ class EcalTimePi0Tree : public edm::EDAnalyzer
 
       edm::InputTag barrelEcalRecHitCollection_ ;
       edm::InputTag endcapEcalRecHitCollection_ ;
+      edm::InputTag barrelEcalUncalibratedRecHitCollection_ ;
+      edm::InputTag endcapEcalUncalibratedRecHitCollection_ ;
       edm::InputTag barrelBasicClusterCollection_ ;
       edm::InputTag endcapBasicClusterCollection_ ;
       edm::InputTag barrelSuperClusterCollection_ ;
@@ -164,7 +170,8 @@ class EcalTimePi0Tree : public edm::EDAnalyzer
       edm::InputTag l1GMTReadoutRecTag_ ;
       int runNum_ ;
       std::string fileName_ ;
-      int naiveId_ ; 
+      bool useRaw_ ;
+      int  naiveId_ ; 
 
       TrackDetectorAssociator trackAssociator_ ;
       TrackAssociatorParameters trackParameters_ ;

@@ -4,8 +4,10 @@ ecalTimePi0Tree = cms.EDFilter("EcalTimePi0Tree",
     barrelEcalRecHitCollection = cms.InputTag("ecalRecHit","EcalRecHitsEB"),
     endcapEcalRecHitCollection = cms.InputTag("ecalRecHit","EcalRecHitsEE"),
 
-    barrelEcalUncalRecHitCollection = cms.InputTag("ecalRatioUncalibRecHit","EcalUncalibRecHitsEB"),
-    endcapEcalUncalRecHitCollection = cms.InputTag("ecalRatioUncalibRecHit","EcalUncalibRecHitsEE"),
+    useRaw = cms.untracked.bool(False),
+
+    barrelEcalUncalibratedRecHitCollection = cms.InputTag("ecalRatioUncalibRecHit","EcalUncalibRecHitsEB"),
+    endcapEcalUncalibratedRecHitCollection = cms.InputTag("ecalRatioUncalibRecHit","EcalUncalibRecHitsEE"),
 
     # gf set correct cluster producrs
     # gf here SC are used, switch to BC for us

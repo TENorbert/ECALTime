@@ -126,6 +126,7 @@ process.load("ECALTime.EcalTimePi0.ecalTimePi0Tree_cfi")
 process.ecalTimePi0Tree.fileName = 'EcalTimePi0TreeRAW'
 process.ecalTimePi0Tree.muonCollection = cms.InputTag("muons")
 process.ecalTimePi0Tree.runNum = 108645
+process.ecalTimePi0Tree.useRaw = cms.untracked.bool(True)
 # gfworks: replace these names
 process.ecalTimePi0Tree.barrelSuperClusterCollection = cms.InputTag("multi5x5SuperClustersTimePi0Barrel","multi5x5BarrelSuperClusters")
 process.ecalTimePi0Tree.endcapSuperClusterCollection = cms.InputTag("multi5x5SuperClustersTimePi0Endcap","multi5x5EndcapSuperClusters")
@@ -148,7 +149,7 @@ process.p = cms.Path(
     process.multi5x5BasicClustersTimePi0Endcap *
     process.multi5x5SuperClustersTimePi0Barrel *
     process.multi5x5SuperClustersTimePi0Endcap *
-    process.dumpEvContent  *
+    #process.dumpEvContent  *
     process.ecalTimePi0Tree
     )
 

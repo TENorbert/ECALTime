@@ -14,7 +14,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.cc,v 1.17 2010/05/19 12:38:16 franzoni Exp $
+// $Id: EcalTimePi0Tree.cc,v 1.18 2010/05/19 14:41:16 franzoni Exp $
 //
 //
 
@@ -65,6 +65,8 @@ using namespace std ;
 EcalTimePi0Tree::EcalTimePi0Tree (const edm::ParameterSet& iConfig) :
   barrelEcalRecHitCollection_              (iConfig.getParameter<edm::InputTag> ("barrelEcalRecHitCollection")),
   endcapEcalRecHitCollection_              (iConfig.getParameter<edm::InputTag> ("endcapEcalRecHitCollection")),
+  barrelEcalUncalibratedRecHitCollection_  (iConfig.getParameter<edm::InputTag> ("barrelEcalUncalibratedRecHitCollection")),
+  endcapEcalUncalibratedRecHitCollection_  (iConfig.getParameter<edm::InputTag> ("endcapEcalUncalibratedRecHitCollection")),
   barrelBasicClusterCollection_            (iConfig.getParameter<edm::InputTag> ("barrelBasicClusterCollection")),
   endcapBasicClusterCollection_            (iConfig.getParameter<edm::InputTag> ("endcapBasicClusterCollection")),
   barrelSuperClusterCollection_            (iConfig.getParameter<edm::InputTag> ("barrelSuperClusterCollection")),
@@ -74,6 +76,7 @@ EcalTimePi0Tree::EcalTimePi0Tree (const edm::ParameterSet& iConfig) :
   l1GMTReadoutRecTag_   (iConfig.getUntrackedParameter<std::string> ("L1GlobalReadoutRecord","gtDigis")),
   runNum_               (iConfig.getUntrackedParameter<int> ("runNum")),
   fileName_             (iConfig.getUntrackedParameter<std::string> ("fileName", std::string ("EcalTimePi0Tree"))),
+  useRaw_               (iConfig.getUntrackedParameter<bool> ("useRaw", false)),
   naiveId_ (0)              
 
 {
@@ -124,22 +127,45 @@ void EcalTimePi0Tree::analyze (const edm::Event& iEvent, const edm::EventSetup& 
   const CaloTopology * theCaloTopology = pCaloTopology.product () ;
   
 
+  // Ecal barrel UncalibratedRecHits 
+  edm::Handle<EcalUncalibratedRecHitCollection> pBarrelEcalUncalibratedRecHits ;
+  const EcalUncalibratedRecHitCollection* theBarrelEcalUncalibratedRecHits;
+  if(useRaw_){
+    iEvent.getByLabel (barrelEcalUncalibratedRecHitCollection_, pBarrelEcalUncalibratedRecHits) ;
+    theBarrelEcalUncalibratedRecHits = pBarrelEcalUncalibratedRecHits.product () ;   
+  }
+
+  edm::Handle<EcalUncalibratedRecHitCollection> pEndcapEcalUncalibratedRecHits ;
+  const EcalUncalibratedRecHitCollection* theEndcapEcalUncalibratedRecHits;
+  if(useRaw_){
+    iEvent.getByLabel (endcapEcalUncalibratedRecHitCollection_, pEndcapEcalUncalibratedRecHits) ;
+    theEndcapEcalUncalibratedRecHits = pEndcapEcalUncalibratedRecHits.product () ;   
+  }
+  
+  
+
   // Ecal barrel RecHits 
   edm::Handle<EcalRecHitCollection> pBarrelEcalRecHits ;
-  iEvent.getByLabel (barrelEcalRecHitCollection_, pBarrelEcalRecHits) ;
-  const EcalRecHitCollection* theBarrelEcalRecHits = pBarrelEcalRecHits.product () ;   
-
+  const EcalRecHitCollection* theBarrelEcalRecHits;
+  if( iEvent.getByLabel (barrelEcalRecHitCollection_, pBarrelEcalRecHits) && pBarrelEcalRecHits.isValid ())
+    {
+      theBarrelEcalRecHits = pBarrelEcalRecHits.product () ;   
+    }
   if (! (pBarrelEcalRecHits.isValid ()) )
     {
       LogWarning ("EcalTimePi0Tree") << barrelEcalRecHitCollection_ 
-                                     << " not available" ;
+				     << " not available" ;
       return ;
     }
-
+  
+  
   // Ecal endcap RecHits
   edm::Handle<EcalRecHitCollection> pEndcapEcalRecHits ;
-  iEvent.getByLabel (endcapEcalRecHitCollection_, pEndcapEcalRecHits) ;
-  const EcalRecHitCollection* theEndcapEcalRecHits = pEndcapEcalRecHits.product () ;   
+  const EcalRecHitCollection* theEndcapEcalRecHits;
+  if( iEvent.getByLabel (endcapEcalRecHitCollection_, pEndcapEcalRecHits) && pEndcapEcalRecHits.isValid ())
+    {
+      theEndcapEcalRecHits = pEndcapEcalRecHits.product () ;   
+    }
   
   if (! (pEndcapEcalRecHits.isValid ()))
     {
@@ -147,9 +173,6 @@ void EcalTimePi0Tree::analyze (const edm::Event& iEvent, const edm::EventSetup& 
                                      << " not available" ;
       return ;
     }
-  
-  
-  
   
   // GFdo switch to appropriate clusters here (basic instead of super) 
   // Barrel SuperClusters
@@ -200,11 +223,7 @@ void EcalTimePi0Tree::analyze (const edm::Event& iEvent, const edm::EventSetup& 
                                      << " not available" ;
       return ;
     }
-  
-  
-  
-  
-  
+ 
   // ClusterShapes
   EcalClusterLazyTools* lazyTools = new EcalClusterLazyTools(iEvent, iSetup, barrelEcalRecHitCollection_, endcapEcalRecHitCollection_);
 
@@ -244,12 +263,14 @@ void EcalTimePi0Tree::analyze (const edm::Event& iEvent, const edm::EventSetup& 
 
   // GFdoc GT information 
   dump3Ginfo(iEvent, iSetup, myTreeVariables_) ;
-
+  
   dumpBarrelClusterInfo(theGeometry, theCaloTopology,
-                   theBarrelEcalRecHits, theBarrelBasicClusters, theBarrelSuperClusters, lazyTools, XtalMap, XtalMapCurved, myTreeVariables_) ;
+			theBarrelEcalRecHits, pBarrelEcalUncalibratedRecHits, theBarrelEcalUncalibratedRecHits,
+			theBarrelBasicClusters, theBarrelSuperClusters, lazyTools, XtalMap, XtalMapCurved, myTreeVariables_) ;
   dumpEndcapClusterInfo(theGeometry, theCaloTopology,
-			theEndcapEcalRecHits, theEndcapBasicClusters, theEndcapSuperClusters, lazyTools, XtalMap, XtalMapCurved, myTreeVariables_) ;
-
+			theEndcapEcalRecHits, pEndcapEcalUncalibratedRecHits, theEndcapEcalUncalibratedRecHits,
+			theEndcapBasicClusters, theEndcapSuperClusters, lazyTools, XtalMap, XtalMapCurved, myTreeVariables_) ;
+  
   dumpVertexInfo(theRecVtxs, myTreeVariables_);
 
   tree_ -> Fill();
@@ -302,14 +323,16 @@ std::string EcalTimePi0Tree::intToString (int num)
 // -----------------------------------------------------------------------------------------
 
 void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
-                                        const CaloTopology * theCaloTopology,
-                                        const EcalRecHitCollection* theBarrelEcalRecHits,
-                                        const reco::BasicClusterCollection* theBarrelBasicClusters,
-                                        const reco::SuperClusterCollection* theBarrelSuperClusters,
-                                        EcalClusterLazyTools* lazyTools,
-                                        const std::map<int,float> & XtalMap, //GFdoc unclear
-                                        const std::map<int,float> & XtalMapCurved, //GFdoc unclear
-                                        EcalTimePi0TreeContent & myTreeVariables_)
+					     const CaloTopology * theCaloTopology,
+					     const EcalRecHitCollection* theBarrelEcalRecHits,
+					     edm::Handle<EcalUncalibratedRecHitCollection> ptheBarrelUncalibratedEcalRecHits,
+					     const EcalUncalibratedRecHitCollection* theBarrelUncalibratedEcalRecHits,
+					     const reco::BasicClusterCollection* theBarrelBasicClusters,
+					     const reco::SuperClusterCollection* theBarrelSuperClusters,
+					     EcalClusterLazyTools* lazyTools,
+					     const std::map<int,float> & XtalMap, //GFdoc unclear
+					     const std::map<int,float> & XtalMapCurved, //GFdoc unclear
+					     EcalTimePi0TreeContent & myTreeVariables_)
 {            
   // get number of of objects already present in the tree (none if dumpBarrelClusterInfo is called first)
   int numberOfSuperClusters = myTreeVariables_.nSuperClusters;
@@ -468,6 +491,16 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
 	   
 	   myTreeVariables_.xtalAmplitudeADC[numberOfXtals] = (float) thisamp/(icalconst*adcToGeV);
 	   
+	   // determine time error if uncalibrated RH are available
+	   if  (ptheBarrelUncalibratedEcalRecHits.isValid ()) 
+	     {
+	       EcalUncalibratedRecHitCollection::const_iterator theURH = theBarrelUncalibratedEcalRecHits->find(detitr->first);
+	       if(theURH != theBarrelUncalibratedEcalRecHits->end()) myTreeVariables_.xtalInBCTime[numberOfClusters][numberOfXtalsInCluster]= (*theURH).chi2();
+	       //std::cout << "EB error is: " << myTreeVariables_.xtalInBCTime[numberOfClusters][numberOfXtalsInCluster] << std::endl;
+	     }
+	   else {	      std::cout << "no EB URH available" << std::endl;
+	   }
+
 	   // xtal variables inside a barrel basic cluster 
 	   myTreeVariables_.xtalInBCEnergy[numberOfClusters][numberOfXtalsInCluster]=       (float) thisamp;
 	   myTreeVariables_.xtalInBCTime[numberOfClusters][numberOfXtalsInCluster]=         (float) (myhit.time ()); 
@@ -587,16 +620,18 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
 // -----------------------------------------------------------------------------------------
 
 void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
-                                        const CaloTopology * theCaloTopology,
-                                        const EcalRecHitCollection* theEndcapEcalRecHits,
-                                        const reco::BasicClusterCollection* theEndcapBasicClusters,
-                                        const reco::SuperClusterCollection* theEndcapSuperClusters,
-                                        EcalClusterLazyTools* lazyTools,
-                                        const std::map<int,float> & XtalMap,
-                                        const std::map<int,float> & XtalMapCurved,
-                                        EcalTimePi0TreeContent & myTreeVariables_)
+					     const CaloTopology * theCaloTopology,
+					     const EcalRecHitCollection* theEndcapEcalRecHits,
+					     edm::Handle<EcalUncalibratedRecHitCollection> ptheEndcapUncalibratedEcalRecHits,
+					     const EcalUncalibratedRecHitCollection* theEndcapUncalibratedEcalRecHits,
+					     const reco::BasicClusterCollection* theEndcapBasicClusters,
+					     const reco::SuperClusterCollection* theEndcapSuperClusters,
+					     EcalClusterLazyTools* lazyTools,
+					     const std::map<int,float> & XtalMap,
+					     const std::map<int,float> & XtalMapCurved,
+					     EcalTimePi0TreeContent & myTreeVariables_)
 {
-  // counters come from the ntuple are to account for what was added in dumpBarrelClusterInfo
+  // counters come from the ntuple are to account for what was added in dumpBarrelClusterInf
   int numberOfSuperClusters = myTreeVariables_.nSuperClusters;
   int numberOfClusters      = myTreeVariables_.nClusters;
   int numberOfXtals         = myTreeVariables_.nXtals ; // this is number of crystals associated to any cluster
@@ -747,6 +782,17 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
 	     energySum += (float) thisamp ;
              //MF Lenght evaluation in XTals
              int raw = (detitr -> first).rawId () ;
+
+	   // determine time error if uncalibrated RH are available
+	   if  (ptheEndcapUncalibratedEcalRecHits.isValid ()) 
+	     {
+	       EcalUncalibratedRecHitCollection::const_iterator theURH = theEndcapUncalibratedEcalRecHits->find(detitr->first);
+	       if(theURH != theEndcapUncalibratedEcalRecHits->end()) myTreeVariables_.xtalInBCTime[numberOfClusters][numberOfXtalsInCluster]= (*theURH).chi2();
+	       // std::cout << "EE error is: " <<  myTreeVariables_.xtalInBCTime[numberOfClusters][numberOfXtalsInCluster]  << std::endl;
+	     }
+	   else {	      std::cout << "EE no URH available" << std::endl;
+	   }
+
 
 	     // xtal variables inside an endcap basic cluster 
 	      myTreeVariables_.xtalInBCEnergy[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp;
