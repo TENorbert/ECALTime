@@ -328,6 +328,12 @@ TH1F* dtSlicesVsAeffDoubleClusterHistPi0Peak_[numAeffBins];
 TH1F* dtSlicesVsAeffDoubleClusterHistPi0PeakEE_[numAeffBins];     
 TH1F* dtSlicesVsAeffDoubleClusterHistPi0PeakEB_[numAeffBins];     
 
+// vertex Z position and EE timing
+TH1F* vertexZ;
+TH1F* vertexY;
+TH1F* vertexX; 
+TH2F* vrtexYvsX; 
+TH2F* timeEEMminusTimeEEPvsVrtexZ; 
 
 
 // ---------------------------------------------------------------------------------------
@@ -798,6 +804,13 @@ void initializeHists(){
 
   }//end loop to inizialize cluster dt slices histograms 
 
+  // histograms for comparison of EE's times to Z coordinates of primary vertex
+  vertexZ   = new TH1F("vertexZ", "vertexZ", 100, -10, 10);
+  vertexY   = new TH1F("vertexY", "vertexY", 100, -0.5, 0.5);
+  vertexX   = new TH1F("vertexX", "vertexX", 100, -0.5, 0.5);
+  vrtexYvsX = new TH2F("vrtexYvsX", "vrtexYvsX", 100, -0.5, 0.5, 100, -0.5, 0.5); 
+  timeEEMminusTimeEEPvsVrtexZ = new TH2F("t_{EEM}-t_{EEP} VS vrtexZ", "t_{EEM}-t_{EEP} VS vrtexZ", 100, -10, 10, 100, -1, 1); 
+
 }//end initializeHists
 
 
@@ -1213,7 +1226,15 @@ void writeHists()
   for (int v=0; v<AeffNBins_; v++){    dtSlicesVsAeffDoubleClusterHistPi0PeakEB_[v] -> Write();  }
 
 
-
+  // histograms for comparison of EE's times to Z coordinates of primary vertex
+  //directory to study bias of reco_time with Amplitude
+  TDirectory *EEtimeVSvertexStudy = saving_->mkdir("EEtimeVSvertex");
+  EEtimeVSvertexStudy->cd();
+  vertexZ -> Write();
+  vertexY -> Write();
+  vertexX -> Write();
+  vrtexYvsX -> Write();
+  timeEEMminusTimeEEPvsVrtexZ -> Write();
 
 }
 
@@ -1900,6 +1921,15 @@ void doDoubleClusterResolutionPlots(SetOfIntPairs myBCpairs, bool isAfterPi0Sele
 
 
 // ---------------------------------------------------------------------------------------
+// ----------------- Function to compare vertex Z and  endcap times ----------------------
+void doTimingAndVertexPlots()
+{
+  ;
+}
+
+
+
+// ---------------------------------------------------------------------------------------
 // ------------------ Function to do slicing and fitting of plots ------------------------
 void doFinalPlots()
 {
@@ -2359,6 +2389,7 @@ int main (int argc, char** argv)
     // Do the singleCluster again on the pi0 BasicClusters
     doSingleClusterResolutionPlots(myPi0BasicClusters,true);
 
+    doTimingAndVertexPlots();
 
   }   // end of loop over entries
   // now you have di-mass plots filled => get masses
