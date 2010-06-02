@@ -1924,7 +1924,53 @@ void doDoubleClusterResolutionPlots(SetOfIntPairs myBCpairs, bool isAfterPi0Sele
 // ----------------- Function to compare vertex Z and  endcap times ----------------------
 void doTimingAndVertexPlots()
 {
-  ;
+
+  if(treeVars_.nVertices==1){
+
+    vertexZ -> Fill(treeVars_.vtxZ[0]);
+    vertexY -> Fill(treeVars_.vtxY[0]);
+    vertexX -> Fill(treeVars_.vtxX[0]);
+
+    // consider clusters with at least 2/5 GeV of Et/E 
+    //float eTAMaxEEP = 2;
+    float eAMaxEEP  = 5;
+    float timeEEP   = -9999; 
+    //float eTAMaxEEM = 2;
+    float eAMaxEEM  = 5;
+    float timeEEM   = -9999; 
+
+    for (int bClusterA=0; bClusterA < treeVars_.nClusters; bClusterA++)
+      {// loop on all clusters in event
+	float etaA = treeVars_.clusterEta[bClusterA];
+	//std::cout << "gfcomm etaA: " << etaA << std::endl;
+	
+	if (   // consider only EE clusters
+	    fabs(etaA) < (BarrelLimit+0.1) || 
+	    (EndcapLimit-0.2) < fabs(etaA) 
+	    ) continue;
+	
+	//std::cout << " -> passed  " << std::endl;
+	
+	// float eTA = treeVars_.clusterTransverseEnergy[bClusterA];
+	float eA  = treeVars_.clusterEnergy[bClusterA];
+	
+	// update cluster in EEP 
+	if(eA > eAMaxEEP && etaA > BarrelLimit){
+	  eAMaxEEP = eA;
+	  timeEEP = (timeAndUncertSingleCluster(bClusterA) ) .time;
+	}	// update cluster in EEM 
+	else if (eA > eAMaxEEM && etaA < -1*BarrelLimit){
+	  eAMaxEEM = eA;
+	  timeEEM  = (timeAndUncertSingleCluster(bClusterA) ) .time;
+	}
+	
+      } // loop on all clusters
+    
+    if(timeEEM>-9998 && timeEEP>-9998 ) timeEEMminusTimeEEPvsVrtexZ->Fill(treeVars_.vtxZ[0], timeEEM-timeEEP);
+    
+  }// if only one vertex
+
+// TH2F* timeEEMminusTimeEEPvsVrtexZ; 
 }
 
 
