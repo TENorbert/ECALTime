@@ -1,6 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 
-ecalTimePi0Tree = cms.EDFilter("EcalTimePi0Tree",
+ecalTimePi0Tree = cms.EDAnalyzer("EcalTimePi0Tree",
     barrelEcalRecHitCollection = cms.InputTag("ecalRecHit","EcalRecHitsEB"),
     endcapEcalRecHitCollection = cms.InputTag("ecalRecHit","EcalRecHitsEE"),
 
