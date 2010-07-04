@@ -34,7 +34,7 @@ typedef std::set<std::pair<int,int> > SetOfIntPairs;
 #define ADCtoGeVEB   0.039
 #define ADCtoGeVEE   0.063
 
-#define numAeffBins     34
+#define numAeffBins     35
 #define numAoSigmaBins  25
 
 struct ClusterTime {
@@ -96,13 +96,13 @@ std::string fitOption_("L"); // use likelihood method
 // int    AeffNBins_    = 40;
 // int    AeffMax_      = 150;
 
-double AeffBins_[35] = {0,                          // set of fine bins for large stats
+double AeffBins_[36] = {0,                          // set of fine bins for large stats
  			1 ,2 ,3 ,4 ,5 ,6 ,7 ,8 ,9 ,10,
  			11,12,13,14,15,16,17,18,19,20,
  			22,24,26,28,30,
                         32,36,40,46,52,
-                        58,74,86,120};
-int    AeffNBins_    = 34;
+                        58,74,86,110,130};
+int    AeffNBins_    = 35;
 int    AeffMax_      = 120;
 
 // defining arrays large enough; number of actual bins to define TGraphErrors comes from AeffNBins_ 
@@ -210,12 +210,12 @@ TH1F*   AeffSliceEB_[numAeffBins];
 TH2F*   dtVSAeffHistEE_;
 TH1F*   dtSliceVSAeffEE_[numAeffBins];
 TH1F*   AeffSliceEE_[numAeffBins];
-TH1F*   dtSliceVSAoSigmaEB_[numAoSigmaBins][numAoSigmaBins];
-TH1F*   dtSliceVSAoSigmaEE_[numAoSigmaBins][numAoSigmaBins];
+TH1F*   dtSliceVSAoSigmaEB_[numAoSigmaBins][numAoSigmaBins][5];
+TH1F*   dtSliceVSAoSigmaEE_[numAoSigmaBins][numAoSigmaBins][5];
 TH1F*   ampliInAoSigmabinsEB_[numAoSigmaBins][numAoSigmaBins];
 TH1F*   ampliInAoSigmabinsEE_[numAoSigmaBins][numAoSigmaBins];
-TH2F*   dtSliceSAoSigmaVSAoSigmaEB_;
-TH2F*   dtSliceSAoSigmaVSAoSigmaEE_;
+TH2F*   dtSliceSAoSigmaVSAoSigmaEB_[5];
+TH2F*   dtSliceSAoSigmaVSAoSigmaEE_[5];
 TH2F*   dtoSigmaSliceSAoSigmaVSAoSigmaEB_; 
 TH2F*   dtoSigmaSliceSAoSigmaVSAoSigmaEE_;
 TH2F*   occupancyAoSigmaVSAoSigmaEB_;
@@ -578,7 +578,17 @@ void initializeHists(){
 
       sprintf (buffer_, "#deltat EB: A/#sigma bin %d-%d: [%3.f,%4.f)-[%3.f,%3.f)", v+1, u+1, binLeftV, binRightV, binLeftU, binRightU);
       bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
-      dtSliceVSAoSigmaEB_[v][u] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);
+      dtSliceVSAoSigmaEB_[v][u][0] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);
+
+
+      sprintf (buffer_, "c2o #deltat EB: A/#sigma bin %d-%d: [%3.f,%4.f)-[%3.f,%3.f)", v+1, u+1, binLeftV, binRightV, binLeftU, binRightU);
+      bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
+      dtSliceVSAoSigmaEB_[v][u][1] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);
+
+
+      sprintf (buffer_, "o2o #deltat EB: A/#sigma bin %d-%d: [%3.f,%4.f)-[%3.f,%3.f)", v+1, u+1, binLeftV, binRightV, binLeftU, binRightU);
+      bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
+      dtSliceVSAoSigmaEB_[v][u][2] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);
 
       sprintf (buffer_, "Ampli EB: A/#sigma bin %d-%d: [%3.f,%4.f)-[%3.f,%3.f)", v+1, u+1, binLeftV, binRightV, binLeftU, binRightU);
       bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; A/#sigma");
@@ -596,7 +606,15 @@ void initializeHists(){
 
       sprintf (buffer_, "#deltat EE: A/#sigma bin %d-%d, [%3.f,%3.f)-[%3.f,%3.f)", v+1, u+1, binLeftV, binRightV, binLeftU, binRightU);
       bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
-      dtSliceVSAoSigmaEE_[v][u] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);
+      dtSliceVSAoSigmaEE_[v][u][0] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);
+
+      sprintf (buffer_, "c2o #deltat EE: A/#sigma bin %d-%d, [%3.f,%3.f)-[%3.f,%3.f)", v+1, u+1, binLeftV, binRightV, binLeftU, binRightU);
+      bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
+      dtSliceVSAoSigmaEE_[v][u][1] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);
+
+      sprintf (buffer_, "o2o #deltat EE: A/#sigma bin %d-%d, [%3.f,%3.f)-[%3.f,%3.f)", v+1, u+1, binLeftV, binRightV, binLeftU, binRightU);
+      bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; #Deltat [ns]");
+      dtSliceVSAoSigmaEE_[v][u][2] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);
 
       sprintf (buffer_, "Ampli EE: A/#sigma bin %d-%d: [%3.f,%4.f)-[%3.f,%3.f)", v+1, u+1, binLeftV, binRightV, binLeftU, binRightU);
       bufferTitle_.erase(); bufferTitle_=std::string(buffer_)+std::string("; A/#sigma");
@@ -606,8 +624,21 @@ void initializeHists(){
       sigmaAoSigmaEE_[v][u]=0;       sigmaAoSigmaErrEE_[v][u]=0;
     }//end loop on u
   }//end loop on v
-  dtSliceSAoSigmaVSAoSigmaEB_ = new TH2F("EB: #mu(#Deltat) VS AmpliBins","EB: #mu(#Deltat) VS AmpliBins; A/#sigma; A/#sigma",AoSigmaNBins_,AoSigmaBins_,AoSigmaNBins_,AoSigmaBins_);
-  dtSliceSAoSigmaVSAoSigmaEE_ = new TH2F("EE: #mu(#Deltat) VS AmpliBins","EE: #mu(#Deltat) VS AmpliBins; A/#sigma; A/#sigma",AoSigmaNBins_,AoSigmaBins_,AoSigmaNBins_,AoSigmaBins_);
+
+  // adding more maps with:
+  // x,y: AmpliBins
+  // z: average of  time difference
+  // in order to allow different topological selections con channeil paris (central to outer, outer to outer) 
+  dtSliceSAoSigmaVSAoSigmaEB_[0] = new TH2F("EB: #mu(#Deltat) VS AmpliBins","EB: #mu(#Deltat) VS AmpliBins; A/#sigma; A/#sigma",AoSigmaNBins_,AoSigmaBins_,AoSigmaNBins_,AoSigmaBins_);
+  dtSliceSAoSigmaVSAoSigmaEB_[1] = new TH2F("c2o EB: #mu(#Deltat) VS AmpliBins","EB: #mu(#Deltat) VS AmpliBins; A/#sigma; A/#sigma",AoSigmaNBins_,AoSigmaBins_,AoSigmaNBins_,AoSigmaBins_);
+  dtSliceSAoSigmaVSAoSigmaEB_[2] = new TH2F("o2o EB: #mu(#Deltat) VS AmpliBins","EB: #mu(#Deltat) VS AmpliBins; A/#sigma; A/#sigma",AoSigmaNBins_,AoSigmaBins_,AoSigmaNBins_,AoSigmaBins_);
+  // adding more maps with:
+  // x,y: AmpliBins
+  // z: average of  time difference
+  // in order to allow different topological selections con channeil paris (central to outer, outer to outer) 
+  dtSliceSAoSigmaVSAoSigmaEE_[0] = new TH2F("EE: #mu(#Deltat) VS AmpliBins","EE: #mu(#Deltat) VS AmpliBins; A/#sigma; A/#sigma",AoSigmaNBins_,AoSigmaBins_,AoSigmaNBins_,AoSigmaBins_);
+  dtSliceSAoSigmaVSAoSigmaEE_[1] = new TH2F("c2o EE: #mu(#Deltat) VS AmpliBins","c2o EE: #mu(#Deltat) VS AmpliBins; A/#sigma; A/#sigma",AoSigmaNBins_,AoSigmaBins_,AoSigmaNBins_,AoSigmaBins_);
+  dtSliceSAoSigmaVSAoSigmaEE_[2] = new TH2F("o2o EE: #mu(#Deltat) VS AmpliBins","o2o EE: #mu(#Deltat) VS AmpliBins; A/#sigma; A/#sigma",AoSigmaNBins_,AoSigmaBins_,AoSigmaNBins_,AoSigmaBins_);
   dtoSigmaSliceSAoSigmaVSAoSigmaEB_ = new TH2F("EB: #mu(#Deltat)/#sigma(#mu) VS AmpliBins","EB: #mu(#Deltat)/#sigma(#mu) VS AmpliBins; A/#sigma; A/#sigma",AoSigmaNBins_,AoSigmaBins_,AoSigmaNBins_,AoSigmaBins_);
   dtoSigmaSliceSAoSigmaVSAoSigmaEE_ = new TH2F("EE: #mu(#Deltat)/#sigma(#mu) VS AmpliBins","EE: #mu(#Deltat)/#sigma(#mu) VS AmpliBins; A/#sigma; A/#sigma",AoSigmaNBins_,AoSigmaBins_,AoSigmaNBins_,AoSigmaBins_);
   occupancyAoSigmaVSAoSigmaEB_ = new TH2F("EB: occupancy VS AmpliBins","EB: occ. VS AmpliBins; A/#sigma; A/#sigma",AoSigmaNBins_,AoSigmaBins_,AoSigmaNBins_,AoSigmaBins_);
@@ -1028,8 +1059,10 @@ void writeHists()
   //directory to study bias of reco_time with Amplitude
   TDirectory *singleClusterBiasStudy = saving_->mkdir("single-bias");
   singleClusterBiasStudy->cd();
-  dtSliceSAoSigmaVSAoSigmaEB_       ->Write();
-  dtSliceSAoSigmaVSAoSigmaEE_       ->Write();
+  for(int k=0; k<3; k++){
+    dtSliceSAoSigmaVSAoSigmaEB_[k]       ->Write();
+    dtSliceSAoSigmaVSAoSigmaEE_[k]       ->Write();
+  }
   dtoSigmaSliceSAoSigmaVSAoSigmaEB_ ->Write(); 
   dtoSigmaSliceSAoSigmaVSAoSigmaEE_ ->Write();
   occupancyAoSigmaVSAoSigmaEB_      ->Write();
@@ -1039,7 +1072,9 @@ void writeHists()
   dtInDoubleAmplitudeBinsEB->cd();
   for (int v=0; v<AoSigmaNBins_ ; v++){// build histograms time difference between channels with ampli in two different AoSigmaBins_ ; loop on first bin
     for (int u=0; u<=v ; u++){// second bin (which can also be the same as the first one)
-      dtSliceVSAoSigmaEB_[v][u] -> Write();        }}
+      for(int k=0; k<3; k++){//loop over relative topology of crystal pairs
+      dtSliceVSAoSigmaEB_[v][u][k] -> Write();        
+      }}}
   
   // monitor amplitudes which actually fall in each bin, EB 
   TDirectory *ampliInAmplitudeBinsEB =  singleClusterBiasStudy->mkdir("ampli-double-slices-EB");
@@ -1053,7 +1088,9 @@ void writeHists()
   dtInDoubleAmplitudeBinsEE->cd();
   for (int v=0; v<AoSigmaNBins_ ; v++){// build histograms time difference between channels with ampli in two different AoSigmaBins_ ; loop on first bin
     for (int u=0; u<=v ; u++){// second bin (which can also be the same as the first one)
-      dtSliceVSAoSigmaEE_[v][u] -> Write();    }}
+      for(int k=0; k<3; k++){//loop over relative topology of crystal pairs
+	dtSliceVSAoSigmaEE_[v][u][k] -> Write();
+      }}}
   
   // monitor amplitudes which actually fall in each bin, EE
   TDirectory *ampliInAmplitudeBinsEE =  singleClusterBiasStudy->mkdir("ampli-double-slices-EE");
@@ -1505,7 +1542,9 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
   	    int u = bin/(AoSigmaNBins_+2) -1;
 	    
   	    if(u<AoSigmaNBins_ && v<AoSigmaNBins_){
- 	      dtSliceVSAoSigmaEB_[v][u]->Fill(dtSyst);
+ 	      dtSliceVSAoSigmaEB_[v][u][0]->Fill(dtSyst); // here add topological selection for other values of k 
+ 	      dtSliceVSAoSigmaEB_[v][u][1]->Fill(dtSyst); // here add topological selection for other values of k 
+ 	      dtSliceVSAoSigmaEB_[v][u][2]->Fill(dtSyst); // here add topological selection for other values of k 
 	      ampliInAoSigmabinsEB_[v][u]->Fill(ampliOfThis);
 	      ampliInAoSigmabinsEB_[v][u]->Fill(ampliOfThat);
   	    }
@@ -1553,7 +1592,9 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
   	    int u = bin/(AoSigmaNBins_+2) -1;
 
   	    if(u<AoSigmaNBins_ && v<AoSigmaNBins_) {
-	      dtSliceVSAoSigmaEE_[v][u]->Fill(dtSyst);
+	      dtSliceVSAoSigmaEE_[v][u][0]->Fill(dtSyst);
+	      dtSliceVSAoSigmaEE_[v][u][1]->Fill(dtSyst);//gf select on topology here: central (seed) to outer crystal 
+	      dtSliceVSAoSigmaEE_[v][u][2]->Fill(dtSyst);//gf select on topology here: outer to outer crystal 
  	      ampliInAoSigmabinsEE_[v][u]->Fill(ampliOfThis);
  	      ampliInAoSigmabinsEE_[v][u]->Fill(ampliOfThat);
   	    } 
@@ -2041,7 +2082,7 @@ void doFinalPlots()
       float RMSErr    = dtSliceVSAeffEB_[sliceX] -> GetRMSError();
       dtRMSVSAeffEB_ -> SetBinContent(sliceX+1, RMS);
       dtRMSVSAeffEB_ -> SetBinError(sliceX+1, RMSErr);
-      
+
       TF1 *gauss = new TF1("dtFitEB","gaus",-DtMax_,DtMax_); // require min number entries
       gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
       gauss                    ->SetParameter(1,0);    // initialize mean on central value
@@ -2068,7 +2109,6 @@ void doFinalPlots()
       float RMSErr    = dtSliceVSAeffEE_[sliceX] -> GetRMSError();
       dtRMSVSAeffEE_ -> SetBinContent(sliceX+1, RMS);
       dtRMSVSAeffEE_ -> SetBinError(sliceX+1, RMSErr);
-      
       TF1 *gauss = new TF1("dtFitEE","gaus",-DtMax_,DtMax_); // require min number entries
       gauss                    ->SetParLimits(1,-5,5); // limit on gaussian central 
       gauss                    ->SetParameter(1,0);    // initialize on central value
@@ -2082,8 +2122,6 @@ void doFinalPlots()
       // setting histogram and arrays with sigmas and their errros + abcsissa bins
       dtSigmaAeffEE_ -> SetBinContent(sliceX+1, sigma);  sigmaAeffEE_[sliceX]=sigma;
       dtSigmaAeffEE_ -> SetBinError(sliceX+1, sigmaErr); sigmaAeffErrEE_[sliceX]=sigmaErr;
-      //       AeffBinCentersEE_[sliceX]    = dtSigmaAeffEE_->GetXaxis()->GetBinCenter(sliceX+1);
-      //       AeffBinCentersErrEE_[sliceX] = dtSigmaAeffEE_->GetXaxis()->GetBinWidth(sliceX+1)/2;
       AeffBinCentersEE_[sliceX]    = AeffSliceEE_[sliceX]->GetMean();
       AeffBinCentersErrEE_[sliceX] = AeffSliceEE_[sliceX]->GetMeanError();
     }// slices for EE
@@ -2264,44 +2302,50 @@ void doFinalPlots()
 
 
   }// end loop on Xslices
-
+  
   for (int v=0; v<AoSigmaNBins_ ; v++){//initializing the four maps to values well far off 0
     for (int u=0; u<AoSigmaNBins_ ; u++){// to ease display of results...
- 	int bin = dtSliceSAoSigmaVSAoSigmaEB_-> FindBin(AoSigmaBins_[v],AoSigmaBins_[u]);
- 	dtSliceSAoSigmaVSAoSigmaEB_          -> SetBinContent(bin,-100);
- 	dtoSigmaSliceSAoSigmaVSAoSigmaEB_    -> SetBinContent(bin,-100);
- 	dtSliceSAoSigmaVSAoSigmaEE_          -> SetBinContent(bin,-100);
- 	dtoSigmaSliceSAoSigmaVSAoSigmaEE_    -> SetBinContent(bin,-100);
-    }}
-
+      int bun = dtoSigmaSliceSAoSigmaVSAoSigmaEB_-> FindBin(AoSigmaBins_[v],AoSigmaBins_[u]);
+      dtoSigmaSliceSAoSigmaVSAoSigmaEB_       -> SetBinContent(bun,-100);
+      dtoSigmaSliceSAoSigmaVSAoSigmaEE_       -> SetBinContent(bun,-100);
+      for (int k=0; k<3; k++) {
+ 	int bin = dtSliceSAoSigmaVSAoSigmaEB_[k]-> FindBin(AoSigmaBins_[v],AoSigmaBins_[u]);
+ 	dtSliceSAoSigmaVSAoSigmaEB_[k]         -> SetBinContent(bin,-100);
+ 	dtSliceSAoSigmaVSAoSigmaEE_[k]         -> SetBinContent(bin,-100);
+      }}}
+  
   // **** cluster for bias study ****    
   for (int v=0; v<AoSigmaNBins_ ; v++){// build histograms time difference between channels with ampli in two different AoSigmaBins_ ; loop on first bin
     for (int u=0; u<=v ; u++){// second bin (which can also be the same as the first one)
       
-      if( dtSliceVSAoSigmaEB_[v][u]->Integral()  >= minEntriesForFit_ ){// do fit for this bin in EB,  require min number entries
-  	TF1 *gauss = new TF1("dtFitEBInAmpliBin","gaus",-DtMax_,DtMax_); 
-  	gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(1,0);
-  	dtSliceVSAoSigmaEB_[v][u] ->Fit("dtFitEBInAmpliBin");
-  	float mu    = gauss -> GetParameter(1);                 float muErr     = gauss -> GetParError(1);
-  	// filling two maps:
- 	int bin = dtSliceSAoSigmaVSAoSigmaEB_-> FindBin(AoSigmaBins_[v],AoSigmaBins_[u]);
- 	dtSliceSAoSigmaVSAoSigmaEB_          -> SetBinContent(bin,mu);           // fitted gaussian mu of time differences for a given pair of Ampli bins 
- 	dtoSigmaSliceSAoSigmaVSAoSigmaEB_    -> SetBinContent(bin,mu/muErr);     // same as above, but relative to uncertainty on mu
-      }//end EB
+      //gf work in progress here
+      for(int k=0; k<3; k++ ){//loop on k, which is topological selection on crystal pairs
+	if( dtSliceVSAoSigmaEB_[v][u][k]->Integral()  >= minEntriesForFit_ ){// do fit for this bin in EB,  require min number entries
+	  TF1 *gauss = new TF1("dtFitEBInAmpliBin","gaus",-DtMax_,DtMax_); 
+	  gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(1,0);
+	  dtSliceVSAoSigmaEB_[v][u][k] ->Fit("dtFitEBInAmpliBin");
+	  float mu    = gauss -> GetParameter(1);                 float muErr     = gauss -> GetParError(1);
+	  // filling two maps:
+	  int bin = dtSliceSAoSigmaVSAoSigmaEB_[k]-> FindBin(AoSigmaBins_[v],AoSigmaBins_[u]);
+	  dtSliceSAoSigmaVSAoSigmaEB_[k]          -> SetBinContent(bin,mu);           // fitted gaussian mu of time differences for a given pair of Ampli bins 
+	  dtoSigmaSliceSAoSigmaVSAoSigmaEB_       -> SetBinContent(bin,mu/muErr);     // same as above, but relative to uncertainty on mu
+	}//end EB
+	
+	if( dtSliceVSAoSigmaEE_[v][u][k]->Integral()  >= minEntriesForFit_ ){// do fit for this bin in EE,  require min number entries
+	  TF1 *gauss = new TF1("dtFitEEInAmpliBin","gaus",-DtMax_,DtMax_); 
+	  gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(1,0);
+	  dtSliceVSAoSigmaEE_[v][u][k] ->Fit("dtFitEEInAmpliBin");
+	  float mu    = gauss -> GetParameter(1);                 float muErr     = gauss -> GetParError(1);
+	  // filling two maps:
+	  int bin = dtSliceSAoSigmaVSAoSigmaEE_[k]-> FindBin(AoSigmaBins_[v],AoSigmaBins_[u]);
+	  dtSliceSAoSigmaVSAoSigmaEE_[k]          -> SetBinContent(bin,mu);           // fitted gaussian mu of time differences for a given pair of Ampli bins 
+	  dtoSigmaSliceSAoSigmaVSAoSigmaEE_    -> SetBinContent(bin,mu/muErr);     // same as above, but relative to uncertainty on mu
+	}//end EE
+      }//loop on k, which is topological selection on crystal pairs
       
-      if( dtSliceVSAoSigmaEE_[v][u]->Integral()  >= minEntriesForFit_ ){// do fit for this bin in EE,  require min number entries
-	TF1 *gauss = new TF1("dtFitEEInAmpliBin","gaus",-DtMax_,DtMax_); 
-	gauss ->SetParLimits(1,-5,5);   gauss ->SetParameter(1,0);
-	dtSliceVSAoSigmaEE_[v][u] ->Fit("dtFitEEInAmpliBin");
-	float mu    = gauss -> GetParameter(1);                 float muErr     = gauss -> GetParError(1);
-	// filling two maps:
- 	int bin = dtSliceSAoSigmaVSAoSigmaEE_-> FindBin(AoSigmaBins_[v],AoSigmaBins_[u]);
- 	dtSliceSAoSigmaVSAoSigmaEE_          -> SetBinContent(bin,mu);           // fitted gaussian mu of time differences for a given pair of Ampli bins 
- 	dtoSigmaSliceSAoSigmaVSAoSigmaEE_    -> SetBinContent(bin,mu/muErr);     // same as above, but relative to uncertainty on mu
-      }//end EE
     }//end loop on u
   }//end loop on v
-
+  
 
 }// end doFinalPlots
 
