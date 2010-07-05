@@ -14,7 +14,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.cc,v 1.20 2010/05/19 17:41:30 franzoni Exp $
+// $Id: EcalTimePi0Tree.cc,v 1.21 2010/05/19 19:06:57 franzoni Exp $
 //
 //
 
@@ -74,6 +74,7 @@ EcalTimePi0Tree::EcalTimePi0Tree (const edm::ParameterSet& iConfig) :
   muonCollection_                          (iConfig.getParameter<edm::InputTag> ("muonCollection")),
   vertexCollection_                        (iConfig.getParameter<edm::InputTag> ("vertexCollection")),
   l1GMTReadoutRecTag_   (iConfig.getUntrackedParameter<std::string> ("L1GlobalReadoutRecord","gtDigis")),
+  gtRecordCollectionTag_ (iConfig.getUntrackedParameter<std::string> ("GTRecordCollection","")),
   runNum_               (iConfig.getUntrackedParameter<int> ("runNum")),
   fileName_             (iConfig.getUntrackedParameter<std::string> ("fileName", std::string ("EcalTimePi0Tree"))),
   useRaw_               (iConfig.getUntrackedParameter<bool> ("useRaw", false)),
@@ -981,6 +982,43 @@ EcalTimePi0Tree::dump3Ginfo (const edm::Event& iEvent,
   //     << myTreeVariables_.isDTL1Bx  [0]
   //     << myTreeVariables_.isDTL1Bx  [1]
   //     << myTreeVariables_.isDTL1Bx  [2] << endl;
+
+  //SIC - July 5 2010
+  // Fill the trigger bit arrays, from EcalTimingAnalysis
+  myTreeVariables_.l1NActiveTriggers = 0 ;
+  myTreeVariables_.l1NActiveTechTriggers = 0;
+  //I (Jason) Decided ONLY to look at the L1 triggers that took part in the decision, not just the ACTIVE triggers
+  // HOPEFULLY this wasn't a bad decision
+  edm::Handle< L1GlobalTriggerReadoutRecord > gtRecord;
+  iEvent.getByLabel(gtRecordCollectionTag_, gtRecord);
+  DecisionWord dWord = gtRecord->decisionWord();   // this will get the decision word *before* masking disabled bits
+  int iBit = -1;
+  for (std::vector<bool>::iterator itBit = dWord.begin(); itBit != dWord.end(); ++itBit)
+  {
+    iBit++;
+    if (*itBit)
+    {
+      myTreeVariables_.l1ActiveTriggers[myTreeVariables_.l1NActiveTriggers] = iBit ;
+      myTreeVariables_.l1NActiveTriggers++;
+    }
+  }
+
+  TechnicalTriggerWord tw = gtRecord->technicalTriggerWord();
+  if ( ! tw.empty() )
+  {
+    // loop over dec. bit to get total rate (no overlap)
+    for ( int itechbit = 0; itechbit < 64; ++itechbit )
+    {
+      myTreeVariables_.l1ActiveTechTriggers[myTreeVariables_.l1NActiveTechTriggers] = 0; // ADD THIS 
+
+      if ( tw[itechbit] )
+      {
+        myTreeVariables_.l1ActiveTechTriggers[myTreeVariables_.l1NActiveTechTriggers] = itechbit;
+        myTreeVariables_.l1NActiveTechTriggers++;
+      }
+
+    }
+  }
  
   return ;
 } //PG dump3Ginfo  

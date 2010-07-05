@@ -375,6 +375,8 @@ void setBranchAddresses(TTree* chain, EcalTimePi0TreeContent& treeVars)
   {
     chain -> SetBranchAddress("l1NActiveTriggers", &treeVars.l1NActiveTriggers);
     chain -> SetBranchAddress("l1ActiveTriggers",   treeVars.l1ActiveTriggers);
+    chain -> SetBranchAddress("l1NActiveTechTriggers", &treeVars.l1NActiveTechTriggers);
+    chain -> SetBranchAddress("l1ActiveTechTriggers", treeVars.l1ActiveTechTriggers);
     
     chain->SetBranchAddress("l1GtNEm",    &treeVars.l1GtNEm);
     chain->SetBranchAddress("l1GtEmBx",   treeVars.l1GtEmBx);
@@ -873,6 +875,8 @@ void setBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
       
     chain->Branch("l1NActiveTriggers", &treeVars.l1NActiveTriggers,                  "l1NActiveTriggers/I");
     chain->Branch("l1ActiveTriggers",   treeVars.l1ActiveTriggers, "l1ActiveTriggers[l1NActiveTriggers]/I");
+    chain->Branch("l1NActiveTechTriggers", &treeVars.l1NActiveTechTriggers,                  "l1NActiveTechTriggers/I");
+    chain->Branch("l1ActiveTechTriggers",   treeVars.l1ActiveTechTriggers, "l1ActiveTechTriggers[l1NActiveTechTriggers]/I");
     
     chain->Branch("l1GtNEm",    &treeVars.l1GtNEm,   "l1GtNEm/I"   );
     chain->Branch("l1GtEmBx",   treeVars.l1GtEmBx,   "l1GtEmBx[l1GtNEm]/I"  );
