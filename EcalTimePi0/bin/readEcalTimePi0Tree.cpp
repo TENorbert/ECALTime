@@ -6,6 +6,7 @@
 #include <algorithm> 
 #include <functional>
 #include <set>
+#include <boost/tokenizer.hpp>
 
 #include "ECALTime/EcalTimePi0/interface/EcalTimePi0TreeContent.h"
 #include "DataFormats/GeometryVector/interface/GlobalPoint.h"
@@ -74,6 +75,13 @@ float eTPi0MinEB_     = 0.65;
 float eTGammaMinEE_   = 0.250;
 float s4s9GammaMinEE_ = 0.85;
 float eTPi0MinEE_     = 0.800;
+float swissCrossMaxEB_ = 0.95; // 1-E4/E1
+float swissCrossMaxEE_ = 0.95; // 1-E4/E1
+std::vector<std::vector<double> > trigIncludeVector;
+std::vector<std::vector<double> > trigExcludeVector;
+std::vector<std::vector<double> > ttrigIncludeVector;
+std::vector<std::vector<double> > ttrigExcludeVector;
+
 
 float minAmpliOverSigma_   = 10;    // dimensionless
 
@@ -181,6 +189,14 @@ TH1F* BCClusterShapeEEHist_;
 TH1F* BCClusterShapeEEPHist_;
 TH1F* BCClusterShapeEEMHist_;
 TH1F* BCClusterShapeEBHist_;
+TH1F* BCTimeHist_;
+TH1F* BCTimeHistEB_;
+TH1F* BCTimeHistEBP_;
+TH1F* BCTimeHistEBM_;
+TH1F* BCTimeHistEE_;
+TH1F* BCTimeHistEEP_;
+TH1F* BCTimeHistEEM_;
+TH2F* BCTimeHistEBvsEE_;
 // diphotons control plots
 TH1F* massDiGammaHist_;
 TH1F* massDiGammaEBHist_;
@@ -337,6 +353,109 @@ TH2F* timeEEMminusTimeEEPvsVrtexZ;
 
 
 // ---------------------------------------------------------------------------------------
+// ------------------ Function to split arg input lists by comma -------------------------
+std::vector<std::string> split(std::string msg, std::string separator)
+{
+  boost::char_separator<char> sep(separator.c_str());
+  boost::tokenizer<boost::char_separator<char> > tok(msg, sep );
+  std::vector<std::string> token;
+  for ( boost::tokenizer<boost::char_separator<char> >::const_iterator i = tok.begin(); i != tok.end(); ++i ) {
+    token.push_back(std::string(*i));
+  }
+  return token;
+}
+
+// ---------------------------------------------------------------------------------------
+// ------------------ Function to generate include/exclude vectors -----------------------
+void genIncludeExcludeVectors(std::string optionString,
+    std::vector<std::vector<double> >& includeVector,
+    std::vector<std::vector<double> >& excludeVector)
+{
+  std::vector<std::string> rangeStringVector;
+  std::vector<double> rangeIntVector;
+
+  if(optionString != "-1"){
+    std::vector<std::string> stringVector = split(optionString,",") ;
+
+    for (uint i=0 ; i<stringVector.size() ; i++) {
+      bool exclude = false;
+
+      if(stringVector[i].at(0)=='x'){
+        exclude = true;
+        stringVector[i].erase(0,1);
+      }
+      rangeStringVector = split(stringVector[i],"-") ;
+
+      rangeIntVector.clear();
+      for(uint j=0; j<rangeStringVector.size();j++) {
+        rangeIntVector.push_back(atof(rangeStringVector[j].c_str()));
+      }
+      if(exclude) excludeVector.push_back(rangeIntVector);
+      else includeVector.push_back(rangeIntVector);
+
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------------------
+// - Function to decide to include/exclude event based on the vectors passed for triggers 
+bool includeEvent(int* triggers,
+    int numTriggers,
+    std::vector<std::vector<double> > includeVector,
+    std::vector<std::vector<double> > excludeVector)
+{
+  bool keepEvent = false;
+  if(includeVector.size()==0) keepEvent = true;
+  for (int ti = 0; ti < numTriggers; ++ti) {
+    for(uint i=0; i!=includeVector.size();++i){
+      if(includeVector[i].size()==1 && triggers[ti]==includeVector[i][0]) keepEvent=true;
+      else if(includeVector[i].size()==2 && (triggers[ti]>=includeVector[i][0] && triggers[ti]<=includeVector[i][1])) keepEvent=true;
+    }
+  }
+  if(!keepEvent)
+    return false;
+
+  keepEvent = true;
+  for (int ti = 0; ti < numTriggers; ++ti) {
+    for(uint i=0; i!=excludeVector.size();++i){
+      if(excludeVector[i].size()==1 && triggers[ti]==excludeVector[i][0]) keepEvent=false;
+      else if(excludeVector[i].size()==2 && (triggers[ti]>=excludeVector[i][0] && triggers[ti]<=excludeVector[i][1])) keepEvent=false;
+    }
+  }
+
+  return keepEvent;
+}
+
+// ---------------------------------------------------------------------------------------
+// ------- Function to decide to include/exclude event based on the vectors passed -------
+bool includeEvent(double eventParameter,
+    std::vector<std::vector<double> > includeVector,
+    std::vector<std::vector<double> > excludeVector)
+{
+  bool keepEvent = false;
+  if(includeVector.size()==0) keepEvent = true;
+  for(uint i=0; i!=includeVector.size();++i){
+    if(includeVector[i].size()==1 && eventParameter==includeVector[i][0])
+      keepEvent=true;
+    else if(includeVector[i].size()==2 && (eventParameter>=includeVector[i][0] && eventParameter<=includeVector[i][1]))
+      keepEvent=true;
+  }
+  if(!keepEvent) // if it's not in our include list, skip it
+    return false;
+
+  keepEvent = true;
+  for(uint i=0; i!=excludeVector.size();++i){
+    if(excludeVector[i].size()==1 && eventParameter==excludeVector[i][0])
+      keepEvent=false;
+    else if(excludeVector[i].size()==2 && (eventParameter>=excludeVector[i][0] && eventParameter<=excludeVector[i][1]))
+      keepEvent=false;
+  }
+
+  return keepEvent; // if someone includes and excludes, exclusion will overrule
+
+}
+
+// ---------------------------------------------------------------------------------------
 // ------------------ Function to parse the command-line arguments------------------------
 void parseArguments(int argc, char** argv)
 {
@@ -356,6 +475,8 @@ void parseArguments(int argc, char** argv)
   std::string stringMaxRun           = "--maxRun";
   std::string stringMinLS            = "--minLS";
   std::string stringMaxLS            = "--maxLS";
+  std::string stringTriggers         = "--trig";
+  std::string stringTechTriggers     = "--techTrig";
 
 
   //gf: support development
@@ -389,6 +510,8 @@ void parseArguments(int argc, char** argv)
       std::cout << " --maxRun: highest run number considered" << std::endl;
       std::cout << " --minLS: lowest lumi section number considered" << std::endl;
       std::cout << " --maxLS: highest lumi section number considered" << std::endl;
+      std::cout << " --trig: L1 triggers to include (exclude with x)" << std::endl;
+      std::cout << " --techTrig: L1 technical triggers to include (exclude with x)" << std::endl;
       exit(1);      }
 
 
@@ -447,6 +570,14 @@ void parseArguments(int argc, char** argv)
     }
     else if (argv[v] == stringminAmpliOverSigma) { // set min amplitude considered for time measurement
       minAmpliOverSigma_  = atof(argv[v+1]);
+      v++;
+    }
+    else if (argv[v] == stringTriggers) { // set L1 triggers to include/exclude
+      genIncludeExcludeVectors(std::string(argv[v+1]),trigIncludeVector,trigExcludeVector);
+      v++;
+    }
+    else if (argv[v] == stringTechTriggers) { // set L1 technical triggers to include/exclude
+      genIncludeExcludeVectors(std::string(argv[v+1]),ttrigIncludeVector,ttrigExcludeVector);
       v++;
     }
     // handle here the case of multiple arguments for input files
@@ -516,6 +647,14 @@ void initializeHists(){
   BCClusterShapeEEPHist_ = new TH1F("EEP cluster shape","e2x2 / e3x3",65,-0.1,1.2);
   BCClusterShapeEEMHist_ = new TH1F("EEM cluster shape","e2x2 / e3x3",65,-0.1,1.2);
   BCClusterShapeEBHist_  = new TH1F("EB cluster shape","e2x2 / e3x3",65,-0.1,1.2);
+  BCTimeHist_ = new TH1F("BCTimeHist","Time of all BasicClusters",500,-25,25);
+  BCTimeHistEB_ = new TH1F("BCTimeHistEB","Time of all EB BasicClusters",500,-25,25);
+  BCTimeHistEBP_ = new TH1F("BCTimeHistEBP","Time of all EBP BasicClusters",500,-25,25);
+  BCTimeHistEBM_ = new TH1F("BCTimeHistEBM","Time of all EBM BasicClusters",500,-25,25);
+  BCTimeHistEE_ = new TH1F("BCTimeHistEE","Time of all EE BasicClusters",500,-25,25);
+  BCTimeHistEEP_ = new TH1F("BCTimeHistEEP","Time of all EEP BasicClusters",500,-25,25);
+  BCTimeHistEEM_ = new TH1F("BCTimeHistEEM","Time of all EEM BasicClusters",500,-25,25);
+  BCTimeHistEBvsEE_ = new TH2F("BCTimeHistEBvsEE","Time of EE vs. time of EB BasicClusters",500,-25,25,500,-25,25);
   // Initialize histograms -- diphotons control plots
   massDiGammaHist_      = new TH1F("massDiGamma","m(#gamma#gamma)",50,0,0.500);
   massDiGammaEBHist_    = new TH1F("massDiGamma EB","m(#gamma#gamma) EB",50,0,0.500);
@@ -844,7 +983,99 @@ void initializeHists(){
 
 }//end initializeHists
 
+// ---------------------------------------------------------------------------------------
+// ------------------ Function to compute time and error for a cluster -------------------
+//std::pair<float,float> timeAndUncertSingleCluster(int bClusterIndex)
+ClusterTime timeAndUncertSingleCluster(int bClusterIndex)
+{
+  float weightTsum  = 0;
+  float weightSum   = 0;
+  int   numCrystals = 0;
+  float timingResParamN    =0;
+  float timingResParamConst=0;
+  // loop on the cry components of a basic cluster; get timeBest and uncertainty 
+  for(int thisCry=0; thisCry<treeVars_.nXtalsInCluster[bClusterIndex]; thisCry++)
+  {
+    bool  thisIsInEB=false;
+    float sigmaNoiseOfThis=0;
+    if(treeVars_.xtalInBCIEta[bClusterIndex][thisCry]!=-999999)       {
+      sigmaNoiseOfThis   =sigmaNoiseEB;
+      timingResParamN    =timingResParamNEB;
+      timingResParamConst=timingResParamConstEB;
+      thisIsInEB=true;    }
+    else if(treeVars_.xtalInBCIy[bClusterIndex][thisCry]!=-999999)    {
+      sigmaNoiseOfThis=sigmaNoiseEE;
+      timingResParamN    =timingResParamNEE;
+      timingResParamConst=timingResParamConstEE;
+      thisIsInEB=false;    }
+    else    {  std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
+    float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] / sigmaNoiseOfThis; 
+    if( ampliOverSigOfThis < minAmpliOverSigma_) continue;
+    // added spike cleaning SIC July 6 2010
+    if( treeVars_.xtalInBCSwissCross[bClusterIndex][thisCry] > 0.95) continue;
 
+    numCrystals++;
+    float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry];
+    float sigmaOfThis = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
+
+    //std::cout << "GFdeb eampli: " << treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] //gfdebug
+    //          << " ampliOverSigOfThis: " << ampliOverSigOfThis
+    //          << " timeOfThis: " << timeOfThis
+    //          << " sigmaOfThis: " << sigmaOfThis
+    //          << std::endl;//gfdebug
+
+    weightTsum+=(timeOfThis/pow(sigmaOfThis,2));
+    weightSum+=1/pow(sigmaOfThis,2);
+  }
+  float bestTime = weightTsum/weightSum;
+
+  float chi2 = -999999;
+  // loop on the cry components to get chi2
+  // do this only if you have at least 2 crystals over threshold and not spiky
+  if(numCrystals>1){
+    chi2=0;
+    for(int thisCry=0; thisCry<treeVars_.nXtalsInCluster[bClusterIndex]; thisCry++)
+      {
+  	//bool  thisIsInEB=false;
+  	float sigmaNoiseOfThis=0;
+  	if(treeVars_.xtalInBCIEta[bClusterIndex][thisCry]!=-999999)       {
+  	  sigmaNoiseOfThis=sigmaNoiseEB;
+  	  //thisIsInEB=true;
+  	}
+  	else if(treeVars_.xtalInBCIy[bClusterIndex][thisCry]!=-999999)    {
+  	  sigmaNoiseOfThis=sigmaNoiseEE;
+  	  //thisIsInEB=false;    
+  	}
+  	else    {  std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
+  	
+  	float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] / sigmaNoiseOfThis; 
+  	if( ampliOverSigOfThis < minAmpliOverSigma_) continue;
+  	
+  	float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry];
+  	float sigmaOfThis = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
+  	
+  	chi2 += pow( (timeOfThis-bestTime)/sigmaOfThis, 2);
+  	
+      }// end loop on cry
+  }//end if
+
+
+  ClusterTime theResult; //initialize
+  theResult.numCry = -999999;   theResult.time   = -999999;
+  theResult.timeErr= -999999;   theResult.chi2   = -999999;
+  
+  if(weightSum <= 0) {
+    return theResult;}
+  else{
+    //std::cout << "-- GFdeb time: " << bestTime << " error: " << sqrt(1/weightSum) << std::endl;//gfdebug
+    theResult.numCry = numCrystals;
+    theResult.time   = bestTime;
+    theResult.timeErr= sqrt(1/weightSum);
+    theResult.chi2   = chi2;
+    return theResult;
+  }
+
+}// end timeAndUncertSingleCluster
 
 // ---------------------------------------------------------------------------------------
 // ------------------ Function to plot the control hists ---------------------------------
@@ -854,11 +1085,11 @@ void doControlHists()
   // loop on basic clusters
   for (int bCluster=0; bCluster < treeVars_.nClusters; bCluster++)
   {
-
     float eBC=0; // calculate energy of BC for validation
     for (int cryInBC=0; cryInBC < treeVars_.nXtalsInCluster[bCluster]; cryInBC++){
       eBC+= treeVars_.xtalInBCEnergy[bCluster][cryInBC];}
 
+    //FIXME: SIC: Is this a bug? Shouldn't these only be filled once per cluster?
     BCEnergyHist_->Fill(treeVars_.clusterEnergy[bCluster]);
     BCEtHist_->Fill(treeVars_.clusterTransverseEnergy[bCluster]);
     BCNumCrysHist_->Fill(treeVars_.nXtalsInCluster[bCluster]);
@@ -924,6 +1155,41 @@ void doControlHists()
 	BCNumCrysOverThrHist_  ->Fill(numCryOverThreshold);
 	BCNumCrysOverThrEEHist_->Fill(numCryOverThreshold);}
      
+      ClusterTime myClusterTime = timeAndUncertSingleCluster(bCluster);
+      // require at least 2 crys in cluster, non-spike and above threshold
+      if(myClusterTime.numCry < 2) continue;
+
+      BCTimeHist_->Fill(myClusterTime.time);
+      if(treeVars_.xtalInBCIEta[bCluster][0] != -999999)
+      {
+        BCTimeHistEB_->Fill(myClusterTime.time);
+        if(treeVars_.xtalInBCIEta[bCluster][0] > 0)
+          BCTimeHistEBP_->Fill(myClusterTime.time);
+        else
+          BCTimeHistEBM_->Fill(myClusterTime.time);
+      }
+      else if(treeVars_.xtalInBCIx[bCluster][0] != -999999)
+      {
+        BCTimeHistEE_->Fill(myClusterTime.time);
+        if(treeVars_.clusterEta[bCluster]>0)
+          BCTimeHistEEP_->Fill(myClusterTime.time);
+        else
+          BCTimeHistEEM_->Fill(myClusterTime.time);
+      }
+    
+      // now take just the EB clusters
+      if(treeVars_.xtalInBCIEta[bCluster][0] == -999999) continue;
+
+      for (int bClusterEE=0; bClusterEE < treeVars_.nClusters; ++bClusterEE)
+      {
+        // Now from here take just the valid EE clusters
+        if(treeVars_.xtalInBCIx[bClusterEE][0] == -999999) continue;
+        ClusterTime eeClusterTime = timeAndUncertSingleCluster(bClusterEE);
+        // require at least 2 crys in cluster, non-spike and above threshold
+        if(eeClusterTime.numCry < 2) continue;
+        BCTimeHistEBvsEE_->Fill(myClusterTime.time,eeClusterTime.time);
+      }
+
       
   }//end loop on basic clusters
 }// end doControlHistograms
@@ -954,6 +1220,14 @@ void writeHists()
   BCClusterShapeEEPHist_->Write();
   BCClusterShapeEEMHist_->Write();
   BCClusterShapeEBHist_->Write();
+  BCTimeHist_->Write();
+  BCTimeHistEB_->Write();
+  BCTimeHistEBP_->Write();
+  BCTimeHistEBM_->Write();
+  BCTimeHistEE_->Write();
+  BCTimeHistEEP_->Write();
+  BCTimeHistEEM_->Write();
+  BCTimeHistEBvsEE_->Write();
 
   xtalEnergyHist_->Write(); 
   xtalTimeHist_->Write();
@@ -1274,99 +1548,6 @@ void writeHists()
   timeEEMminusTimeEEPvsVrtexZ -> Write();
 
 }
-
-// ---------------------------------------------------------------------------------------
-// ------------------ Function to compute time and error for a cluster -------------------
-//std::pair<float,float> timeAndUncertSingleCluster(int bClusterIndex)
-ClusterTime timeAndUncertSingleCluster(int bClusterIndex)
-{
-  float weightTsum  = 0;
-  float weightSum   = 0;
-  int   numCrystals = 0;
-  float timingResParamN    =0;
-  float timingResParamConst=0;
-  // loop on the cry components of a basic cluster; get timeBest and uncertainty 
-  for(int thisCry=0; thisCry<treeVars_.nXtalsInCluster[bClusterIndex]; thisCry++)
-  {
-    bool  thisIsInEB=false;
-    float sigmaNoiseOfThis=0;
-    if(treeVars_.xtalInBCIEta[bClusterIndex][thisCry]!=-999999)       {
-      sigmaNoiseOfThis   =sigmaNoiseEB;
-      timingResParamN    =timingResParamNEB;
-      timingResParamConst=timingResParamConstEB;
-      thisIsInEB=true;    }
-    else if(treeVars_.xtalInBCIy[bClusterIndex][thisCry]!=-999999)    {
-      sigmaNoiseOfThis=sigmaNoiseEE;
-      timingResParamN    =timingResParamNEE;
-      timingResParamConst=timingResParamConstEE;
-      thisIsInEB=false;    }
-    else    {  std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
-    float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] / sigmaNoiseOfThis; 
-    if( ampliOverSigOfThis < minAmpliOverSigma_) continue;
-
-    numCrystals++;
-    float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry];
-    float sigmaOfThis = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
-
-    //std::cout << "GFdeb eampli: " << treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] //gfdebug
-    //          << " ampliOverSigOfThis: " << ampliOverSigOfThis
-    //          << " timeOfThis: " << timeOfThis
-    //          << " sigmaOfThis: " << sigmaOfThis
-    //          << std::endl;//gfdebug
-
-    weightTsum+=(timeOfThis/pow(sigmaOfThis,2));
-    weightSum+=1/pow(sigmaOfThis,2);
-  }
-  float bestTime = weightTsum/weightSum;
-
-  float chi2 = -999999;
-  // loop on the cry components to get chi2
-  // do this only if you have at least 2 crystals over threshold
-  if(numCrystals>1){
-    chi2=0;
-    for(int thisCry=0; thisCry<treeVars_.nXtalsInCluster[bClusterIndex]; thisCry++)
-      {
-  	//bool  thisIsInEB=false;
-  	float sigmaNoiseOfThis=0;
-  	if(treeVars_.xtalInBCIEta[bClusterIndex][thisCry]!=-999999)       {
-  	  sigmaNoiseOfThis=sigmaNoiseEB;
-  	  //thisIsInEB=true;
-  	}
-  	else if(treeVars_.xtalInBCIy[bClusterIndex][thisCry]!=-999999)    {
-  	  sigmaNoiseOfThis=sigmaNoiseEE;
-  	  //thisIsInEB=false;    
-  	}
-  	else    {  std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
-  	
-  	float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] / sigmaNoiseOfThis; 
-  	if( ampliOverSigOfThis < minAmpliOverSigma_) continue;
-  	
-  	float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry];
-  	float sigmaOfThis = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
-  	
-  	chi2 += pow( (timeOfThis-bestTime)/sigmaOfThis, 2);
-  	
-      }// end loop on cry
-  }//end if
-
-
-  ClusterTime theResult; //initialize
-  theResult.numCry = -999999;   theResult.time   = -999999;
-  theResult.timeErr= -999999;   theResult.chi2   = -999999;
-  
-  if(weightSum <= 0) {
-    return theResult;}
-  else{
-    //std::cout << "-- GFdeb time: " << bestTime << " error: " << sqrt(1/weightSum) << std::endl;//gfdebug
-    theResult.numCry = numCrystals;
-    theResult.time   = bestTime;
-    theResult.timeErr= sqrt(1/weightSum);
-    theResult.chi2   = chi2;
-    return theResult;
-  }
-
-}// end timeAndUncertSingleCluster
-
 
 // ---------------------------------------------------------------------------------------
 // ------------------ Function to do single BasicCluster resolution studies  -------------
@@ -2432,6 +2613,14 @@ int main (int argc, char** argv)
   for (int entry = 0 ; (entry < nEntries && eventCounter < numEvents_); ++entry)
   {
     chain->GetEntry (entry) ;
+    // Keep the event?
+    bool keepEvent = includeEvent(treeVars_.l1ActiveTriggers,
+        treeVars_.l1NActiveTriggers,trigIncludeVector,trigExcludeVector)
+            && includeEvent(treeVars_.l1ActiveTechTriggers,
+                treeVars_.l1NActiveTechTriggers,ttrigIncludeVector,ttrigExcludeVector);
+    if(!keepEvent)
+      continue;
+
     
     // do analysis if the run is in the desired range  
     if( treeVars_.runId<minRun_  || maxRun_<treeVars_.runId) continue;
