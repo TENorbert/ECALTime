@@ -8,20 +8,20 @@ process.load('Configuration/StandardSequences/GeometryExtended_cff')
 # Geometry
 process.load("Geometry.CaloEventSetup.CaloTopology_cfi")
 process.load("Geometry.CaloEventSetup.CaloGeometry_cff")
-# process.load("Geometry.CMSCommonData.cmsIdealGeometryXML_cfi") # gfwork: need this? 
+process.load("Geometry.CMSCommonData.cmsIdealGeometryXML_cfi") # gfwork: need this? 
 process.load("Geometry.CaloEventSetup.CaloGeometry_cfi")
-# process.load("Geometry.CommonDetUnit.globalTrackingGeometry_cfi") # gfwork: need this?
+process.load("Geometry.CommonDetUnit.globalTrackingGeometry_cfi") # gfwork: need this?
 process.load("Geometry.EcalMapping.EcalMapping_cfi")
 process.load("Geometry.EcalMapping.EcalMappingRecord_cfi")
 process.load("Geometry.MuonNumbering.muonNumberingInitialization_cfi") # gfwork: need this?
 
+process.load("Configuration.StandardSequences.MagneticField_38T_cff")
 
 # Global Tag
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 #process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_noesprefer_cff")
 #process.GlobalTag.globaltag = 'CRAFT_ALL_V12::All'
-#process.GlobalTag.globaltag = 'GR_R_35X_V8A::All'
-process.GlobalTag.globaltag = 'GR_R_38X_V1::All'
+process.GlobalTag.globaltag = 'GR_R_35X_V8A::All'
 
 # Trigger
 process.load("L1TriggerConfig.L1ScalesProducers.L1MuTriggerScalesConfig_cff")
@@ -36,16 +36,17 @@ import EventFilter.L1GlobalTriggerRawToDigi.l1GtUnpack_cfi
 process.gtDigis = EventFilter.L1GlobalTriggerRawToDigi.l1GtUnpack_cfi.l1GtUnpack.clone()
 
 # Raw
+process.load("Configuration.StandardSequences.Reconstruction_cff")
 process.load("Configuration.StandardSequences.RawToDigi_Data_cff")
-process.load("RecoLocalCalo.EcalRecProducers.ecalRatioUncalibRecHit_cfi")
-#process.load("RecoLocalCalo.EcalRecProducers.ecalGlobalUncalibRecHit_cfi")
+#process.load("RecoLocalCalo.EcalRecProducers.ecalRatioUncalibRecHit_cfi")
+process.load("RecoLocalCalo.EcalRecProducers.ecalGlobalUncalibRecHit_cfi")
 process.load("RecoLocalCalo.Configuration.ecalLocalRecoSequence_cff")
-process.ecalLocalRecoSequence = cms.Sequence(process.ecalRatioUncalibRecHit*process.ecalDetIdToBeRecovered*process.ecalRecHit+process.ecalPreshowerRecHit)
+#process.ecalLocalRecoSequence = cms.Sequence(process.ecalRatioUncalibRecHit*process.ecalDetIdToBeRecovered*process.ecalRecHit+process.ecalPreshowerRecHit)
 #process.ecalLocalRecoSequence = cms.Sequence(process.ecalGlobalUncalibRecHit*process.ecalDetIdToBeRecovered*process.ecalRecHit+process.ecalPreshowerRecHit)
 #process.ecalRecHit.EEuncalibRecHitCollection = cms.InputTag("ecalGlobalUncalibRecHit","EcalUncalibRecHitsEE")
 #process.ecalRecHit.EBuncalibRecHitCollection = cms.InputTag("ecalGlobalUncalibRecHit","EcalUncalibRecHitsEB")
-process.ecalRecHit.EEuncalibRecHitCollection = cms.InputTag("ecalRatioUncalibRecHit","EcalUncalibRecHitsEE")
-process.ecalRecHit.EBuncalibRecHitCollection = cms.InputTag("ecalRatioUncalibRecHit","EcalUncalibRecHitsEB")
+#process.ecalRecHit.EEuncalibRecHitCollection = cms.InputTag("ecalRatioUncalibRecHit","EcalUncalibRecHitsEE")
+#process.ecalRecHit.EBuncalibRecHitCollection = cms.InputTag("ecalRatioUncalibRecHit","EcalUncalibRecHitsEB")
 
 
 # general basic- and super- clustering sequences
@@ -63,8 +64,8 @@ process.multi5x5BasicClustersTimePi0Barrel =  RecoEcal.EgammaClusterProducers.mu
     endcapHitProducer = cms.string('ecalRecHit'),
     endcapHitCollection = cms.string('EcalRecHitsEE'),
     
-    IslandBarrelSeedThr = cms.double(0.250),   # barrelSeedThreshold
-    IslandEndcapSeedThr = cms.double(0.450),   # endcapSeedThreshold
+    IslandBarrelSeedThr = cms.double(0.5),   # barrelSeedThreshold
+    IslandEndcapSeedThr = cms.double(1.0),   # endcapSeedThreshold
 
     barrelClusterCollection = cms.string('multi5x5BarrelBasicClusters'),
     endcapClusterCollection = cms.string('multi5x5EndcapBasicClusters'),
@@ -86,8 +87,8 @@ process.multi5x5BasicClustersTimePi0Endcap =  RecoEcal.EgammaClusterProducers.mu
     endcapHitProducer = cms.string('ecalRecHit'),
     endcapHitCollection = cms.string('EcalRecHitsEE'),
     
-    IslandBarrelSeedThr = cms.double(0.150),              # endcapSeedThreshold
-    IslandEndcapSeedThr = cms.double(0.200),             # barrelSeedThreshold
+    IslandBarrelSeedThr = cms.double(0.5),              # endcapSeedThreshold
+    IslandEndcapSeedThr = cms.double(1.0),             # barrelSeedThreshold
 
     barrelClusterCollection = cms.string('multi5x5BarrelBasicClusters'),
     endcapClusterCollection = cms.string('multi5x5EndcapBasicClusters'),
@@ -124,11 +125,13 @@ process.multi5x5SuperClustersTimePi0Endcap =  RecoEcal.EgammaClusterProducers.mu
 
 # this is the ntuple producer
 process.load("ECALTime.EcalTimePi0.ecalTimePi0Tree_cfi")
-process.ecalTimePi0Tree.fileName = 'EcalTimePi0TreeRAW'
+process.ecalTimePi0Tree.fileName = 'EcalTimePi0Tree'
 process.ecalTimePi0Tree.muonCollection = cms.InputTag("muons")
-process.ecalTimePi0Tree.runNum = 108645
+process.ecalTimePi0Tree.runNum = 135149
 process.ecalTimePi0Tree.useRaw = cms.untracked.bool(True)
 # gfworks: replace these names
+process.ecalTimePi0Tree.barrelEcalUncalibratedRecHitCollection = cms.InputTag("ecalGlobalUncalibRecHit","EcalUncalibRecHitsEB")
+process.ecalTimePi0Tree.endcapEcalUncalibratedRecHitCollection = cms.InputTag("ecalGlobalUncalibRecHit","EcalUncalibRecHitsEE")
 process.ecalTimePi0Tree.barrelSuperClusterCollection = cms.InputTag("multi5x5SuperClustersTimePi0Barrel","multi5x5BarrelSuperClusters")
 process.ecalTimePi0Tree.endcapSuperClusterCollection = cms.InputTag("multi5x5SuperClustersTimePi0Endcap","multi5x5EndcapSuperClusters")
 process.ecalTimePi0Tree.barrelBasicClusterCollection = cms.InputTag("multi5x5BasicClustersTimePi0Barrel","multi5x5BarrelBasicClusters")
@@ -136,6 +139,7 @@ process.ecalTimePi0Tree.endcapBasicClusterCollection = cms.InputTag("multi5x5Bas
 process.ecalTimePi0Tree.barrelClusterShapeAssociationCollection = cms.InputTag("multi5x5BasicClustersTimePi0Barrel","multi5x5BarrelShapeAssoc")
 process.ecalTimePi0Tree.endcapClusterShapeAssociationCollection = cms.InputTag("multi5x5BasicClustersTimePi0Endcap","multi5x5EndcapShapeAssoc") 
 
+process.load("RecoVertex.Configuration.RecoVertex_cff")
 
 
 process.dumpEvContent = cms.EDAnalyzer("EventContentAnalyzer")
@@ -144,6 +148,15 @@ process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(1000))
 
 process.p = cms.Path(
     process.ecalDigis *
+    process.gctDigis *
+    process.gtDigis *
+    process.gtEvmDigis *
+    process.siPixelDigis *
+    process.siStripDigis *
+    process.offlineBeamSpot *
+    process.trackerlocalreco *
+    process.recopixelvertexing *
+    process.ckftracks *
     process.ecalPreshowerDigis *
     process.ecalLocalRecoSequence *
     process.multi5x5BasicClustersTimePi0Barrel *
@@ -151,6 +164,7 @@ process.p = cms.Path(
     process.multi5x5SuperClustersTimePi0Barrel *
     process.multi5x5SuperClustersTimePi0Endcap *
     #process.dumpEvContent  *
+    process.vertexreco *
     process.ecalTimePi0Tree
     )
 
@@ -158,7 +172,7 @@ process.p = cms.Path(
 
 process.MessageLogger = cms.Service("MessageLogger",
     cout = cms.untracked.PSet(
-        threshold = cms.untracked.string('DEBUG')
+        threshold = cms.untracked.string('WARNING')
     ),
     categories = cms.untracked.vstring('ecalTimePi0Tree'),
     destinations = cms.untracked.vstring('cout')
