@@ -1085,20 +1085,19 @@ void doControlHists()
   // loop on basic clusters
   for (int bCluster=0; bCluster < treeVars_.nClusters; bCluster++)
   {
-    float eBC=0; // calculate energy of BC for validation
-    for (int cryInBC=0; cryInBC < treeVars_.nXtalsInCluster[bCluster]; cryInBC++){
-      eBC+= treeVars_.xtalInBCEnergy[bCluster][cryInBC];}
-
-    //FIXME: SIC: Is this a bug? Shouldn't these only be filled once per cluster?
     BCEnergyHist_->Fill(treeVars_.clusterEnergy[bCluster]);
     BCEtHist_->Fill(treeVars_.clusterTransverseEnergy[bCluster]);
     BCNumCrysHist_->Fill(treeVars_.nXtalsInCluster[bCluster]);
-
     // basic cluster occupancy in physics coordinates
     BCOccupancyHistAny_ -> Fill(treeVars_.clusterEta[bCluster],treeVars_.clusterPhi[bCluster]);
     BCEtaHist_ -> Fill(treeVars_.clusterEta[bCluster]);
     BCPhiHist_ -> Fill(treeVars_.clusterPhi[bCluster]);
-    
+
+    float eBC=0; // calculate energy of BC for validation
+    for (int cryInBC=0; cryInBC < treeVars_.nXtalsInCluster[bCluster]; cryInBC++){
+      eBC+= treeVars_.xtalInBCEnergy[bCluster][cryInBC];
+    }
+
     bool thisIsEB = false;
     //  basic cluster occupancy in detector coordinates, using first cry of BC as a representative
     if(treeVars_.xtalInBCIEta[bCluster][0] != -999999){                                        // this is EB; ieta=-999999 tags EE
@@ -1128,8 +1127,16 @@ void doControlHists()
 
       // count number of crystals in a BC over threshold
       int numCryOverThreshold=0; 
+      int bClusterSeedIndex = -1;
+      float seedCryEnergy = -1000;
       for(int thisCry=0; thisCry<treeVars_.nXtalsInCluster[bCluster]; thisCry++)
       {
+        if(treeVars_.xtalInBCEnergy[bCluster][thisCry] > seedCryEnergy)
+        {
+          seedCryEnergy = treeVars_.xtalInBCEnergy[bCluster][thisCry];
+          bClusterSeedIndex = thisCry;
+        }
+
         if (treeVars_.xtalInBCIEta[bCluster][thisCry]!=-999999)  xtalIEtaHist_ -> Fill (treeVars_.xtalInBCIEta[bCluster][thisCry]);
         if (treeVars_.xtalInBCIPhi[bCluster][thisCry]!=-999999)  xtalIPhiHist_ -> Fill (treeVars_.xtalInBCIPhi[bCluster][thisCry]);
         if (treeVars_.xtalInBCIx[bCluster][thisCry]  !=-999999)  xtalIXHist_   -> Fill (treeVars_.xtalInBCIx[bCluster][thisCry]);
@@ -1179,9 +1186,25 @@ void doControlHists()
     
       // now take just the EB clusters
       if(treeVars_.xtalInBCIEta[bCluster][0] == -999999) continue;
+      // limit eta range in EB
+      if(fabs(treeVars_.xtalInBCIEta[bCluster][0]) > 15) continue;
+      // cut on seedCryEnergy
+      if(seedCryEnergy < 2) continue;
 
       for (int bClusterEE=0; bClusterEE < treeVars_.nClusters; ++bClusterEE)
       {
+        float seedCryEnergyB = -1000;
+        int bClusterSeedIndexB = -1;
+        for (int cryInBC=0; cryInBC < treeVars_.nXtalsInCluster[bClusterEE]; cryInBC++)
+        {
+          if(treeVars_.xtalInBCEnergy[bClusterEE][cryInBC] > seedCryEnergyB)
+          {
+            seedCryEnergyB = treeVars_.xtalInBCEnergy[bClusterEE][cryInBC];
+            bClusterSeedIndexB = cryInBC;
+          }
+        }
+        // Cut clusterB seed energy
+        if(seedCryEnergyB < 6) continue;
         // Now from here take just the valid EE clusters
         if(treeVars_.xtalInBCIx[bClusterEE][0] == -999999) continue;
         ClusterTime eeClusterTime = timeAndUncertSingleCluster(bClusterEE);
