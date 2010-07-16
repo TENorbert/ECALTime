@@ -585,11 +585,11 @@ void parseArguments(int argc, char** argv)
     else if (argv[v] == stringminAmpliOverSigma) { // set min amplitude considered for time measurement
       minAmpliOverSigma_  = atof(argv[v+1]);
       v++;
-    }// GF need to update from here
+    }
     else if (argv[v] == vertex) { // collect requirement for one vertex only or not
       flagOneVertex_  = atof(argv[v+1]);
       if (flagOneVertex_!=0 && flagOneVertex_!=1 && flagOneVertex_!=2){
-	std::cout << "Not a valid value for flagOneVertex_ (0,1,2). Returning" << std::endl;
+	std::cout << "Not a valid value for flagOneVertex_ (0,1,2). Returning." << std::endl;
 	exit (1);}
       v++;
     }
