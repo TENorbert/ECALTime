@@ -88,6 +88,9 @@ float minAmpliOverSigma_   = 10;    // dimensionless
 float maxChi2NDF_ = 20;  //TODO: gf configurable
 
 int  minEntriesForFit_ = 7;
+
+int  flagOneVertex_ = 0;
+
 bool limitFit_(true); 
 //std::string fitOption_(""); // default: use chi2 method
 std::string fitOption_("L"); // use likelihood method
@@ -484,6 +487,7 @@ void parseArguments(int argc, char** argv)
   std::string stringMaxRun           = "--maxRun";
   std::string stringMinLS            = "--minLS";
   std::string stringMaxLS            = "--maxLS";
+  std::string vertex                 = "--vertex";
   std::string stringTriggers         = "--trig";
   std::string stringTechTriggers     = "--techTrig";
 
@@ -519,6 +523,7 @@ void parseArguments(int argc, char** argv)
       std::cout << " --maxRun: highest run number considered" << std::endl;
       std::cout << " --minLS: lowest lumi section number considered" << std::endl;
       std::cout << " --maxLS: highest lumi section number considered" << std::endl;
+      std::cout << " --vertex: require vertex@IP (1), veto it (2) or either (0, or unset)" << std::endl;
       std::cout << " --trig: L1 triggers to include (exclude with x)" << std::endl;
       std::cout << " --techTrig: L1 technical triggers to include (exclude with x)" << std::endl;
       exit(1);      }
@@ -579,6 +584,13 @@ void parseArguments(int argc, char** argv)
     }
     else if (argv[v] == stringminAmpliOverSigma) { // set min amplitude considered for time measurement
       minAmpliOverSigma_  = atof(argv[v+1]);
+      v++;
+    }// GF need to update from here
+    else if (argv[v] == vertex) { // collect requirement for one vertex only or not
+      flagOneVertex_  = atof(argv[v+1]);
+      if (flagOneVertex_!=0 && flagOneVertex_!=1 && flagOneVertex_!=2){
+	std::cout << "Not a valid value for flagOneVertex_ (0,1,2). Returning" << std::endl;
+	exit (1);}
       v++;
     }
     else if (argv[v] == stringTriggers) { // set L1 triggers to include/exclude
@@ -2757,29 +2769,46 @@ int main (int argc, char** argv)
     // do analysis if the LS is in the desired range  
     if( treeVars_.lumiSection<minLS_  || maxLS_<treeVars_.lumiSection) continue;
     
+    bool verticesAreOnlyNextToNominalIP;
+    int  count=0;
+
+    for(int v=0; v<treeVars_.nVertices; v++  )
+      { 	if (fabs(treeVars_.vtxZ[0])<15) count++;       }
+
+    if ( treeVars_.nVertices >0 && count==treeVars_.nVertices ) verticesAreOnlyNextToNominalIP = true;
+    else                                                        verticesAreOnlyNextToNominalIP = false;
+
+    //    --vertex: require vertex@IP (1), veto it (2) or either (0, or unset)
+    if (flagOneVertex_ ==1 && (!verticesAreOnlyNextToNominalIP) ) continue;
+    if (flagOneVertex_ ==2 && (verticesAreOnlyNextToNominalIP) )  continue;
+
     int currentLS = treeVars_.lumiSection;
 
-    if( !(
+    // this is specific to fill 
+//    if( !(
+//
+//	  (2274 <=  currentLS && currentLS <= 2524 ) || // gio lumi interval starts here
+//	  (2528 <=  currentLS && currentLS <=  2713) ||
+//	  (2715 <=  currentLS && currentLS <=  3098) ||
+//	  (3100 <=  currentLS && currentLS <=  3102) ||
+//	  (3105 <=  currentLS && currentLS <=  3179) ||
+//	  (3182 <=  currentLS && currentLS <=  3303) ||
+//	  (3305 <=  currentLS && currentLS <=  3381) ||  // gio lumi interval ends here
+//	  (297 <=  currentLS && currentLS <=  337) ||    // seth lumi interval starts here
+//	  (339 <=  currentLS && currentLS <=  754) ||
+//	  (756 <=  currentLS && currentLS <=  932) ||
+//	  (934 <=  currentLS && currentLS <=  937) ||
+//	  (942 <=  currentLS && currentLS <=  993) ||
+//	  (995 <=  currentLS && currentLS <=  1031) ||
+//	  (1033 <=  currentLS && currentLS <=  1098) ||
+//	  (1102 <=  currentLS && currentLS <=  1808) ||
+//	  (1811 <=  currentLS && currentLS <=  2269)       // seth lumi interval starts here
+//  
+//	  )
+//	) continue;
+//
 
-	  (2274 <=  currentLS && currentLS <= 2524 ) || // gio lumi interval starts here
-	  (2528 <=  currentLS && currentLS <=  2713) ||
-	  (2715 <=  currentLS && currentLS <=  3098) ||
-	  (3100 <=  currentLS && currentLS <=  3102) ||
-	  (3105 <=  currentLS && currentLS <=  3179) ||
-	  (3182 <=  currentLS && currentLS <=  3303) ||
-	  (3305 <=  currentLS && currentLS <=  3381) ||  // gio lumi interval ends here
-	  (297 <=  currentLS && currentLS <=  337) ||    // seth lumi interval starts here
-	  (339 <=  currentLS && currentLS <=  754) ||
-	  (756 <=  currentLS && currentLS <=  932) ||
-	  (934 <=  currentLS && currentLS <=  937) ||
-	  (942 <=  currentLS && currentLS <=  993) ||
-	  (995 <=  currentLS && currentLS <=  1031) ||
-	  (1033 <=  currentLS && currentLS <=  1098) ||
-	  (1102 <=  currentLS && currentLS <=  1808) ||
-	  (1811 <=  currentLS && currentLS <=  2269)       // seth lumi interval starts here
-  
-	  )
-	) continue;
+
 
     // if evet being actually processed, increment counter of analyzed events
     eventCounter++;
