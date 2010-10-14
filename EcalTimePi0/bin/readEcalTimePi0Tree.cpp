@@ -130,16 +130,17 @@ float  AeffBinCentersEE_[256];  float  AeffBinCentersErrEE_[256];  float  sigmaA
 
 
 // set of fine bins for AoSigmaBins, for t vs Ampli bias study 
-double AoSigmaBins_[26] = {0,  5,  7,  9,  10,
-			   12, 14, 16, 18, 20,
-			   22, 26, 30, 36, 40,
-                           46, 52, 58, 74, 86,
-                           120,160,200,240,280, 
-			   320}; //25 bins in total
-int    AoSigmaNBins_     = 25;    // 300 combinations between different bins; + 25 self-combinations =-> 325 in total
+double AoSigmaBins_[33] = {0,  10,  18,  
+			   24, 28,  32,  36,  40,
+			   44, 52,  60,  72,  80,
+                           92, 102, 116, 144, 172,
+                           240,320, 400, 480, 560, 
+			   650, 800, 1000, 1200, 1500,
+                           1900, 2400, 3000, 3700, 4000}; //25 bins in total
+int    AoSigmaNBins_     = 32;    // (counting to be updated) 300 combinations between different bins; + 25 self-combinations =-> 325 in total
                                   // check above that numAeffBins is set to a value equal or larger than this (==325)
 int    AoSigmaNPairs_    = (AoSigmaNBins_)*(AoSigmaNBins_-1)/2 + AoSigmaNBins_;
-int    AoSigmaMax_       = 320;   //up to about 8 GeV
+int    AoSigmaMax_       = 4000;   //up to about 8 GeV
 
 float  AoSigmaBinCentersEB_[32][32];  float  AoSigmaBinCentersErrEB_[32][32];  float  sigmaAoSigmaEB_[32][32];  float  sigmaAoSigmaErrEB_[32][32];
 float  AoSigmaBinCentersEE_[32][32];  float  AoSigmaBinCentersErrEE_[32][32];  float  sigmaAoSigmaEE_[32][32];  float  sigmaAoSigmaErrEE_[32][32];
