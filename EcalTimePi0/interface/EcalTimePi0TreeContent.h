@@ -347,8 +347,6 @@ struct EcalTimePi0TreeContent
   // l1Variables
   int l1NActiveTriggers;
   int l1ActiveTriggers[128];
-  int l1NActiveTechTriggers;
-  int l1ActiveTechTriggers[128];
   
   //GT +-1BX
   int l1GtNEm;

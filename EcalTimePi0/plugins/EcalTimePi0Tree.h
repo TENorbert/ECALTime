@@ -17,7 +17,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.h,v 1.8 2010/05/19 17:35:52 franzoni Exp $
+// $Id: EcalTimePi0Tree.h,v 1.7 2010/05/19 14:41:16 franzoni Exp $
 //
 //
 
@@ -168,7 +168,6 @@ class EcalTimePi0Tree : public edm::EDAnalyzer
       edm::InputTag muonCollection_ ;
       edm::InputTag vertexCollection_ ;
       edm::InputTag l1GMTReadoutRecTag_ ;
-      edm::InputTag gtRecordCollectionTag_ ;
       int runNum_ ;
       std::string fileName_ ;
       bool useRaw_ ;
