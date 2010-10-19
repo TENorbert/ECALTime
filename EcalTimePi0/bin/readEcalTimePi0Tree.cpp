@@ -228,6 +228,8 @@ TH1F*   AeffSliceEB_[numAeffBins];
 TH2F*   dtVSAeffHistEE_;
 TH1F*   dtSliceVSAeffEE_[numAeffBins];
 TH1F*   AeffSliceEE_[numAeffBins];
+TH2F*   timeVsAoSigmaEB;
+TH2F*   timeVsAoSigmaEE;
 TH1F*   dtSliceVSAoSigmaEB_[numAoSigmaBins][numAoSigmaBins][5];
 TH1F*   dtSliceVSAoSigmaEE_[numAoSigmaBins][numAoSigmaBins][5];
 TH1F*   ampliInAoSigmabinsEB_[numAoSigmaBins][numAoSigmaBins];
@@ -720,6 +722,9 @@ void initializeHists(){
     AeffBinCentersEE_[v]=0; AeffBinCentersErrEE_[v]=0; sigmaAeffEE_[v]=0;  sigmaAeffErrEE_[v]=0;
     AeffSliceEE_[v] = new TH1F(bufferTitle_.c_str(),bufferTitle_.c_str(),20,binLeft,binRight);
   }//end loop
+
+  timeVsAoSigmaEB = new TH2F("timeVsAoSigmaEB","timeVsAoSigmaEB",100,0,4000,50,-2.5,2.5);
+  timeVsAoSigmaEE = new TH2F("timeVsAoSigmaEB","timeVsAoSigmaEB",100,0,4000,50,-2.5,2.5);
 
   for (int v=0; v<AoSigmaNBins_ ; v++){// build histograms time difference between channels with ampli in two different AoSigmaBins_ ; loop on first bin
     for (int u=0; u<=v ; u++){// second bin (which can also be the same as the first one)
@@ -1384,6 +1389,11 @@ void writeHists()
       dtSliceVSAoSigmaEB_[v][u][k] -> Write();        
       }}}
   
+
+  timeVsAoSigmaEB ->Write();
+  timeVsAoSigmaEE ->Write();
+
+
   // monitor amplitudes which actually fall in each bin, EB 
   TDirectory *ampliInAmplitudeBinsEB =  singleClusterBiasStudy->mkdir("ampli-double-slices-EB");
   ampliInAmplitudeBinsEB->cd();
@@ -1671,6 +1681,10 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
       if( ampliOverSigOfThis < minAmpliOverSigma_) continue;
       if( swissCrossOfThis   > 0.95)               continue;
       
+      if(thisIsInEB)   {
+	timeVsAoSigmaEB->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);}
+            else   {
+      timeVsAoSigmaEE->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);}
 
       // loop on the _other_ cryS among the components of a basic cluster
       for(int thatCry=thisCry+1; thatCry<treeVars_.nXtalsInCluster[bCluster]; thatCry++)
