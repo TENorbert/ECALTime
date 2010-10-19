@@ -228,8 +228,10 @@ TH1F*   AeffSliceEB_[numAeffBins];
 TH2F*   dtVSAeffHistEE_;
 TH1F*   dtSliceVSAeffEE_[numAeffBins];
 TH1F*   AeffSliceEE_[numAeffBins];
-TH2F*   timeVsAoSigmaEB;
-TH2F*   timeVsAoSigmaEE;
+TH2F*   timeVsAoSigmaEB_; 
+TH2F*   timeVsAoSigmaEE_;
+TH2F*   timeVsAoSigmaEBlarge_; 
+TH2F*   timeVsAoSigmaEElarge_;
 TH1F*   dtSliceVSAoSigmaEB_[numAoSigmaBins][numAoSigmaBins][5];
 TH1F*   dtSliceVSAoSigmaEE_[numAoSigmaBins][numAoSigmaBins][5];
 TH1F*   ampliInAoSigmabinsEB_[numAoSigmaBins][numAoSigmaBins];
@@ -723,8 +725,10 @@ void initializeHists(){
     AeffSliceEE_[v] = new TH1F(bufferTitle_.c_str(),bufferTitle_.c_str(),20,binLeft,binRight);
   }//end loop
 
-  timeVsAoSigmaEB = new TH2F("timeVsAoSigmaEB","timeVsAoSigmaEB",100,0,4000,50,-2.5,2.5);
-  timeVsAoSigmaEE = new TH2F("timeVsAoSigmaEB","timeVsAoSigmaEB",100,0,4000,50,-2.5,2.5);
+  timeVsAoSigmaEB_ = new TH2F("timeVsAoSigmaEB","timeVsAoSigmaEB",100,0,4000,50,-2.5,2.5);
+  timeVsAoSigmaEE_ = new TH2F("timeVsAoSigmaEB","timeVsAoSigmaEB",100,0,4000,50,-2.5,2.5);
+  timeVsAoSigmaEBlarge_ = new TH2F("timeVsAoSigmaEBlarge","timeVsAoSigmaEB",200,0,8000,150,-25,25);
+  timeVsAoSigmaEElarge_ = new TH2F("timeVsAoSigmaEBlarge","timeVsAoSigmaEB",200,0,8000,150,-25,25);
 
   for (int v=0; v<AoSigmaNBins_ ; v++){// build histograms time difference between channels with ampli in two different AoSigmaBins_ ; loop on first bin
     for (int u=0; u<=v ; u++){// second bin (which can also be the same as the first one)
@@ -1372,6 +1376,12 @@ void writeHists()
   //directory to study bias of reco_time with Amplitude
   TDirectory *singleClusterBiasStudy = saving_->mkdir("single-bias");
   singleClusterBiasStudy->cd();
+
+  timeVsAoSigmaEB_ ->Write();
+  timeVsAoSigmaEE_ ->Write();
+  timeVsAoSigmaEBlarge_ ->Write();
+  timeVsAoSigmaEElarge_ ->Write();
+
   for(int k=0; k<3; k++){
     dtSliceSAoSigmaVSAoSigmaEB_[k]       ->Write();
     dtSliceSAoSigmaVSAoSigmaEE_[k]       ->Write();
@@ -1389,9 +1399,6 @@ void writeHists()
       dtSliceVSAoSigmaEB_[v][u][k] -> Write();        
       }}}
   
-
-  timeVsAoSigmaEB ->Write();
-  timeVsAoSigmaEE ->Write();
 
 
   // monitor amplitudes which actually fall in each bin, EB 
@@ -1682,9 +1689,13 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
       if( swissCrossOfThis   > 0.95)               continue;
       
       if(thisIsInEB)   {
-	timeVsAoSigmaEB->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);}
-            else   {
-      timeVsAoSigmaEE->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);}
+	timeVsAoSigmaEB_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
+	timeVsAoSigmaEBlarge_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
+      }
+      else   {
+	timeVsAoSigmaEE_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
+	timeVsAoSigmaEElarge_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
+      }
 
       // loop on the _other_ cryS among the components of a basic cluster
       for(int thatCry=thisCry+1; thatCry<treeVars_.nXtalsInCluster[bCluster]; thatCry++)
