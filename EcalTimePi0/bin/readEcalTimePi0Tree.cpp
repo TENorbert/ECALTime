@@ -228,10 +228,28 @@ TH1F*   AeffSliceEB_[numAeffBins];
 TH2F*   dtVSAeffHistEE_;
 TH1F*   dtSliceVSAeffEE_[numAeffBins];
 TH1F*   AeffSliceEE_[numAeffBins];
+<<<<<<< readEcalTimePi0Tree.cpp
+TH2F*   timeVsAoSigmaEB_; 
+TH2F*   timeVsAoSigmaEE_;
+TH2F*   timeVsAoSigmaMod1EB_; 
+TH2F*   timeVsAoSigmaMod2EB_; 
+TH2F*   timeVsAoSigmaMod3EB_; 
+TH2F*   timeVsAoSigmaMod4EB_; 
+TH2F*   timeVsAoSigmaMod1EBlog_; 
+TH2F*   timeVsAoSigmaMod2EBlog_; 
+TH2F*   timeVsAoSigmaMod3EBlog_; 
+TH2F*   timeVsAoSigmaMod4EBlog_; 
+//TH1F*   timeVsAoSigmaMod4EBSlices[20]_; 
+TH2F*   timeVsAoSigmaLowEE_;
+TH2F*   timeVsAoSigmaHighEE_;
+TH2F*   timeVsAoSigmaEBlarge_; 
+TH2F*   timeVsAoSigmaEElarge_;
+=======
 TH2F*   timeVsAoSigmaEB_; 
 TH2F*   timeVsAoSigmaEE_;
 TH2F*   timeVsAoSigmaEBlarge_; 
 TH2F*   timeVsAoSigmaEElarge_;
+>>>>>>> 1.60
 TH1F*   dtSliceVSAoSigmaEB_[numAoSigmaBins][numAoSigmaBins][5];
 TH1F*   dtSliceVSAoSigmaEE_[numAoSigmaBins][numAoSigmaBins][5];
 TH1F*   ampliInAoSigmabinsEB_[numAoSigmaBins][numAoSigmaBins];
@@ -723,12 +741,44 @@ void initializeHists(){
     dtSliceVSAeffEE_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  
     AeffBinCentersEE_[v]=0; AeffBinCentersErrEE_[v]=0; sigmaAeffEE_[v]=0;  sigmaAeffErrEE_[v]=0;
     AeffSliceEE_[v] = new TH1F(bufferTitle_.c_str(),bufferTitle_.c_str(),20,binLeft,binRight);
-  }//end loop
+  }//end loopA
 
+  // EB and EE time vs A/sigma in modules
+  timeVsAoSigmaEB_ = new TH2F("timeVsAoSigmaEB","timeVsAoSigmaEB",100,0,4000,50,-2.5,2.5);
+  timeVsAoSigmaEE_ = new TH2F("timeVsAoSigmaEE","timeVsAoSigmaEE",100,0,4000,50,-2.5,2.5);
+  //EB modules time vs A/sigma
+  timeVsAoSigmaMod1EB_ = new TH2F("timeVsAoSigmaMod1EB","timeVsAoSigmaMod1EB",100,0,4000,50,-2.5,2.5);
+  timeVsAoSigmaMod2EB_ = new TH2F("timeVsAoSigmaMod2EB","timeVsAoSigmaMod2EB",100,0,4000,50,-2.5,2.5);
+  timeVsAoSigmaMod3EB_ = new TH2F("timeVsAoSigmaMod3EB","timeVsAoSigmaMod3EB",100,0,4000,50,-2.5,2.5);
+  timeVsAoSigmaMod4EB_ = new TH2F("timeVsAoSigmaMod4EB","timeVsAoSigmaMod4EB",100,0,4000,50,-2.5,2.5);
+  //log E version for EB
+  timeVsAoSigmaMod1EBlog_ = new TH2F("timeVsAoSigmaMod1EBlog","timeVsAoSigmaMod1EBlog",80,-0.5,4,100,-50,50);
+  timeVsAoSigmaMod2EBlog_ = new TH2F("timeVsAoSigmaMod2EBlog","timeVsAoSigmaMod2EBlog",80,-0.5,4,100,-50,50);
+  timeVsAoSigmaMod3EBlog_ = new TH2F("timeVsAoSigmaMod3EBlog","timeVsAoSigmaMod3EBlog",80,-0.5,4,100,-50,50);
+  timeVsAoSigmaMod4EBlog_ = new TH2F("timeVsAoSigmaMod4EBlog","timeVsAoSigmaMod4EBlog",80,-0.5,4,100,-50,50);
+  //EE time vs A/sigma
+  timeVsAoSigmaLowEE_ = new TH2F("timeVsAoSigmaLowEE","timeVsAoSigmaLowEE",100,0,4000,50,-2.5,2.5);
+  timeVsAoSigmaHighEE_ = new TH2F("timeVsAoSigmaHighEE","timeVsAoSigmaHighEE",100,0,4000,50,-2.5,2.5);
+  timeVsAoSigmaEBlarge_ = new TH2F("timeVsAoSigmaEBlarge","timeVsAoSigmaEB",200,0,8000,150,-25,25);
+  timeVsAoSigmaEElarge_ = new TH2F("timeVsAoSigmaEElarge","timeVsAoSigmaEE",200,0,8000,150,-25,25);
+
+  //  timeVsAoSigmaMod4EBSlices_[0] = new TH1F("slice 0-25","slice 0-25",400,-25,25);
+  //  float binAoSigmaLow; float binAoSigmaHigh;
+  //  for(int v=1; v<20; v++){
+  //    binAoSigmaLow  = 25*pow(1.2,v);
+  //    binAoSigmaHigh = 25*pow(1.2,v+1);
+  //    //std::string title = std::string("slice ") + std::string()
+  //    sprintf (buffer_, "slice %d: [%2.f,%2.f)", v, binAoSigmaLow, binAoSigmaHigh);
+  //    timeVsAoSigmaMod4EBSlices_[v] = new  TH1F(buffer_,buffer_,400,-25,25); 
+  //  }
+
+<<<<<<< readEcalTimePi0Tree.cpp
+=======
   timeVsAoSigmaEB_ = new TH2F("timeVsAoSigmaEB","timeVsAoSigmaEB",100,0,4000,50,-2.5,2.5);
   timeVsAoSigmaEE_ = new TH2F("timeVsAoSigmaEB","timeVsAoSigmaEB",100,0,4000,50,-2.5,2.5);
   timeVsAoSigmaEBlarge_ = new TH2F("timeVsAoSigmaEBlarge","timeVsAoSigmaEB",200,0,8000,150,-25,25);
   timeVsAoSigmaEElarge_ = new TH2F("timeVsAoSigmaEBlarge","timeVsAoSigmaEB",200,0,8000,150,-25,25);
+>>>>>>> 1.60
 
   for (int v=0; v<AoSigmaNBins_ ; v++){// build histograms time difference between channels with ampli in two different AoSigmaBins_ ; loop on first bin
     for (int u=0; u<=v ; u++){// second bin (which can also be the same as the first one)
@@ -1376,12 +1426,31 @@ void writeHists()
   //directory to study bias of reco_time with Amplitude
   TDirectory *singleClusterBiasStudy = saving_->mkdir("single-bias");
   singleClusterBiasStudy->cd();
+<<<<<<< readEcalTimePi0Tree.cpp
+
+  timeVsAoSigmaEB_ ->Write();
+  timeVsAoSigmaEE_ ->Write();
+  timeVsAoSigmaMod1EB_ ->Write();
+  timeVsAoSigmaMod2EB_ ->Write();
+  timeVsAoSigmaMod3EB_ ->Write();
+  timeVsAoSigmaMod4EB_ ->Write();
+  timeVsAoSigmaMod1EBlog_ ->Write();
+  timeVsAoSigmaMod2EBlog_ ->Write();
+  timeVsAoSigmaMod3EBlog_ ->Write();
+  timeVsAoSigmaMod4EBlog_ ->Write();
+  timeVsAoSigmaLowEE_ ->Write();
+  timeVsAoSigmaHighEE_ ->Write();
+  timeVsAoSigmaEBlarge_ ->Write();
+  timeVsAoSigmaEElarge_ ->Write();
+
+=======
 
   timeVsAoSigmaEB_ ->Write();
   timeVsAoSigmaEE_ ->Write();
   timeVsAoSigmaEBlarge_ ->Write();
   timeVsAoSigmaEElarge_ ->Write();
 
+>>>>>>> 1.60
   for(int k=0; k<3; k++){
     dtSliceSAoSigmaVSAoSigmaEB_[k]       ->Write();
     dtSliceSAoSigmaVSAoSigmaEE_[k]       ->Write();
@@ -1689,6 +1758,43 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
       if( swissCrossOfThis   > 0.95)               continue;
       
       if(thisIsInEB)   {
+<<<<<<< readEcalTimePi0Tree.cpp
+	timeVsAoSigmaEB_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
+	timeVsAoSigmaEBlarge_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
+	//Barrel module 1
+	if( fabs(treeVars_.xtalInBCIEta[bCluster][thisCry]) <26){
+	timeVsAoSigmaMod1EB_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
+	timeVsAoSigmaMod1EBlog_->Fill(log10(ampliOverSigOfThis/25),treeVars_.xtalInBCTime[bCluster][thisCry]);
+	}
+	//Barrel module 2
+	else if( fabs(treeVars_.xtalInBCIEta[bCluster][thisCry]) <46){
+	  timeVsAoSigmaMod2EB_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
+	  timeVsAoSigmaMod2EBlog_->Fill(log10(ampliOverSigOfThis/25),treeVars_.xtalInBCTime[bCluster][thisCry]);
+	}
+	//Barrel module 3
+	else if( fabs(treeVars_.xtalInBCIEta[bCluster][thisCry]) <66){
+	timeVsAoSigmaMod3EB_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
+	timeVsAoSigmaMod3EBlog_->Fill(log10(ampliOverSigOfThis/25),treeVars_.xtalInBCTime[bCluster][thisCry]);
+	}
+	//Barrel module 4
+	else {
+	timeVsAoSigmaMod4EB_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
+	timeVsAoSigmaMod4EBlog_->Fill(log10(ampliOverSigOfThis/25),treeVars_.xtalInBCTime[bCluster][thisCry]);
+	}
+      }
+      //endcap filling
+      else   {
+	timeVsAoSigmaEE_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
+	timeVsAoSigmaEElarge_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
+
+	if( fabs(treeVars_.clusterEta[bCluster]) <2.2){
+	timeVsAoSigmaLowEE_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
+	}
+	else {
+	timeVsAoSigmaHighEE_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
+	}
+      }
+=======
 	timeVsAoSigmaEB_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
 	timeVsAoSigmaEBlarge_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
       }
@@ -1696,6 +1802,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
 	timeVsAoSigmaEE_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
 	timeVsAoSigmaEElarge_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
       }
+>>>>>>> 1.60
 
       // loop on the _other_ cryS among the components of a basic cluster
       for(int thatCry=thisCry+1; thatCry<treeVars_.nXtalsInCluster[bCluster]; thatCry++)
