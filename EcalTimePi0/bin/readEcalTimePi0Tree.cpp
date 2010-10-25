@@ -228,7 +228,6 @@ TH1F*   AeffSliceEB_[numAeffBins];
 TH2F*   dtVSAeffHistEE_;
 TH1F*   dtSliceVSAeffEE_[numAeffBins];
 TH1F*   AeffSliceEE_[numAeffBins];
-<<<<<<< readEcalTimePi0Tree.cpp
 TH2F*   timeVsAoSigmaEB_; 
 TH2F*   timeVsAoSigmaEE_;
 TH2F*   timeVsAoSigmaMod1EB_; 
@@ -239,17 +238,12 @@ TH2F*   timeVsAoSigmaMod1EBlog_;
 TH2F*   timeVsAoSigmaMod2EBlog_; 
 TH2F*   timeVsAoSigmaMod3EBlog_; 
 TH2F*   timeVsAoSigmaMod4EBlog_; 
-//TH1F*   timeVsAoSigmaMod4EBSlices[20]_; 
+TH1F*   timeVsAoSigmaMod4EBSlices_[20]; 
+TH1F*   timeVsAoSigmaHighEESlices_[20]; 
 TH2F*   timeVsAoSigmaLowEE_;
 TH2F*   timeVsAoSigmaHighEE_;
 TH2F*   timeVsAoSigmaEBlarge_; 
 TH2F*   timeVsAoSigmaEElarge_;
-=======
-TH2F*   timeVsAoSigmaEB_; 
-TH2F*   timeVsAoSigmaEE_;
-TH2F*   timeVsAoSigmaEBlarge_; 
-TH2F*   timeVsAoSigmaEElarge_;
->>>>>>> 1.60
 TH1F*   dtSliceVSAoSigmaEB_[numAoSigmaBins][numAoSigmaBins][5];
 TH1F*   dtSliceVSAoSigmaEE_[numAoSigmaBins][numAoSigmaBins][5];
 TH1F*   ampliInAoSigmabinsEB_[numAoSigmaBins][numAoSigmaBins];
@@ -761,25 +755,25 @@ void initializeHists(){
   timeVsAoSigmaHighEE_ = new TH2F("timeVsAoSigmaHighEE","timeVsAoSigmaHighEE",100,0,4000,50,-2.5,2.5);
   timeVsAoSigmaEBlarge_ = new TH2F("timeVsAoSigmaEBlarge","timeVsAoSigmaEB",200,0,8000,150,-25,25);
   timeVsAoSigmaEElarge_ = new TH2F("timeVsAoSigmaEElarge","timeVsAoSigmaEE",200,0,8000,150,-25,25);
+  // slices to study single crystal time bias vs A/signa: 1d EB time histograms in slices of A/sigma
+  timeVsAoSigmaMod4EBSlices_[0] = new TH1F("EB slice 1: 0-25","slice 0-25",400,-25,25);
+  float binAoSigmaLow; float binAoSigmaHigh;
+  for(int v=1; v<20; v++){
+    binAoSigmaLow  = 25*pow(1.25,v-1);
+    binAoSigmaHigh = 25*pow(1.25,v);
+    sprintf (buffer_, "EB slice %d: [%2.f,%2.f)", v+1, binAoSigmaLow, binAoSigmaHigh);
+    timeVsAoSigmaMod4EBSlices_[v] = new  TH1F(buffer_,buffer_,200,-25,25); 
+  }
+  // slices to study single crystal time bias vs A/signa: 1d EE time histograms in slices of A/sigma
+  timeVsAoSigmaHighEESlices_[0] = new TH1F("EE slice 1: 0-25","slice 0-25",400,-25,25);
+  for(int v=1; v<20; v++){
+    binAoSigmaLow  = 25*pow(1.25,v-1);
+    binAoSigmaHigh = 25*pow(1.25,v);
+    sprintf (buffer_, "EE slice %d: [%2.f,%2.f)", v+1, binAoSigmaLow, binAoSigmaHigh);
+    timeVsAoSigmaHighEESlices_[v] = new  TH1F(buffer_,buffer_,200,-25,25); 
+  }
 
-  //  timeVsAoSigmaMod4EBSlices_[0] = new TH1F("slice 0-25","slice 0-25",400,-25,25);
-  //  float binAoSigmaLow; float binAoSigmaHigh;
-  //  for(int v=1; v<20; v++){
-  //    binAoSigmaLow  = 25*pow(1.2,v);
-  //    binAoSigmaHigh = 25*pow(1.2,v+1);
-  //    //std::string title = std::string("slice ") + std::string()
-  //    sprintf (buffer_, "slice %d: [%2.f,%2.f)", v, binAoSigmaLow, binAoSigmaHigh);
-  //    timeVsAoSigmaMod4EBSlices_[v] = new  TH1F(buffer_,buffer_,400,-25,25); 
-  //  }
-
-<<<<<<< readEcalTimePi0Tree.cpp
-=======
-  timeVsAoSigmaEB_ = new TH2F("timeVsAoSigmaEB","timeVsAoSigmaEB",100,0,4000,50,-2.5,2.5);
-  timeVsAoSigmaEE_ = new TH2F("timeVsAoSigmaEB","timeVsAoSigmaEB",100,0,4000,50,-2.5,2.5);
-  timeVsAoSigmaEBlarge_ = new TH2F("timeVsAoSigmaEBlarge","timeVsAoSigmaEB",200,0,8000,150,-25,25);
-  timeVsAoSigmaEElarge_ = new TH2F("timeVsAoSigmaEBlarge","timeVsAoSigmaEB",200,0,8000,150,-25,25);
->>>>>>> 1.60
-
+  
   for (int v=0; v<AoSigmaNBins_ ; v++){// build histograms time difference between channels with ampli in two different AoSigmaBins_ ; loop on first bin
     for (int u=0; u<=v ; u++){// second bin (which can also be the same as the first one)
       float binLeftV=AoSigmaBins_[v]; float binRightV=AoSigmaBins_[v+1];
@@ -1426,7 +1420,6 @@ void writeHists()
   //directory to study bias of reco_time with Amplitude
   TDirectory *singleClusterBiasStudy = saving_->mkdir("single-bias");
   singleClusterBiasStudy->cd();
-<<<<<<< readEcalTimePi0Tree.cpp
 
   timeVsAoSigmaEB_ ->Write();
   timeVsAoSigmaEE_ ->Write();
@@ -1443,14 +1436,6 @@ void writeHists()
   timeVsAoSigmaEBlarge_ ->Write();
   timeVsAoSigmaEElarge_ ->Write();
 
-=======
-
-  timeVsAoSigmaEB_ ->Write();
-  timeVsAoSigmaEE_ ->Write();
-  timeVsAoSigmaEBlarge_ ->Write();
-  timeVsAoSigmaEElarge_ ->Write();
-
->>>>>>> 1.60
   for(int k=0; k<3; k++){
     dtSliceSAoSigmaVSAoSigmaEB_[k]       ->Write();
     dtSliceSAoSigmaVSAoSigmaEE_[k]       ->Write();
@@ -1459,6 +1444,20 @@ void writeHists()
   dtoSigmaSliceSAoSigmaVSAoSigmaEE_ ->Write();
   occupancyAoSigmaVSAoSigmaEB_      ->Write();
   occupancyAoSigmaVSAoSigmaEE_      ->Write();
+
+  //directory to study bias of reco_time in amplitude bins
+  TDirectory *singleClusterBiasSlicesEBStudy = singleClusterBiasStudy->mkdir("single-bias-EB-slices");
+  singleClusterBiasSlicesEBStudy->cd();
+  for(int v=0; v<20; v++){
+    timeVsAoSigmaMod4EBSlices_[v] ->Write();
+  }
+  //directory to study bias of reco_time in amplitude bins
+  TDirectory *singleClusterBiasSlicesEEStudy = singleClusterBiasStudy->mkdir("single-bias-EE-slices");
+  singleClusterBiasSlicesEEStudy->cd();
+  for(int v=0; v<20; v++){
+    timeVsAoSigmaHighEESlices_[v] ->Write();
+  }
+
   // write out 1-d histos for DeltaT computed for amplitudes (A1,A2) fitting the pair of bins [Aleft1,Aright1] X [Aleft2,Aright2] (t VS ampli bias study)
   TDirectory *dtInDoubleAmplitudeBinsEB =  singleClusterBiasStudy->mkdir("dt-double-slices-EB");
   dtInDoubleAmplitudeBinsEB->cd();
@@ -1758,7 +1757,6 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
       if( swissCrossOfThis   > 0.95)               continue;
       
       if(thisIsInEB)   {
-<<<<<<< readEcalTimePi0Tree.cpp
 	timeVsAoSigmaEB_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
 	timeVsAoSigmaEBlarge_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
 	//Barrel module 1
@@ -1778,8 +1776,12 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
 	}
 	//Barrel module 4
 	else {
-	timeVsAoSigmaMod4EB_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
-	timeVsAoSigmaMod4EBlog_->Fill(log10(ampliOverSigOfThis/25),treeVars_.xtalInBCTime[bCluster][thisCry]);
+	  timeVsAoSigmaMod4EB_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
+	  timeVsAoSigmaMod4EBlog_->Fill(log10(ampliOverSigOfThis/25),treeVars_.xtalInBCTime[bCluster][thisCry]);
+	  for(int v=0; v<20; v++){
+	    if(ampliOverSigOfThis <  25*pow(1.25,v)){
+	      timeVsAoSigmaMod4EBSlices_[v] -> Fill(treeVars_.xtalInBCTime[bCluster][thisCry]);
+	      break; }	  }
 	}
       }
       //endcap filling
@@ -1792,17 +1794,12 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
 	}
 	else {
 	timeVsAoSigmaHighEE_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
+	  for(int v=0; v<20; v++){
+	    if(ampliOverSigOfThis <  25*pow(1.25,v)){
+	      timeVsAoSigmaHighEESlices_[v] -> Fill(treeVars_.xtalInBCTime[bCluster][thisCry]);
+	      break; }	  }
 	}
       }
-=======
-	timeVsAoSigmaEB_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
-	timeVsAoSigmaEBlarge_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
-      }
-      else   {
-	timeVsAoSigmaEE_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
-	timeVsAoSigmaEElarge_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
-      }
->>>>>>> 1.60
 
       // loop on the _other_ cryS among the components of a basic cluster
       for(int thatCry=thisCry+1; thatCry<treeVars_.nXtalsInCluster[bCluster]; thatCry++)
