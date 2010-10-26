@@ -238,11 +238,13 @@ TH2F*   timeVsAoSigmaMod1EBlog_;
 TH2F*   timeVsAoSigmaMod2EBlog_; 
 TH2F*   timeVsAoSigmaMod3EBlog_; 
 TH2F*   timeVsAoSigmaMod4EBlog_; 
-TH1F*   timeVsAoSigmaMod4EBSlices_[20]; 
-TH1F*   timeVsAoSigmaHighEESlices_[20]; 
+TH1F*   timeVsAoSigmaMod4EBSlices_[23]; 
+TH1F*   timeVsAoSigmaHighEESlices_[23]; 
 TH2F*   timeVsAoSigmaLowEE_;
 TH2F*   timeVsAoSigmaHighEE_;
-TH2F*   timeVsAoSigmaEBlarge_; 
+TH2F*   timeVsAoSigmaEBlarge_;
+TH1D*   fittedMeanVsAoSigmaEB_, * chi2VsAoSigmaEB_; 
+TH1D*   fittedMeanVsAoSigmaEE_, * chi2VsAoSigmaEE_; 
 TH2F*   timeVsAoSigmaEElarge_;
 TH1F*   dtSliceVSAoSigmaEB_[numAoSigmaBins][numAoSigmaBins][5];
 TH1F*   dtSliceVSAoSigmaEE_[numAoSigmaBins][numAoSigmaBins][5];
@@ -758,7 +760,7 @@ void initializeHists(){
   // slices to study single crystal time bias vs A/signa: 1d EB time histograms in slices of A/sigma
   timeVsAoSigmaMod4EBSlices_[0] = new TH1F("EB slice 1: 0-25","slice 0-25",400,-25,25);
   float binAoSigmaLow; float binAoSigmaHigh;
-  for(int v=1; v<20; v++){
+  for(int v=1; v<23; v++){
     binAoSigmaLow  = 25*pow(1.25,v-1);
     binAoSigmaHigh = 25*pow(1.25,v);
     sprintf (buffer_, "EB slice %d: [%2.f,%2.f)", v+1, binAoSigmaLow, binAoSigmaHigh);
@@ -766,7 +768,7 @@ void initializeHists(){
   }
   // slices to study single crystal time bias vs A/signa: 1d EE time histograms in slices of A/sigma
   timeVsAoSigmaHighEESlices_[0] = new TH1F("EE slice 1: 0-25","slice 0-25",400,-25,25);
-  for(int v=1; v<20; v++){
+  for(int v=1; v<23; v++){
     binAoSigmaLow  = 25*pow(1.25,v-1);
     binAoSigmaHigh = 25*pow(1.25,v);
     sprintf (buffer_, "EE slice %d: [%2.f,%2.f)", v+1, binAoSigmaLow, binAoSigmaHigh);
@@ -1436,6 +1438,11 @@ void writeHists()
   timeVsAoSigmaEBlarge_ ->Write();
   timeVsAoSigmaEElarge_ ->Write();
 
+  fittedMeanVsAoSigmaEB_->Write();
+  chi2VsAoSigmaEB_      ->Write();
+  fittedMeanVsAoSigmaEE_->Write();
+  chi2VsAoSigmaEE_      ->Write();
+ 
   for(int k=0; k<3; k++){
     dtSliceSAoSigmaVSAoSigmaEB_[k]       ->Write();
     dtSliceSAoSigmaVSAoSigmaEE_[k]       ->Write();
@@ -1448,13 +1455,13 @@ void writeHists()
   //directory to study bias of reco_time in amplitude bins
   TDirectory *singleClusterBiasSlicesEBStudy = singleClusterBiasStudy->mkdir("single-bias-EB-slices");
   singleClusterBiasSlicesEBStudy->cd();
-  for(int v=0; v<20; v++){
+  for(int v=0; v<23; v++){
     timeVsAoSigmaMod4EBSlices_[v] ->Write();
   }
   //directory to study bias of reco_time in amplitude bins
   TDirectory *singleClusterBiasSlicesEEStudy = singleClusterBiasStudy->mkdir("single-bias-EE-slices");
   singleClusterBiasSlicesEEStudy->cd();
-  for(int v=0; v<20; v++){
+  for(int v=0; v<23; v++){
     timeVsAoSigmaHighEESlices_[v] ->Write();
   }
 
@@ -1778,7 +1785,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
 	else {
 	  timeVsAoSigmaMod4EB_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
 	  timeVsAoSigmaMod4EBlog_->Fill(log10(ampliOverSigOfThis/25),treeVars_.xtalInBCTime[bCluster][thisCry]);
-	  for(int v=0; v<20; v++){
+	  for(int v=0; v<23; v++){
 	    if(ampliOverSigOfThis <  25*pow(1.25,v)){
 	      timeVsAoSigmaMod4EBSlices_[v] -> Fill(treeVars_.xtalInBCTime[bCluster][thisCry]);
 	      break; }	  }
@@ -1794,7 +1801,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
 	}
 	else {
 	timeVsAoSigmaHighEE_->Fill(ampliOverSigOfThis,treeVars_.xtalInBCTime[bCluster][thisCry]);
-	  for(int v=0; v<20; v++){
+	  for(int v=0; v<23; v++){
 	    if(ampliOverSigOfThis <  25*pow(1.25,v)){
 	      timeVsAoSigmaHighEESlices_[v] -> Fill(treeVars_.xtalInBCTime[bCluster][thisCry]);
 	      break; }	  }
@@ -2690,6 +2697,44 @@ void doFinalPlots()
     }//end loop on u
   }//end loop on v
   
+  
+  // fitting recHits times in bins of A/sigma, for EB
+  TF1 *gaussMod4EBSlicesFit = new TF1("timeVsAoSigmaMod4EBSlicesFit","gaus",-7,7);
+  for(int v=0; v<23; v++){
+    if( timeVsAoSigmaMod4EBSlices_[v]->Integral()  >= minEntriesForFit_ ){// do fit for this bin in EB,  require min number entries
+      float RMS       = timeVsAoSigmaMod4EBSlices_[v] -> GetRMS();
+      float mean      = timeVsAoSigmaMod4EBSlices_[v] -> GetMean();
+      gaussMod4EBSlicesFit        ->SetParLimits(1,-5,5);  // limit on gaussian central 
+      gaussMod4EBSlicesFit        ->SetParameter(1,mean);  // initialize on central value
+      gaussMod4EBSlicesFit        ->SetParameter(2,RMS);   // initialize on central value
+      timeVsAoSigmaMod4EBSlices_[v] -> Fit("timeVsAoSigmaMod4EBSlicesFit","","",-7,+7); // fit on [-7,+7] ns range to stay away from spikes
+    }
+  }
+  gaussMod4EBSlicesFit        ->SetParameter(1,0);  // re-initialize on central value
+  gaussMod4EBSlicesFit        ->SetParameter(2,1);   // re-initialize on central value
+  timeVsAoSigmaEBlarge_  ->FitSlicesY(gaussMod4EBSlicesFit,0,-1,0,"",0);  
+  fittedMeanVsAoSigmaEB_ = (TH1D*)gDirectory->Get("timeVsAoSigmaEBlarge_1");
+  chi2VsAoSigmaEB_       = (TH1D*)gDirectory->Get("timeVsAoSigmaEBlarge_chi2");
+
+  // fitting recHits times in bins of A/sigma, for EE
+  TF1 *gaussHighEESlicesFit = new TF1("timeVsAoSigmaHighEESlicesFit","gaus",-7,7);
+  for(int v=0; v<23; v++){
+    if( timeVsAoSigmaHighEESlices_[v]->Integral()  >= minEntriesForFit_ ){// do fit for this bin in EE,  require min number entries
+      float RMS       = timeVsAoSigmaHighEESlices_[v] -> GetRMS();
+      float mean      = timeVsAoSigmaHighEESlices_[v] -> GetMean();
+      gaussHighEESlicesFit        ->SetParLimits(1,-5,5);  // limit on gaussian central 
+      gaussHighEESlicesFit        ->SetParameter(1,mean);  // initialize on central value
+      gaussHighEESlicesFit        ->SetParameter(2,RMS);   // initialize on central value
+      timeVsAoSigmaHighEESlices_[v] -> Fit("timeVsAoSigmaHighEESlicesFit","","",-7,+7);  // fit on [-7,+7] ns range to stay away from spikes
+    }
+  }
+  gaussHighEESlicesFit        ->SetParameter(1,0);  // re-initialize on central value
+  gaussHighEESlicesFit        ->SetParameter(2,1);   // re-initialize on central value
+  timeVsAoSigmaEElarge_  ->FitSlicesY(gaussHighEESlicesFit,0,-1,0,"",0);  
+  fittedMeanVsAoSigmaEE_ = (TH1D*)gDirectory->Get("timeVsAoSigmaEElarge_1");
+  chi2VsAoSigmaEE_       = (TH1D*)gDirectory->Get("timeVsAoSigmaEElarge_chi2");
+
+
 
 }// end doFinalPlots
 
