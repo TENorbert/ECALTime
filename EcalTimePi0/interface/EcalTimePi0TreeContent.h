@@ -141,6 +141,7 @@ struct EcalTimePi0TreeContent
   
   // vertex variables
   int   nVertices;
+  bool  vtxIsFake[MAXVTX];
   int   vtxNTracks[MAXVTX];
   float vtxChi2[MAXVTX];
   float vtxNdof[MAXVTX];

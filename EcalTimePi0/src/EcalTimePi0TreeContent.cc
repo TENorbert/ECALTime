@@ -120,6 +120,7 @@ void setBranchAddresses(TTree* chain, EcalTimePi0TreeContent& treeVars)
 
     // vertex variables
     chain -> SetBranchAddress("nVertices",         &treeVars.nVertices);
+    chain -> SetBranchAddress("vtxIsFake",        treeVars.vtxIsFake);
     chain -> SetBranchAddress("vtxNTracks",       treeVars.vtxNTracks);
     chain -> SetBranchAddress("vtxChi2",          treeVars.vtxChi2);
     chain -> SetBranchAddress("vtxNdof",          treeVars.vtxNdof);
@@ -527,17 +528,17 @@ void setBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
   if(EcalTimePi0TreeContent::trgVariables)
   {    
     // trigger variables
-    chain -> Branch("isRPCL1",  &treeVars.isRPCL1,   "isRPCL1/b");
-    chain -> Branch("isDTL1",   &treeVars.isDTL1,     "isDTL1/b");
-    chain -> Branch("isCSCL1",  &treeVars.isCSCL1,   "isCSCL1/b");
-    chain -> Branch("isECALL1", &treeVars.isECALL1, "isECALL1/b");
-    chain -> Branch("isHCALL1", &treeVars.isHCALL1, "isHCALL1/b");
+    chain -> Branch("isRPCL1",  &treeVars.isRPCL1,   "isRPCL1/O");
+    chain -> Branch("isDTL1",   &treeVars.isDTL1,     "isDTL1/O");
+    chain -> Branch("isCSCL1",  &treeVars.isCSCL1,   "isCSCL1/O");
+    chain -> Branch("isECALL1", &treeVars.isECALL1, "isECALL1/O");
+    chain -> Branch("isHCALL1", &treeVars.isHCALL1, "isHCALL1/O");
   
-    chain -> Branch("isRPCL1Bx",  treeVars.isRPCL1Bx,   "isRPCL1Bx[3]/b");
-    chain -> Branch("isDTL1Bx",   treeVars.isDTL1Bx,     "isDTL1Bx[3]/b");
-    chain -> Branch("isCSCL1Bx",  treeVars.isCSCL1Bx,   "isCSCL1Bx[3]/b");
-    chain -> Branch("isECALL1Bx", treeVars.isECALL1Bx, "isECALL1Bx[3]/b");
-    chain -> Branch("isHCALL1Bx", treeVars.isHCALL1Bx, "isHCALL1Bx[3]/b");
+    chain -> Branch("isRPCL1Bx",  treeVars.isRPCL1Bx,   "isRPCL1Bx[3]/O");
+    chain -> Branch("isDTL1Bx",   treeVars.isDTL1Bx,     "isDTL1Bx[3]/O");
+    chain -> Branch("isCSCL1Bx",  treeVars.isCSCL1Bx,   "isCSCL1Bx[3]/O");
+    chain -> Branch("isECALL1Bx", treeVars.isECALL1Bx, "isECALL1Bx[3]/O");
+    chain -> Branch("isHCALL1Bx", treeVars.isHCALL1Bx, "isHCALL1Bx[3]/O");
   }
   //*/  
   
@@ -617,6 +618,7 @@ void setBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
 
     // vertex variables
     chain -> Branch("nVertices",         &treeVars.nVertices,   "nVertices/I");
+    chain -> Branch("vtxIsFake",        treeVars.vtxIsFake,    "vtxIsFake[nVertices]/O");
     chain -> Branch("vtxNTracks",       treeVars.vtxNTracks,   "vtxNTracks[nVertices]/I");
     chain -> Branch("vtxChi2",          treeVars.vtxChi2,      "vtxChi2[nVertices]/F");
     chain -> Branch("vtxNdof",          treeVars.vtxNdof,      "vtxNdof[nVertices]/F");
@@ -1147,14 +1149,15 @@ void initializeBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
     treeVars.nVertices=0;
     for(int i=0; i<MAXVTX; i++) {
       treeVars.vtxNTracks[i]=0;
+      treeVars.vtxIsFake[i]=true;
       treeVars.vtxChi2[i]=0;
       treeVars.vtxNdof[i]=0;
-      treeVars.vtxX[i]=0;
-      treeVars.vtxDx[i]=0;
-      treeVars.vtxY[i]=0;
-      treeVars.vtxDy[i]=0;
-      treeVars.vtxZ[i]=0;
-      treeVars.vtxDz[i]=0;
+      treeVars.vtxX[i]=-999;
+      treeVars.vtxDx[i]=-999;
+      treeVars.vtxY[i]=-999;
+      treeVars.vtxDy[i]=-999;
+      treeVars.vtxZ[i]=-999;
+      treeVars.vtxDz[i]=-999;
   }
   
     // xtal variables inside a cluster

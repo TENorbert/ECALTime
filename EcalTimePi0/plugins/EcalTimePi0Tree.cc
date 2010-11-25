@@ -14,7 +14,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.cc,v 1.21 2010/05/19 19:06:57 franzoni Exp $
+// $Id: EcalTimePi0Tree.cc,v 1.22 2010/07/05 14:22:59 scooper Exp $
 //
 //
 
@@ -925,6 +925,7 @@ EcalTimePi0Tree::dumpVertexInfo(const reco::VertexCollection* recVtxs, EcalTimeP
 
     for(int i=0; i<MAXVTX; i++) {
       myTreeVariables_.vtxNTracks[i]=v->tracksSize();
+      myTreeVariables_.vtxIsFake[i]= v->isFake();
       myTreeVariables_.vtxChi2[i]=   v->chi2();
       myTreeVariables_.vtxNdof[i]=   v->ndof();
       myTreeVariables_.vtxX[i]=      v->x();
