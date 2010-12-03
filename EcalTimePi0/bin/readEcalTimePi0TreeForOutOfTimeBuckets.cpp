@@ -67,8 +67,10 @@ std::string outputRootName_ = "outputHistos.root";
 int   numEvents_      = -1;
 unsigned int  minRun_ = 0;
 unsigned int  maxRun_ = 9999999;
-unsigned int  minLS_ = 0;
-unsigned int  maxLS_ = 9999999;
+unsigned int  minLS_       = 0;
+unsigned int  maxLS_       = 9999999;
+unsigned int  minUnixTime_ = 0;
+unsigned int  maxUnixTime_ = 9999999;
 float eTGammaMinEB_   = 0.2;
 float s4s9GammaMinEB_ = 0.85;
 float eTPi0MinEB_     = 0.65;
@@ -487,6 +489,8 @@ void parseArguments(int argc, char** argv)
   std::string stringMaxRun           = "--maxRun";
   std::string stringMinLS            = "--minLS";
   std::string stringMaxLS            = "--maxLS";
+  std::string stringMinT             = "--minUnixT";
+  std::string stringMaxT             = "--maxUnixT";
   std::string vertex                 = "--vertex";
   std::string stringTriggers         = "--trig";
   std::string stringTechTriggers     = "--techTrig";
@@ -523,6 +527,8 @@ void parseArguments(int argc, char** argv)
       std::cout << " --maxRun: highest run number considered" << std::endl;
       std::cout << " --minLS: lowest lumi section number considered" << std::endl;
       std::cout << " --maxLS: highest lumi section number considered" << std::endl;
+      std::cout << " --minUnixT: earliest unix time considered" << std::endl;
+      std::cout << " --maxUnixT: latest unix time considered" << std::endl;
       std::cout << " --vertex: require vertex@IP (1), veto it (2) or either (0, or unset)" << std::endl;
       std::cout << " --trig: L1 triggers to include (exclude with x)" << std::endl;
       std::cout << " --techTrig: L1 technical triggers to include (exclude with x)" << std::endl;
@@ -542,6 +548,16 @@ void parseArguments(int argc, char** argv)
     else if (argv[v] == stringMinLS) { // set first LS of interval to be considered 
       std::cout << "min LS number" << std::endl;
       minLS_=atoi(argv[v+1]);
+      v++;
+    }
+    else if (argv[v] == stringMinT) { // set earliest Unix time to be considered 
+      std::cout << "min unix time: " << std::endl;
+      minUnixTime_=atoi(argv[v+1]);
+      v++;
+    }
+    else if (argv[v] == stringMaxT) { // set latest Unix time to be considered 
+      std::cout << "max unix time:" << std::endl;
+      maxUnixTime_=atoi(argv[v+1]);
       v++;
     }
     else if (argv[v] == stringMaxRun) { // set last run of interval to be considered 
@@ -2733,6 +2749,8 @@ int main (int argc, char** argv)
   std::cout << "\tmaxRun: "         <<  maxRun_ << std::endl;
   std::cout << "\tminLS: "          <<  minLS_ << std::endl;
   std::cout << "\tmaxLS: "          <<  maxLS_ << std::endl;
+  std::cout << "\tminUnixTime: "    <<  minUnixTime_ << std::endl;
+  std::cout << "\tmaxUnixTime: "    <<  maxUnixTime_ << std::endl;
 	
   setBranchAddresses (chain, treeVars_);
 
@@ -2771,6 +2789,9 @@ int main (int argc, char** argv)
     // do analysis if the LS is in the desired range  
     if( treeVars_.lumiSection<minLS_  || maxLS_<treeVars_.lumiSection) continue;
     
+    // do analysis if the unix time is in the desired range  
+    if( treeVars_.unixTime<minUnixTime_  || maxUnixTime_<treeVars_.unixTime) continue;
+
     bool verticesAreOnlyNextToNominalIP;
     int  count=0;
 
