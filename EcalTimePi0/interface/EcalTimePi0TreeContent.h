@@ -29,6 +29,7 @@ struct EcalTimePi0TreeContent
   
   unsigned int runId;
   unsigned int lumiSection;
+  unsigned int unixTime; /// Time in seconds since January 1, 1970.
   unsigned int orbit;
   unsigned int bx;
   unsigned int eventId;

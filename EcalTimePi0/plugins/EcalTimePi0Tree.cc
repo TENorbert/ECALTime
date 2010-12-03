@@ -14,7 +14,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.cc,v 1.22 2010/07/05 14:22:59 scooper Exp $
+// $Id: EcalTimePi0Tree.cc,v 1.23 2010/11/25 09:00:39 scooper Exp $
 //
 //
 
@@ -244,11 +244,14 @@ void EcalTimePi0Tree::analyze (const edm::Event& iEvent, const edm::EventSetup& 
 // 	    << "	bx " << iEvent.bunchCrossing()
 // 	    << "	orbit " << iEvent.orbitNumber()
 // 	    << std::endl;	
+//  std::cout  << "\t" << iEvent.time().value() << "\t" << "pingo" << std::endl;
+//  std::cout  << "\t" << iEvent.eventAuxiliary().time().unixTime()<< " pingo" << std::endl;
   
   myTreeVariables_.bx          = iEvent.bunchCrossing();
   myTreeVariables_.lumiSection = iEvent.id().luminosityBlock();
+  myTreeVariables_.unixTime    = iEvent.eventAuxiliary().time().unixTime();
   myTreeVariables_.orbit       = iEvent.orbitNumber();
-  
+
   myTreeVariables_.runId         = iEvent.id ().run () ;
   myTreeVariables_.eventId       = iEvent.id ().event () ;
   myTreeVariables_.eventNaiveId  = naiveId_ ;
