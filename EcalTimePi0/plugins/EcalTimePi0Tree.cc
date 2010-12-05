@@ -14,7 +14,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.cc,v 1.24 2010/12/03 18:28:39 franzoni Exp $
+// $Id: EcalTimePi0Tree.cc,v 1.25 2010/12/05 21:36:57 franzoni Exp $
 //
 //
 
@@ -769,8 +769,12 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
                  std::swap (maxDet, secDet) ;
                }
     
-             myTreeVariables_.xtalEnergy[numberOfXtals]       = (float) thisamp ;
-	     myTreeVariables_.xtalTime[numberOfXtals]         = (float) thistime ;
+             //myTreeVariables_.xtalEnergy[numberOfXtals]       = (float) thisamp ;
+	     //myTreeVariables_.xtalTime[numberOfXtals]         = (float) thistime ;
+	     if(myhit.isTimeValid())
+	       myTreeVariables_.xtalTime[numberOfXtals]         = (float) thistime ;
+	     else
+	       myTreeVariables_.xtalTime[numberOfXtals]         = -999999;
              myTreeVariables_.xtalHashedIndex[numberOfXtals]  = EEDetId (detitr -> first).hashedIndex () ;
              EcalIntercalibConstantMap::const_iterator icalit = icalMap.find(detitr->first);
              EcalIntercalibConstant icalconst = 1;
