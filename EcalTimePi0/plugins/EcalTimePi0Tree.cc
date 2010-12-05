@@ -14,7 +14,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.cc,v 1.23 2010/11/25 09:00:39 scooper Exp $
+// $Id: EcalTimePi0Tree.cc,v 1.24 2010/12/03 18:28:39 franzoni Exp $
 //
 //
 
@@ -130,14 +130,14 @@ void EcalTimePi0Tree::analyze (const edm::Event& iEvent, const edm::EventSetup& 
 
   // Ecal barrel UncalibratedRecHits 
   edm::Handle<EcalUncalibratedRecHitCollection> pBarrelEcalUncalibratedRecHits ;
-  const EcalUncalibratedRecHitCollection* theBarrelEcalUncalibratedRecHits;
+  const EcalUncalibratedRecHitCollection* theBarrelEcalUncalibratedRecHits=0;
   if(useRaw_){
     iEvent.getByLabel (barrelEcalUncalibratedRecHitCollection_, pBarrelEcalUncalibratedRecHits) ;
     theBarrelEcalUncalibratedRecHits = pBarrelEcalUncalibratedRecHits.product () ;   
   }
 
   edm::Handle<EcalUncalibratedRecHitCollection> pEndcapEcalUncalibratedRecHits ;
-  const EcalUncalibratedRecHitCollection* theEndcapEcalUncalibratedRecHits;
+  const EcalUncalibratedRecHitCollection* theEndcapEcalUncalibratedRecHits=0;
   if(useRaw_){
     iEvent.getByLabel (endcapEcalUncalibratedRecHitCollection_, pEndcapEcalUncalibratedRecHits) ;
     theEndcapEcalUncalibratedRecHits = pEndcapEcalUncalibratedRecHits.product () ;   
@@ -147,7 +147,7 @@ void EcalTimePi0Tree::analyze (const edm::Event& iEvent, const edm::EventSetup& 
 
   // Ecal barrel RecHits 
   edm::Handle<EcalRecHitCollection> pBarrelEcalRecHits ;
-  const EcalRecHitCollection* theBarrelEcalRecHits;
+  const EcalRecHitCollection* theBarrelEcalRecHits=0;
   if( iEvent.getByLabel (barrelEcalRecHitCollection_, pBarrelEcalRecHits) && pBarrelEcalRecHits.isValid ())
     {
       theBarrelEcalRecHits = pBarrelEcalRecHits.product () ;   
@@ -162,7 +162,7 @@ void EcalTimePi0Tree::analyze (const edm::Event& iEvent, const edm::EventSetup& 
   
   // Ecal endcap RecHits
   edm::Handle<EcalRecHitCollection> pEndcapEcalRecHits ;
-  const EcalRecHitCollection* theEndcapEcalRecHits;
+  const EcalRecHitCollection* theEndcapEcalRecHits=0;
   if( iEvent.getByLabel (endcapEcalRecHitCollection_, pEndcapEcalRecHits) && pEndcapEcalRecHits.isValid ())
     {
       theEndcapEcalRecHits = pEndcapEcalRecHits.product () ;   
