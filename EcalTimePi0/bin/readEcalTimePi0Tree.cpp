@@ -3065,8 +3065,8 @@ int main (int argc, char** argv)
 
   // Tree construction
   // FIX should turn this string into a configurable 
-  //  TChain * chain = new TChain ("EcalTimeAnalysis") ;  // ntuple producer in CMSSW CVS
-  TChain * chain = new TChain ("EcalTimePi0Analysis") ;  // ntuple producer in UserCode/UMN space
+  TChain * chain = new TChain ("EcalTimeAnalysis") ;  // ntuple producer in CMSSW CVS
+  //TChain * chain = new TChain ("EcalTimePi0Analysis") ;  // ntuple producer in UserCode/UMN space
   std::vector<std::string>::const_iterator file_itr;
   for(file_itr=listOfFiles_.begin(); file_itr!=listOfFiles_.end(); file_itr++){
     chain->Add( (*file_itr).c_str() );

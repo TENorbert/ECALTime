@@ -14,7 +14,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.cc,v 1.25 2010/12/05 21:36:57 franzoni Exp $
+// $Id: EcalTimePi0Tree.cc,v 1.26 2010/12/05 22:08:33 franzoni Exp $
 //
 //
 
@@ -92,7 +92,9 @@ EcalTimePi0Tree::EcalTimePi0Tree (const edm::ParameterSet& iConfig) :
   file_->cd () ;
 
   // Initialize Tree
-  tree_ = new TTree ( "EcalTimePi0Analysis","EcalTimePi0Analysis" ) ;
+  //tree_ = new TTree ( "EcalTimePi0Analysis","EcalTimePi0Analysis" ) ;
+  // switch over to new name (to be consistent with CalibCalorimetry/EcalTiming)
+  tree_ = new TTree ( "EcalTimeAnalysis","EcalTimeAnalysis" ) ;
 
   // GFdoc EcalCosmicsTreeContent builds branches for group of variables (trg, muon, ecal, hcal, tkass, tpg, l1)
   // GFdoc after setting branches, setBranchAddresses will be called 
