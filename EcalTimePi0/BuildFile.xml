@@ -1,4 +1,5 @@
 <use   name="Calibration/Tools"/>
+<use   name="CalibCalorimetry/EcalTiming"/>
 <use   name="CondCore/DBCommon"/>
 <use   name="CondCore/DBOutputService"/>
 <use   name="CondFormats/DataRecord"/>

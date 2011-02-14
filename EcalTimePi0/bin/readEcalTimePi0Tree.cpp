@@ -8,7 +8,7 @@
 #include <set>
 #include <boost/tokenizer.hpp>
 
-#include "ECALTime/EcalTimePi0/interface/EcalTimePi0TreeContent.h"
+#include "CalibCalorimetry/EcalTiming/interface/EcalTimeTreeContent.h"
 #include "DataFormats/GeometryVector/interface/GlobalPoint.h"
 #include "DataFormats/DetId/interface/DetId.h"
 #include "DataFormats/EcalDetId/interface/EBDetId.h"
@@ -51,7 +51,7 @@ struct ClusterTime {
 
 
 // -------- Globals ----------------------------------------
-EcalTimePi0TreeContent treeVars_; 
+EcalTimeTreeContent treeVars_; 
 TFile* saving_;
 std::vector<std::string> listOfFiles_;
 bool speak_=false;
@@ -1186,8 +1186,6 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex)
     else    {  std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
     float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] / sigmaNoiseOfThis; 
     if( ampliOverSigOfThis < minAmpliOverSigma_) continue;
-    // added spike cleaning SIC July 6 2010
-    if( treeVars_.xtalInBCSwissCross[bClusterIndex][thisCry] > 0.95) continue;
 
     numCrystals++;
     float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry];
@@ -1912,11 +1910,9 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
       float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry] / sigmaNoiseOfThis; 
       float ampliOfThis        = treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry]; 
       float sigmaOfThis        = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
-      float swissCrossOfThis   = treeVars_.xtalInBCSwissCross[bCluster][thisCry];
 
       // remove too low amplitudes and remove spikes as well 
       if( ampliOverSigOfThis < minAmpliOverSigma_) continue;
-      if( swissCrossOfThis   > 0.95)               continue;
       
       if(thisIsInEB)   {
 	//Timing correction to take out the energy dependence if log10(ampliOverSigOfThis/25) is between 0 and 1.2 (about 1 and 13 GeV)
@@ -1998,7 +1994,6 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
         float ampliOverSigOfThat = treeVars_.xtalInBCAmplitudeADC[bCluster][thatCry] / sigmaNoiseOfThat; 
         float ampliOfThat        = treeVars_.xtalInBCAmplitudeADC[bCluster][thatCry];
         float sigmaOfThat        = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
-  	float swissCrossOfThat   = treeVars_.xtalInBCSwissCross[bCluster][thatCry];
 
         float Aeff = ampliOfThis * ampliOfThat / sqrt( pow(ampliOfThis,2) + pow(ampliOfThat,2) );
 	float timeOfThis = treeVars_.xtalInBCTime[bCluster][thisCry];
@@ -2019,7 +2014,6 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
         
   	// remove too low amplitudes and remove spikes as well 
         if( ampliOverSigOfThat < minAmpliOverSigma_) continue;
-  	if( swissCrossOfThat   > 0.95)               continue;
 
         // for debug
         //std::cout << "ampliOverSigOfThis: " << ampliOverSigOfThis << "\tampliOverSigOfThat: " << ampliOverSigOfThat
