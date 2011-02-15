@@ -1,4 +1,4 @@
-<use   name="ECALTime/EcalTimePi0"/>
+<use   name="CalibCalorimetry/EcalTiming"/>
 <use   name="FWCore/Framework"/>
 <use   name="FWCore/ParameterSet"/>
 <use   name="HLTrigger/HLTcore"/>
