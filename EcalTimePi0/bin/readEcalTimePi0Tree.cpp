@@ -1186,6 +1186,7 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex)
     else    {  std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
     float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] / sigmaNoiseOfThis; 
     if( ampliOverSigOfThis < minAmpliOverSigma_) continue;
+    if( treeVars_.xtalInBCSwissCross[bClusterIndex][thisCry] > 0.95) continue;
 
     numCrystals++;
     float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry];
@@ -1910,6 +1911,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
       float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry] / sigmaNoiseOfThis; 
       float ampliOfThis        = treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry]; 
       float sigmaOfThis        = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
+      float swissCrossOfThis   = treeVars_.xtalInBCSwissCross[bCluster][thisCry];
 
       // remove too low amplitudes and remove spikes as well 
       if( ampliOverSigOfThis < minAmpliOverSigma_) continue;
@@ -1994,6 +1996,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
         float ampliOverSigOfThat = treeVars_.xtalInBCAmplitudeADC[bCluster][thatCry] / sigmaNoiseOfThat; 
         float ampliOfThat        = treeVars_.xtalInBCAmplitudeADC[bCluster][thatCry];
         float sigmaOfThat        = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
+        float swissCrossOfThat   = treeVars_.xtalInBCSwissCross[bCluster][thatCry];
 
         float Aeff = ampliOfThis * ampliOfThat / sqrt( pow(ampliOfThis,2) + pow(ampliOfThat,2) );
 	float timeOfThis = treeVars_.xtalInBCTime[bCluster][thisCry];
@@ -2014,6 +2017,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
         
   	// remove too low amplitudes and remove spikes as well 
         if( ampliOverSigOfThat < minAmpliOverSigma_) continue;
+        if( swissCrossOfThat   > 0.95)               continue;
 
         // for debug
         //std::cout << "ampliOverSigOfThis: " << ampliOverSigOfThis << "\tampliOverSigOfThat: " << ampliOverSigOfThat
