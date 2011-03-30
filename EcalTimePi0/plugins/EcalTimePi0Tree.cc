@@ -14,7 +14,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.cc,v 1.21 2010/05/19 19:06:57 franzoni Exp $
+// $Id: EcalTimePi0Tree.cc,v 1.11 2010/01/29 22:45:22 franzoni Exp $
 //
 //
 
@@ -47,10 +47,6 @@ Implementation:
 #include "CondFormats/EcalObjects/interface/EcalADCToGeVConstant.h"
 #include "CondFormats/DataRecord/interface/EcalADCToGeVConstantRcd.h"
 
-// vertex stuff
-#include <DataFormats/VertexReco/interface/VertexFwd.h>
-#include "RecoVertex/VertexPrimitives/interface/TransientVertex.h"
-
 
 #include <vector>
 #include <iostream>
@@ -65,19 +61,14 @@ using namespace std ;
 EcalTimePi0Tree::EcalTimePi0Tree (const edm::ParameterSet& iConfig) :
   barrelEcalRecHitCollection_              (iConfig.getParameter<edm::InputTag> ("barrelEcalRecHitCollection")),
   endcapEcalRecHitCollection_              (iConfig.getParameter<edm::InputTag> ("endcapEcalRecHitCollection")),
-  barrelEcalUncalibratedRecHitCollection_  (iConfig.getParameter<edm::InputTag> ("barrelEcalUncalibratedRecHitCollection")),
-  endcapEcalUncalibratedRecHitCollection_  (iConfig.getParameter<edm::InputTag> ("endcapEcalUncalibratedRecHitCollection")),
   barrelBasicClusterCollection_            (iConfig.getParameter<edm::InputTag> ("barrelBasicClusterCollection")),
   endcapBasicClusterCollection_            (iConfig.getParameter<edm::InputTag> ("endcapBasicClusterCollection")),
   barrelSuperClusterCollection_            (iConfig.getParameter<edm::InputTag> ("barrelSuperClusterCollection")),
   endcapSuperClusterCollection_            (iConfig.getParameter<edm::InputTag> ("endcapSuperClusterCollection")),
   muonCollection_                          (iConfig.getParameter<edm::InputTag> ("muonCollection")),
-  vertexCollection_                        (iConfig.getParameter<edm::InputTag> ("vertexCollection")),
   l1GMTReadoutRecTag_   (iConfig.getUntrackedParameter<std::string> ("L1GlobalReadoutRecord","gtDigis")),
-  gtRecordCollectionTag_ (iConfig.getUntrackedParameter<std::string> ("GTRecordCollection","")),
   runNum_               (iConfig.getUntrackedParameter<int> ("runNum")),
   fileName_             (iConfig.getUntrackedParameter<std::string> ("fileName", std::string ("EcalTimePi0Tree"))),
-  useRaw_               (iConfig.getUntrackedParameter<bool> ("useRaw", false)),
   naiveId_ (0)              
 
 {
@@ -116,7 +107,9 @@ EcalTimePi0Tree::~EcalTimePi0Tree ()
 void EcalTimePi0Tree::analyze (const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
   ++naiveId_ ;
-    
+  //std::cout << ("EcalTimePi0Tree") << "event " << iEvent.id ().event () << "   "
+  //	    << "naiveEvent " <<naiveId_ << "\n" << std::endl;  
+  
 
   // Geometry
   edm::ESHandle<CaloGeometry> pGeometry ;
@@ -128,45 +121,22 @@ void EcalTimePi0Tree::analyze (const edm::Event& iEvent, const edm::EventSetup& 
   const CaloTopology * theCaloTopology = pCaloTopology.product () ;
   
 
-  // Ecal barrel UncalibratedRecHits 
-  edm::Handle<EcalUncalibratedRecHitCollection> pBarrelEcalUncalibratedRecHits ;
-  const EcalUncalibratedRecHitCollection* theBarrelEcalUncalibratedRecHits;
-  if(useRaw_){
-    iEvent.getByLabel (barrelEcalUncalibratedRecHitCollection_, pBarrelEcalUncalibratedRecHits) ;
-    theBarrelEcalUncalibratedRecHits = pBarrelEcalUncalibratedRecHits.product () ;   
-  }
-
-  edm::Handle<EcalUncalibratedRecHitCollection> pEndcapEcalUncalibratedRecHits ;
-  const EcalUncalibratedRecHitCollection* theEndcapEcalUncalibratedRecHits;
-  if(useRaw_){
-    iEvent.getByLabel (endcapEcalUncalibratedRecHitCollection_, pEndcapEcalUncalibratedRecHits) ;
-    theEndcapEcalUncalibratedRecHits = pEndcapEcalUncalibratedRecHits.product () ;   
-  }
-  
-  
-
   // Ecal barrel RecHits 
   edm::Handle<EcalRecHitCollection> pBarrelEcalRecHits ;
-  const EcalRecHitCollection* theBarrelEcalRecHits;
-  if( iEvent.getByLabel (barrelEcalRecHitCollection_, pBarrelEcalRecHits) && pBarrelEcalRecHits.isValid ())
-    {
-      theBarrelEcalRecHits = pBarrelEcalRecHits.product () ;   
-    }
+  iEvent.getByLabel (barrelEcalRecHitCollection_, pBarrelEcalRecHits) ;
+  const EcalRecHitCollection* theBarrelEcalRecHits = pBarrelEcalRecHits.product () ;   
+
   if (! (pBarrelEcalRecHits.isValid ()) )
     {
       LogWarning ("EcalTimePi0Tree") << barrelEcalRecHitCollection_ 
-				     << " not available" ;
+                                     << " not available" ;
       return ;
     }
-  
-  
+
   // Ecal endcap RecHits
   edm::Handle<EcalRecHitCollection> pEndcapEcalRecHits ;
-  const EcalRecHitCollection* theEndcapEcalRecHits;
-  if( iEvent.getByLabel (endcapEcalRecHitCollection_, pEndcapEcalRecHits) && pEndcapEcalRecHits.isValid ())
-    {
-      theEndcapEcalRecHits = pEndcapEcalRecHits.product () ;   
-    }
+  iEvent.getByLabel (endcapEcalRecHitCollection_, pEndcapEcalRecHits) ;
+  const EcalRecHitCollection* theEndcapEcalRecHits = pEndcapEcalRecHits.product () ;   
   
   if (! (pEndcapEcalRecHits.isValid ()))
     {
@@ -174,6 +144,9 @@ void EcalTimePi0Tree::analyze (const edm::Event& iEvent, const edm::EventSetup& 
                                      << " not available" ;
       return ;
     }
+  
+  
+  
   
   // GFdo switch to appropriate clusters here (basic instead of super) 
   // Barrel SuperClusters
@@ -224,7 +197,11 @@ void EcalTimePi0Tree::analyze (const edm::Event& iEvent, const edm::EventSetup& 
                                      << " not available" ;
       return ;
     }
- 
+  
+  
+  
+  
+  
   // ClusterShapes
   EcalClusterLazyTools* lazyTools = new EcalClusterLazyTools(iEvent, iSetup, barrelEcalRecHitCollection_, endcapEcalRecHitCollection_);
 
@@ -237,42 +214,20 @@ void EcalTimePi0Tree::analyze (const edm::Event& iEvent, const edm::EventSetup& 
 
   // GFdoc initialize variables to 0/false
   initializeBranches(tree_, myTreeVariables_);
-  
-//   std::cout << ("EcalTimePi0Tree gftest") << "event " << iEvent.id ().event () << "   "
-//     //<< "naiveEvent " <<naiveId_ << "\n" << std::endl;  
-// 	    << "	ls " << iEvent.id().luminosityBlock() 
-// 	    << "	bx " << iEvent.bunchCrossing()
-// 	    << "	orbit " << iEvent.orbitNumber()
-// 	    << std::endl;	
-  
-  myTreeVariables_.bx          = iEvent.bunchCrossing();
-  myTreeVariables_.lumiSection = iEvent.id().luminosityBlock();
-  myTreeVariables_.orbit       = iEvent.orbitNumber();
-  
-  myTreeVariables_.runId         = iEvent.id ().run () ;
-  myTreeVariables_.eventId       = iEvent.id ().event () ;
-  myTreeVariables_.eventNaiveId  = naiveId_ ;
-  myTreeVariables_.timeStampLow  = ( 0xFFFFFFFF & iEvent.time ().value () ) ;
+
+  myTreeVariables_.runId = iEvent.id ().run () ;
+  myTreeVariables_.eventId = iEvent.id ().event () ;
+  myTreeVariables_.eventNaiveId = naiveId_ ;
+  myTreeVariables_.timeStampLow = ( 0xFFFFFFFF & iEvent.time ().value () ) ;
   myTreeVariables_.timeStampHigh = ( iEvent.time ().value () >> 32 ) ;
-
-
-  //gfdevel
-  Handle<reco::VertexCollection> recVtxs;
-  //  iEvent.getByLabel (endcapBasicClusterCollection_, pEndcapBasicClusters) ;
-  iEvent.getByLabel(vertexCollection_, recVtxs);
-  const reco::VertexCollection * theRecVtxs = recVtxs.product();
 
   // GFdoc GT information 
   dump3Ginfo(iEvent, iSetup, myTreeVariables_) ;
-  
+
   dumpBarrelClusterInfo(theGeometry, theCaloTopology,
-			theBarrelEcalRecHits, pBarrelEcalUncalibratedRecHits, theBarrelEcalUncalibratedRecHits,
-			theBarrelBasicClusters, theBarrelSuperClusters, lazyTools, XtalMap, XtalMapCurved, myTreeVariables_) ;
+                   theBarrelEcalRecHits, theBarrelBasicClusters, theBarrelSuperClusters, lazyTools, XtalMap, XtalMapCurved, myTreeVariables_) ;
   dumpEndcapClusterInfo(theGeometry, theCaloTopology,
-			theEndcapEcalRecHits, pEndcapEcalUncalibratedRecHits, theEndcapEcalUncalibratedRecHits,
-			theEndcapBasicClusters, theEndcapSuperClusters, lazyTools, XtalMap, XtalMapCurved, myTreeVariables_) ;
-  
-  dumpVertexInfo(theRecVtxs, myTreeVariables_);
+			theEndcapEcalRecHits, theEndcapBasicClusters, theEndcapSuperClusters, lazyTools, XtalMap, XtalMapCurved, myTreeVariables_) ;
 
   tree_ -> Fill();
 }
@@ -324,16 +279,14 @@ std::string EcalTimePi0Tree::intToString (int num)
 // -----------------------------------------------------------------------------------------
 
 void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
-					     const CaloTopology * theCaloTopology,
-					     const EcalRecHitCollection* theBarrelEcalRecHits,
-					     edm::Handle<EcalUncalibratedRecHitCollection> ptheBarrelUncalibratedEcalRecHits,
-					     const EcalUncalibratedRecHitCollection* theBarrelUncalibratedEcalRecHits,
-					     const reco::BasicClusterCollection* theBarrelBasicClusters,
-					     const reco::SuperClusterCollection* theBarrelSuperClusters,
-					     EcalClusterLazyTools* lazyTools,
-					     const std::map<int,float> & XtalMap, //GFdoc unclear
-					     const std::map<int,float> & XtalMapCurved, //GFdoc unclear
-					     EcalTimePi0TreeContent & myTreeVariables_)
+                                        const CaloTopology * theCaloTopology,
+                                        const EcalRecHitCollection* theBarrelEcalRecHits,
+                                        const reco::BasicClusterCollection* theBarrelBasicClusters,
+                                        const reco::SuperClusterCollection* theBarrelSuperClusters,
+                                        EcalClusterLazyTools* lazyTools,
+                                        const std::map<int,float> & XtalMap, //GFdoc unclear
+                                        const std::map<int,float> & XtalMapCurved, //GFdoc unclear
+                                        EcalTimePi0TreeContent & myTreeVariables_)
 {            
   // get number of of objects already present in the tree (none if dumpBarrelClusterInfo is called first)
   int numberOfSuperClusters = myTreeVariables_.nSuperClusters;
@@ -457,8 +410,6 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
 	   // thisamp is the EB amplitude of the current rechit
 	   double thisamp  = myhit.energy () ;
 	   double thistime = myhit.time ();
-	   double thisChi2 = myhit.chi2 ();
-	   double thisOutOfTimeChi2 = myhit.outOfTimeChi2 ();
 	   if (thisamp > 0.027) //cut on energy->number of crystals in cluster above 3sigma noise; gf: desirable?
 	     { 
 	       numXtalsinCluster++ ; 
@@ -492,39 +443,17 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
 	   
 	   myTreeVariables_.xtalAmplitudeADC[numberOfXtals] = (float) thisamp/(icalconst*adcToGeV);
 	   
-	   // determine time error if uncalibrated RH are available
-	   if  (ptheBarrelUncalibratedEcalRecHits.isValid ()) 
-	     {
-	       EcalUncalibratedRecHitCollection::const_iterator theURH = theBarrelUncalibratedEcalRecHits->find(detitr->first);
-	       if(theURH != theBarrelUncalibratedEcalRecHits->end()) myTreeVariables_.xtalInBCTimeErr[numberOfClusters][numberOfXtalsInCluster]= (*theURH).chi2() * 25;
-	       //std::cout << "EB error is: " << myTreeVariables_.xtalInBCTimeErr[numberOfClusters][numberOfXtalsInCluster] << std::endl;
-	     }
-	   else {//	      std::cout << "no EB URH available" << std::endl;
-	   }
-
 	   // xtal variables inside a barrel basic cluster 
-	   myTreeVariables_.xtalInBCEnergy[numberOfClusters][numberOfXtalsInCluster]=       (float) thisamp;
-	   myTreeVariables_.xtalInBCTime[numberOfClusters][numberOfXtalsInCluster]=         (float) (myhit.time ()); 
-	   myTreeVariables_.xtalInBCHashedIndex[numberOfClusters][numberOfXtalsInCluster]=  EBDetId (detitr -> first).hashedIndex () ; 
-	   myTreeVariables_.xtalInBCIEta[numberOfClusters][numberOfXtalsInCluster]=         EBDetId((detitr -> first)).ieta();
-	   myTreeVariables_.xtalInBCIPhi[numberOfClusters][numberOfXtalsInCluster]=         EBDetId((detitr -> first)).iphi();
-	   myTreeVariables_.xtalInBCIx[numberOfClusters][numberOfXtalsInCluster]=           -999999; 
-	   myTreeVariables_.xtalInBCIy[numberOfClusters][numberOfXtalsInCluster]=           -999999; 
-	   myTreeVariables_.xtalInBCFlag[numberOfClusters][numberOfXtalsInCluster]=         myhit.recoFlag(); 
-	   myTreeVariables_.xtalInBCAmplitudeADC[numberOfClusters][numberOfXtalsInCluster]= (float) thisamp/(icalconst*adcToGeV);
-	   myTreeVariables_.xtalInBCChi2[numberOfClusters][numberOfXtalsInCluster]=         thisChi2;
-	   myTreeVariables_.xtalInBCOutOfTimeChi2[numberOfClusters][numberOfXtalsInCluster]=thisOutOfTimeChi2;
-	   myTreeVariables_.xtalInBCE1OverE9[numberOfClusters][numberOfXtalsInCluster]=EcalSeverityLevelAlgo::spikeFromNeighbours( EBDetId((detitr -> first)),
-																   (*theBarrelEcalRecHits),
-																   0.5,   //GeV, threshold Et to calculated E1OverE9 
-																   EcalSeverityLevelAlgo::kE1OverE9
-																   );
-	   // note: SwissCross = 1 - E4/E1
-	   myTreeVariables_.xtalInBCSwissCross[numberOfClusters][numberOfXtalsInCluster]=EcalSeverityLevelAlgo::spikeFromNeighbours( EBDetId((detitr -> first)),
-																     (*theBarrelEcalRecHits),
-																     0.5,   //GeV, threshold Et to calculated SwissCross 
-																     EcalSeverityLevelAlgo::kSwissCross);
-
+	   myTreeVariables_.xtalInBCEnergy[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp;
+	   myTreeVariables_.xtalInBCTime[numberOfClusters][numberOfXtalsInCluster]=        (float) (myhit.time ()); 
+	   myTreeVariables_.xtalInBCHashedIndex[numberOfClusters][numberOfXtalsInCluster]= EBDetId (detitr -> first).hashedIndex () ; 
+	   myTreeVariables_.xtalInBCIEta[numberOfClusters][numberOfXtalsInCluster]=        EBDetId((detitr -> first)).ieta();
+	   myTreeVariables_.xtalInBCIPhi[numberOfClusters][numberOfXtalsInCluster]=        EBDetId((detitr -> first)).iphi();
+	   myTreeVariables_.xtalInBCIx[numberOfClusters][numberOfXtalsInCluster]=          -999999; 
+	   myTreeVariables_.xtalInBCIy[numberOfClusters][numberOfXtalsInCluster]=          -999999; 
+	   myTreeVariables_.xtalInBCFlag[numberOfClusters][numberOfXtalsInCluster]=        myhit.recoFlag(); 
+	   myTreeVariables_.xtalInBCAmplitudeADC[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp/(icalconst*adcToGeV);
+	   
 	   // legacy - to be removed
 	   //energySum += (float) thisamp ; // GFdoc incrementing energy of SC
 	   
@@ -621,18 +550,16 @@ void EcalTimePi0Tree::dumpBarrelClusterInfo (const CaloGeometry * theGeometry,
 // -----------------------------------------------------------------------------------------
 
 void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
-					     const CaloTopology * theCaloTopology,
-					     const EcalRecHitCollection* theEndcapEcalRecHits,
-					     edm::Handle<EcalUncalibratedRecHitCollection> ptheEndcapUncalibratedEcalRecHits,
-					     const EcalUncalibratedRecHitCollection* theEndcapUncalibratedEcalRecHits,
-					     const reco::BasicClusterCollection* theEndcapBasicClusters,
-					     const reco::SuperClusterCollection* theEndcapSuperClusters,
-					     EcalClusterLazyTools* lazyTools,
-					     const std::map<int,float> & XtalMap,
-					     const std::map<int,float> & XtalMapCurved,
-					     EcalTimePi0TreeContent & myTreeVariables_)
+                                        const CaloTopology * theCaloTopology,
+                                        const EcalRecHitCollection* theEndcapEcalRecHits,
+                                        const reco::BasicClusterCollection* theEndcapBasicClusters,
+                                        const reco::SuperClusterCollection* theEndcapSuperClusters,
+                                        EcalClusterLazyTools* lazyTools,
+                                        const std::map<int,float> & XtalMap,
+                                        const std::map<int,float> & XtalMapCurved,
+                                        EcalTimePi0TreeContent & myTreeVariables_)
 {
-  // counters come from the ntuple are to account for what was added in dumpBarrelClusterInf
+  // counters come from the ntuple are to account for what was added in dumpBarrelClusterInfo
   int numberOfSuperClusters = myTreeVariables_.nSuperClusters;
   int numberOfClusters      = myTreeVariables_.nClusters;
   int numberOfXtals         = myTreeVariables_.nXtals ; // this is number of crystals associated to any cluster
@@ -744,9 +671,6 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
 	     // thisamp is the EE amplitude of the current rechit
 	     double thisamp  = myhit.energy () ;
 	     double thistime = myhit.time ();
-	     double thisChi2 = myhit.chi2 ();
-	     double thisOutOfTimeChi2 = myhit.outOfTimeChi2 ();
-
              if (thisamp > 0.027) //cut on energy->number of crystals in cluster above 3sigma noise
                { 
                  numXtalsinCluster++ ; //xtals in cluster above 3sigma noise  
@@ -784,17 +708,6 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
              //MF Lenght evaluation in XTals
              int raw = (detitr -> first).rawId () ;
 
-	   // determine time error if uncalibrated RH are available
-	   if  (ptheEndcapUncalibratedEcalRecHits.isValid ()) 
-	     {
-	       EcalUncalibratedRecHitCollection::const_iterator theURH = theEndcapUncalibratedEcalRecHits->find(detitr->first);
-	       if(theURH != theEndcapUncalibratedEcalRecHits->end()) myTreeVariables_.xtalInBCTimeErr[numberOfClusters][numberOfXtalsInCluster]= (*theURH).chi2() * 25;
-	       // std::cout << "EE error is: " <<  myTreeVariables_.xtalInBCTimeErr[numberOfClusters][numberOfXtalsInCluster]  << std::endl;
-	     }
-	   else {//	      std::cout << "EE no URH available" << std::endl;
-	   }
-
-
 	     // xtal variables inside an endcap basic cluster 
 	      myTreeVariables_.xtalInBCEnergy[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp;
 	      myTreeVariables_.xtalInBCTime[numberOfClusters][numberOfXtalsInCluster]=        (float) thistime;
@@ -805,19 +718,8 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
 	      myTreeVariables_.xtalInBCIy[numberOfClusters][numberOfXtalsInCluster]=          EEDetId((detitr -> first)).iy();
 	      myTreeVariables_.xtalInBCFlag[numberOfClusters][numberOfXtalsInCluster]=         myhit.recoFlag(); 
 	      myTreeVariables_.xtalInBCAmplitudeADC[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp/(icalconst*adcToGeV);
-	      myTreeVariables_.xtalInBCChi2[numberOfClusters][numberOfXtalsInCluster]=         thisChi2;
-	      myTreeVariables_.xtalInBCOutOfTimeChi2[numberOfClusters][numberOfXtalsInCluster]=thisOutOfTimeChi2;
-	      myTreeVariables_.xtalInBCE1OverE9[numberOfClusters][numberOfXtalsInCluster]=EcalSeverityLevelAlgo::spikeFromNeighbours( EEDetId((detitr -> first)),
-																      (*theEndcapEcalRecHits),
-																      0.5,   //GeV, threshold Et to calculated E1OverE9 
-																      EcalSeverityLevelAlgo::kE1OverE9
-																      );
-	      myTreeVariables_.xtalInBCSwissCross[numberOfClusters][numberOfXtalsInCluster]=EcalSeverityLevelAlgo::spikeFromNeighbours( EEDetId((detitr -> first)),
-																	(*theEndcapEcalRecHits),
-																	0.5,   //GeV, threshold Et to calculated SwissCross 
-																	EcalSeverityLevelAlgo::kSwissCross
-																	);
-	      if (XtalMap.find (raw) != XtalMap.end ())
+
+             if (XtalMap.find (raw) != XtalMap.end ())
                myTreeVariables_.xtalTkLength[numberOfXtals] = XtalMap.find (raw)->second ;
              else
                myTreeVariables_.xtalTkLength[numberOfXtals] = -1. ;
@@ -900,46 +802,6 @@ void EcalTimePi0Tree::dumpEndcapClusterInfo (const CaloGeometry * theGeometry,
 } // end dumpEndcapClusterInfo  
 
 
-
-void
-EcalTimePi0Tree::dumpVertexInfo(const reco::VertexCollection* recVtxs, EcalTimePi0TreeContent & myTreeVariables_){
-
-  // std::cout << "number of vertices: " << recVtxs->size() << std::endl;
-  int thisVertex=0;
-  myTreeVariables_.nVertices= recVtxs->size();
-
-  for(reco::VertexCollection::const_iterator v=recVtxs->begin(); 
-      v!=recVtxs->end() && thisVertex<MAXVTX; 
-      ++v){
-    //     std::cout << "INSIDE Recvtx "<< std::setw(3) << std::setfill(' ')
-    // 	      << "#trk " << std::setw(3) << v->tracksSize() 
-    // 	      << " chi2 " << std::setw(4) << v->chi2() 
-    // 	      << " ndof " << std::setw(3) << v->ndof() << std::endl 
-    // 	      << " x "  << std::setw(8) <<std::fixed << std::setprecision(4) << v->x() 
-    // 	      << " dx " << std::setw(8) << v->xError()<< std::endl
-    // 	      << " y "  << std::setw(8) << v->y() 
-    // 	      << " dy " << std::setw(8) << v->yError()<< std::endl
-    // 	      << " z "  << std::setw(8) << v->z() 
-    // 	      << " dz " << std::setw(8) << v->zError()
-    // 	      << std::endl;
-
-    for(int i=0; i<MAXVTX; i++) {
-      myTreeVariables_.vtxNTracks[i]=v->tracksSize();
-      myTreeVariables_.vtxChi2[i]=   v->chi2();
-      myTreeVariables_.vtxNdof[i]=   v->ndof();
-      myTreeVariables_.vtxX[i]=      v->x();
-      myTreeVariables_.vtxDx[i]=     v->xError();
-      myTreeVariables_.vtxY[i]=      v->y();
-      myTreeVariables_.vtxDy[i]=     v->yError();
-      myTreeVariables_.vtxZ[i]=      v->z();
-      myTreeVariables_.vtxDz[i]=     v->zError();
-  }
-
-  }
-
-}
-
-
 // GFdoc GT information, at present anf +-1 bx
 void
 EcalTimePi0Tree::dump3Ginfo (const edm::Event& iEvent, 
@@ -982,43 +844,6 @@ EcalTimePi0Tree::dump3Ginfo (const edm::Event& iEvent,
   //     << myTreeVariables_.isDTL1Bx  [0]
   //     << myTreeVariables_.isDTL1Bx  [1]
   //     << myTreeVariables_.isDTL1Bx  [2] << endl;
-
-  //SIC - July 5 2010
-  // Fill the trigger bit arrays, from EcalTimingAnalysis
-  myTreeVariables_.l1NActiveTriggers = 0 ;
-  myTreeVariables_.l1NActiveTechTriggers = 0;
-  //I (Jason) Decided ONLY to look at the L1 triggers that took part in the decision, not just the ACTIVE triggers
-  // HOPEFULLY this wasn't a bad decision
-  edm::Handle< L1GlobalTriggerReadoutRecord > gtRecord;
-  iEvent.getByLabel(gtRecordCollectionTag_, gtRecord);
-  DecisionWord dWord = gtRecord->decisionWord();   // this will get the decision word *before* masking disabled bits
-  int iBit = -1;
-  for (std::vector<bool>::iterator itBit = dWord.begin(); itBit != dWord.end(); ++itBit)
-  {
-    iBit++;
-    if (*itBit)
-    {
-      myTreeVariables_.l1ActiveTriggers[myTreeVariables_.l1NActiveTriggers] = iBit ;
-      myTreeVariables_.l1NActiveTriggers++;
-    }
-  }
-
-  TechnicalTriggerWord tw = gtRecord->technicalTriggerWord();
-  if ( ! tw.empty() )
-  {
-    // loop over dec. bit to get total rate (no overlap)
-    for ( int itechbit = 0; itechbit < 64; ++itechbit )
-    {
-      myTreeVariables_.l1ActiveTechTriggers[myTreeVariables_.l1NActiveTechTriggers] = 0; // ADD THIS 
-
-      if ( tw[itechbit] )
-      {
-        myTreeVariables_.l1ActiveTechTriggers[myTreeVariables_.l1NActiveTechTriggers] = itechbit;
-        myTreeVariables_.l1NActiveTechTriggers++;
-      }
-
-    }
-  }
  
   return ;
 } //PG dump3Ginfo  
@@ -1167,4 +992,78 @@ EcalTimePi0Tree::determineTriggers (const edm::Event& iEvent, const edm::EventSe
   return l1Triggers;
 }
 // -------------------------------------------------------------------------------------------------------------
+
+
+/* for the future?
+void
+EcalTimePi0Tree::dumpDCCHeaders ()
+{
+  Handle<EcalRawDataCollection> DCCHeaders;
+  iEvent.getByLabel("ecalEBunpacker", DCCHeaders);
+  if(!DCCHeaders.isValid())
+    LogWarning("EcalCosmicsHists") << "DCC headers not available";
+
+  //make the bx histos right here
+  //TODO: Right now we are filling histos for errors...
+  int orbit = -100;
+  int bx = -100;
+  int runType = -100;
+
+  for(EcalRawDataCollection::const_iterator headerItr= DCCHeaders->begin();headerItr != DCCHeaders->end(); 
+      ++headerItr) {
+    EcalDCCHeaderBlock::EcalDCCEventSettings settings = headerItr->getEventSettings();
+    int myorbit = headerItr->getOrbit();
+    int mybx = headerItr->getBX();
+    int myRunType = headerItr->getRunType();
+    int FEDid = headerItr->fedId();
+    TH2F* dccRuntypeHist = FEDsAndDCCRuntypeVsBxHists_[FEDid];
+    if(dccRuntypeHist==0)
+    {
+      initHists(FEDid);
+      dccRuntypeHist = FEDsAndDCCRuntypeVsBxHists_[FEDid];
+    }
+    dccRuntypeHist->Fill(mybx,myRunType);
+    
+    if (bx == -100)
+    {
+      bx = mybx;
+    }
+    else if (bx != mybx)
+    {
+      LogWarning("EcalCosmicsHists") << "This header has a conflicting bx OTHERS were " << bx << " here " << mybx;
+      dccBXErrorByFEDHist_->Fill(headerItr->fedId());
+      if(bx != -100)
+      {
+        dccErrorVsBxHist_->Fill(bx,0);
+      }
+    }
+
+    if (runType == -100)
+    {
+      runType = myRunType;
+    }
+    else if (runType != myRunType)
+    {
+      LogWarning("EcalCosmicsHists") << "This header has a conflicting runType OTHERS were " << bx << " here " << mybx;
+      dccRuntypeErrorByFEDHist_->Fill(headerItr->fedId());
+      if(bx != -100)
+        dccErrorVsBxHist_->Fill(bx,2);
+    }
+    
+    
+    if (orbit == -100)
+    {
+      orbit = myorbit;
+    }
+    else if (orbit != myorbit)
+    {
+      LogWarning("EcalCosmicsHists") << "This header has a conflicting orbit; OTHERS were " << orbit << " here " << myorbit;
+      dccOrbitErrorByFEDHist_->Fill(headerItr->fedId());
+      if(bx != -100)
+        dccErrorVsBxHist_->Fill(bx,1);
+    }
+  }
+  
+} //PG dumpDCCHeaders
+*/
 

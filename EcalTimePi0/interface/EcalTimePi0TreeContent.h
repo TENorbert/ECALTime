@@ -7,7 +7,6 @@
 #define MAXC 100
 #define MAXXTAL 250
 #define MAXXTALINC 9
-#define MAXVTX 5
 #define MAXHCALRECHITS 100
 #define MAXCALOTOWERS 100
 #define MAXMU 20
@@ -28,9 +27,6 @@ struct EcalTimePi0TreeContent
   
   
   unsigned int runId;
-  unsigned int lumiSection;
-  unsigned int orbit;
-  unsigned int bx;
   unsigned int eventId;
   unsigned int eventNaiveId;
   unsigned int timeStampLow;
@@ -123,12 +119,7 @@ struct EcalTimePi0TreeContent
   int   xtalInBCFlag[MAXC][MAXXTALINC];
   float xtalInBCEnergy[MAXC][MAXXTALINC];
   float xtalInBCTime[MAXC][MAXXTALINC];
-  float xtalInBCTimeErr[MAXC][MAXXTALINC];
   float xtalInBCAmplitudeADC[MAXC][MAXXTALINC];
-  float xtalInBCChi2[MAXC][MAXXTALINC];
-  float xtalInBCOutOfTimeChi2[MAXC][MAXXTALINC];
-  float xtalInBCE1OverE9[MAXC][MAXXTALINC];
-  float xtalInBCSwissCross[MAXC][MAXXTALINC];
     
   // crystal variables
   int nXtals;
@@ -138,18 +129,6 @@ struct EcalTimePi0TreeContent
   float xtalTkLength[MAXXTAL];
   float xtalTkLengthCurved[MAXXTAL];
   float xtalAmplitudeADC[MAXXTAL];
-  
-  // vertex variables
-  int   nVertices;
-  int   vtxNTracks[MAXVTX];
-  float vtxChi2[MAXVTX];
-  float vtxNdof[MAXVTX];
-  float vtxX[MAXVTX];
-  float vtxDx[MAXVTX];
-  float vtxY[MAXVTX];
-  float vtxDy[MAXVTX];
-  float vtxZ[MAXVTX];
-  float vtxDz[MAXVTX];
 
   
   // hcal variables
@@ -347,8 +326,6 @@ struct EcalTimePi0TreeContent
   // l1Variables
   int l1NActiveTriggers;
   int l1ActiveTriggers[128];
-  int l1NActiveTechTriggers;
-  int l1ActiveTechTriggers[128];
   
   //GT +-1BX
   int l1GtNEm;

@@ -1,13 +1,8 @@
 import FWCore.ParameterSet.Config as cms
 
-ecalTimePi0Tree = cms.EDAnalyzer("EcalTimePi0Tree",
+ecalTimePi0Tree = cms.EDFilter("EcalTimePi0Tree",
     barrelEcalRecHitCollection = cms.InputTag("ecalRecHit","EcalRecHitsEB"),
     endcapEcalRecHitCollection = cms.InputTag("ecalRecHit","EcalRecHitsEE"),
-
-    useRaw = cms.untracked.bool(False),
-
-    barrelEcalUncalibratedRecHitCollection = cms.InputTag("ecalRatioUncalibRecHit","EcalUncalibRecHitsEB"),
-    endcapEcalUncalibratedRecHitCollection = cms.InputTag("ecalRatioUncalibRecHit","EcalUncalibRecHitsEE"),
 
     # gf set correct cluster producrs
     # gf here SC are used, switch to BC for us
@@ -18,12 +13,9 @@ ecalTimePi0Tree = cms.EDAnalyzer("EcalTimePi0Tree",
     barrelClusterShapeAssociationCollection = cms.InputTag("hybridSuperClusters","hybridShapeAssoc"),
     endcapClusterShapeAssociationCollection = cms.InputTag("multi5x5BasicClusters","multi5x5EndcapShapeAssoc"),
 
-    vertexCollection  = cms.InputTag("offlinePrimaryVertices",""),
-                               
     muonCollection = cms.InputTag("GLBMuons"),
     hbTreshold = cms.double(1.),                               
     l1GlobalReadoutRecord = cms.string('gtDigis'),
-    GTRecordCollection = cms.untracked.string('gtDigis'),
     runNum = cms.untracked.int32(-1),
     fileName = cms.untracked.string('EcalTimePi0Tree'),
     TrackAssociatorParameters = cms.PSet(

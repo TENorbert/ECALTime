@@ -17,7 +17,7 @@ Implementation:
 // Skeleton Derived from an example by:  F. DE GUIO C. DOGLIONI P. MERIDIANI
 // Authors:                              Seth Cooper, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePi0Tree.h,v 1.8 2010/05/19 17:35:52 franzoni Exp $
+// $Id: EcalTimePi0Tree.h,v 1.3 2010/01/26 17:32:41 scooper Exp $
 //
 //
 
@@ -88,13 +88,8 @@ Implementation:
 #include "Geometry/EcalAlgo/interface/EcalBarrelGeometry.h"
 #include "RecoCaloTools/Navigation/interface/CaloNavigator.h"
 #include "Geometry/CaloGeometry/interface/CaloSubdetectorGeometry.h"
-
-#include "RecoLocalCalo/EcalRecAlgos/interface/EcalSeverityLevelAlgo.h"
 //
 #include "ECALTime/EcalTimePi0/interface/EcalTimePi0TreeContent.h"
-
-// containers for vertices
-#include <DataFormats/VertexReco/interface/VertexFwd.h>
 
 
 class EcalTimePi0Tree : public edm::EDAnalyzer 
@@ -106,7 +101,7 @@ class EcalTimePi0Tree : public edm::EDAnalyzer
 
    protected:
 
-      virtual void beginJob () {} ;
+      virtual void beginJob (const edm::EventSetup&) {} ;
       virtual void analyze (const edm::Event&, const edm::EventSetup&) ;
       virtual void endJob () ;
       virtual void beginRun(edm::Run const &, edm::EventSetup const &) ;
@@ -119,31 +114,25 @@ class EcalTimePi0Tree : public edm::EDAnalyzer
       //! dump Cluster information
       //! has to run after dumpMUinfo, to have the XtalMap already filled
       void dumpBarrelClusterInfo(const CaloGeometry * theGeometry,
-				 const CaloTopology * theCaloTopology,
-				 const EcalRecHitCollection* theBarrelEcalRecHits,
-				 edm::Handle<EcalUncalibratedRecHitCollection> ptheBarrelUncalibratedEcalRecHits,
-				 const EcalUncalibratedRecHitCollection* theBarrelUncalibratedEcalRecHits,
-				 const reco::BasicClusterCollection* theBarrelBasicClusters,
-				 const reco::SuperClusterCollection* theBarrelSuperClusters,
-				 EcalClusterLazyTools* lazyTools,
-				 const std::map<int,float> & XtalMap,
-				 const std::map<int,float> & XtalMapCurved,
-				 EcalTimePi0TreeContent & myTreeVariables_) ;
+                            const CaloTopology * theCaloTopology,
+                            const EcalRecHitCollection* theBarrelEcalRecHits,
+                            const reco::BasicClusterCollection* theBarrelBasicClusters,
+                            const reco::SuperClusterCollection* theBarrelSuperClusters,
+                            EcalClusterLazyTools* lazyTools,
+                            const std::map<int,float> & XtalMap,
+                            const std::map<int,float> & XtalMapCurved,
+                            EcalTimePi0TreeContent & myTreeVariables_) ;
 
       void dumpEndcapClusterInfo(const CaloGeometry * theGeometry,
-				 const CaloTopology * theCaloTopology,
-				 const EcalRecHitCollection* theEndcapEcalRecHits,
-				 edm::Handle<EcalUncalibratedRecHitCollection> ptheEndcapUncalibratedEcalRecHits,
-				 const EcalUncalibratedRecHitCollection* theEndcapUncalibratedEcalRecHits,
-				 const reco::BasicClusterCollection* theEndcapBasicClusters,
-				 const reco::SuperClusterCollection* theEndcapSuperClusters,
-				 EcalClusterLazyTools* lazyTools,
-				 const std::map<int,float> & XtalMap,
-				 const std::map<int,float> & XtalMapCurved,
-				 EcalTimePi0TreeContent & myTreeVariables_) ;
-      
-      void dumpVertexInfo(const reco::VertexCollection* recVtxs, EcalTimePi0TreeContent & myTreeVariables_);
- 
+                            const CaloTopology * theCaloTopology,
+                            const EcalRecHitCollection* theEndcapEcalRecHits,
+                            const reco::BasicClusterCollection* theEndcapBasicClusters,
+                            const reco::SuperClusterCollection* theEndcapSuperClusters,
+                            EcalClusterLazyTools* lazyTools,
+                            const std::map<int,float> & XtalMap,
+                            const std::map<int,float> & XtalMapCurved,
+                            EcalTimePi0TreeContent & myTreeVariables_) ;
+
       //! dump trigger information
       void dump3Ginfo (const edm::Event& iEvent, const edm::EventSetup& eventSetup,
                        EcalTimePi0TreeContent & myTreeVariables_) ;
@@ -159,20 +148,15 @@ class EcalTimePi0Tree : public edm::EDAnalyzer
 
       edm::InputTag barrelEcalRecHitCollection_ ;
       edm::InputTag endcapEcalRecHitCollection_ ;
-      edm::InputTag barrelEcalUncalibratedRecHitCollection_ ;
-      edm::InputTag endcapEcalUncalibratedRecHitCollection_ ;
       edm::InputTag barrelBasicClusterCollection_ ;
       edm::InputTag endcapBasicClusterCollection_ ;
       edm::InputTag barrelSuperClusterCollection_ ;
       edm::InputTag endcapSuperClusterCollection_ ;
       edm::InputTag muonCollection_ ;
-      edm::InputTag vertexCollection_ ;
       edm::InputTag l1GMTReadoutRecTag_ ;
-      edm::InputTag gtRecordCollectionTag_ ;
       int runNum_ ;
       std::string fileName_ ;
-      bool useRaw_ ;
-      int  naiveId_ ; 
+      int naiveId_ ; 
 
       TrackDetectorAssociator trackAssociator_ ;
       TrackAssociatorParameters trackParameters_ ;
