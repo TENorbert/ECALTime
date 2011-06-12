@@ -6,3 +6,8 @@
   <use   name="CalibCalorimetry/EcalTiming"/>
   <flags   LCGDICT_ARGS="--deep"/>
 </bin>
+<bin   name="ecalTimePerformance" file="ecalTimePerformance.cpp">
+  <use   name="CalibCalorimetry/EcalTiming"/>
+  <flags   LCGDICT_ARGS="--deep"/>
+</bin>
+
