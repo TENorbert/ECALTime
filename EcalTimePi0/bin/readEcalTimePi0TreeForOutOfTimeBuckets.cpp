@@ -8,7 +8,7 @@
 #include <set>
 #include <boost/tokenizer.hpp>
 
-#include "CalibCalorimetry/EcalTiming/interface/EcalTimeTreeContent.h"
+#include "ECALTime/EcalTimePi0/interface/EcalTimePi0TreeContent.h"
 #include "DataFormats/GeometryVector/interface/GlobalPoint.h"
 #include "DataFormats/DetId/interface/DetId.h"
 #include "DataFormats/EcalDetId/interface/EBDetId.h"
@@ -47,7 +47,7 @@ struct ClusterTime {
 
 
 // -------- Globals ----------------------------------------
-EcalTimeTreeContent treeVars_; 
+EcalTimePi0TreeContent treeVars_; 
 TFile* saving_;
 std::vector<std::string> listOfFiles_;
 bool speak_=false;
@@ -67,10 +67,8 @@ std::string outputRootName_ = "outputHistos.root";
 int   numEvents_      = -1;
 unsigned int  minRun_ = 0;
 unsigned int  maxRun_ = 9999999;
-unsigned int  minLS_       = 0;
-unsigned int  maxLS_       = 9999999;
-unsigned int  minUnixTime_ = 0;
-unsigned int  maxUnixTime_ = 9999999;
+unsigned int  minLS_ = 0;
+unsigned int  maxLS_ = 9999999;
 float eTGammaMinEB_   = 0.2;
 float s4s9GammaMinEB_ = 0.85;
 float eTPi0MinEB_     = 0.65;
@@ -489,8 +487,6 @@ void parseArguments(int argc, char** argv)
   std::string stringMaxRun           = "--maxRun";
   std::string stringMinLS            = "--minLS";
   std::string stringMaxLS            = "--maxLS";
-  std::string stringMinT             = "--minUnixT";
-  std::string stringMaxT             = "--maxUnixT";
   std::string vertex                 = "--vertex";
   std::string stringTriggers         = "--trig";
   std::string stringTechTriggers     = "--techTrig";
@@ -527,8 +523,6 @@ void parseArguments(int argc, char** argv)
       std::cout << " --maxRun: highest run number considered" << std::endl;
       std::cout << " --minLS: lowest lumi section number considered" << std::endl;
       std::cout << " --maxLS: highest lumi section number considered" << std::endl;
-      std::cout << " --minUnixT: earliest unix time considered" << std::endl;
-      std::cout << " --maxUnixT: latest unix time considered" << std::endl;
       std::cout << " --vertex: require vertex@IP (1), veto it (2) or either (0, or unset)" << std::endl;
       std::cout << " --trig: L1 triggers to include (exclude with x)" << std::endl;
       std::cout << " --techTrig: L1 technical triggers to include (exclude with x)" << std::endl;
@@ -548,16 +542,6 @@ void parseArguments(int argc, char** argv)
     else if (argv[v] == stringMinLS) { // set first LS of interval to be considered 
       std::cout << "min LS number" << std::endl;
       minLS_=atoi(argv[v+1]);
-      v++;
-    }
-    else if (argv[v] == stringMinT) { // set earliest Unix time to be considered 
-      std::cout << "min unix time: " << std::endl;
-      minUnixTime_=atoi(argv[v+1]);
-      v++;
-    }
-    else if (argv[v] == stringMaxT) { // set latest Unix time to be considered 
-      std::cout << "max unix time:" << std::endl;
-      maxUnixTime_=atoi(argv[v+1]);
       v++;
     }
     else if (argv[v] == stringMaxRun) { // set last run of interval to be considered 
@@ -1057,6 +1041,7 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex)
     else    {  std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
     float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] / sigmaNoiseOfThis; 
     if( ampliOverSigOfThis < minAmpliOverSigma_) continue;
+    // added spike cleaning SIC July 6 2010
     if( treeVars_.xtalInBCSwissCross[bClusterIndex][thisCry] > 0.95) continue;
 
     numCrystals++;
@@ -1805,7 +1790,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
         float ampliOverSigOfThat = treeVars_.xtalInBCAmplitudeADC[bCluster][thatCry] / sigmaNoiseOfThat; 
         float ampliOfThat        = treeVars_.xtalInBCAmplitudeADC[bCluster][thatCry];
         float sigmaOfThat        = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
-        float swissCrossOfThat   = treeVars_.xtalInBCSwissCross[bCluster][thatCry];
+  	float swissCrossOfThat   = treeVars_.xtalInBCSwissCross[bCluster][thatCry];
 
         float Aeff = ampliOfThis * ampliOfThat / sqrt( pow(ampliOfThis,2) + pow(ampliOfThat,2) );
 	float timeOfThis = treeVars_.xtalInBCTime[bCluster][thisCry];
@@ -1826,7 +1811,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
         
   	// remove too low amplitudes and remove spikes as well 
         if( ampliOverSigOfThat < minAmpliOverSigma_) continue;
-        if( swissCrossOfThat   > 0.95)               continue;
+  	if( swissCrossOfThat   > 0.95)               continue;
 
         // for debug
         //std::cout << "ampliOverSigOfThis: " << ampliOverSigOfThis << "\tampliOverSigOfThat: " << ampliOverSigOfThat
@@ -2724,9 +2709,7 @@ int main (int argc, char** argv)
   }
 
   // Tree construction
-  // FIX should turn this string into a configurable 
-  TChain * chain = new TChain ("EcalTimeAnalysis") ;  // ntuple producer in CMSSW CVS
-  //TChain * chain = new TChain ("EcalTimePi0Analysis") ;  // ntuple producer in UserCode/UMN space
+  TChain * chain = new TChain ("EcalTimeAnalysis") ;
   std::vector<std::string>::const_iterator file_itr;
   for(file_itr=listOfFiles_.begin(); file_itr!=listOfFiles_.end(); file_itr++){
     chain->Add( (*file_itr).c_str() );
@@ -2748,8 +2731,6 @@ int main (int argc, char** argv)
   std::cout << "\tmaxRun: "         <<  maxRun_ << std::endl;
   std::cout << "\tminLS: "          <<  minLS_ << std::endl;
   std::cout << "\tmaxLS: "          <<  maxLS_ << std::endl;
-  std::cout << "\tminUnixTime: "    <<  minUnixTime_ << std::endl;
-  std::cout << "\tmaxUnixTime: "    <<  maxUnixTime_ << std::endl;
 	
   setBranchAddresses (chain, treeVars_);
 
@@ -2788,9 +2769,6 @@ int main (int argc, char** argv)
     // do analysis if the LS is in the desired range  
     if( treeVars_.lumiSection<minLS_  || maxLS_<treeVars_.lumiSection) continue;
     
-    // do analysis if the unix time is in the desired range  
-    if( treeVars_.unixTime<minUnixTime_  || maxUnixTime_<treeVars_.unixTime) continue;
-
     bool verticesAreOnlyNextToNominalIP;
     int  count=0;
 
