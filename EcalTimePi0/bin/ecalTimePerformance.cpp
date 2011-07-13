@@ -642,7 +642,6 @@ int main (int argc, char** argv)
     if (speak_)  std::cout << "\n\n------> reading entry " << entry << "\tLS: " << treeVars_.lumiSection << " <------\n" ; 
     if (speak_)  std::cout << "  found " << treeVars_.nSuperClusters << " superclusters" << std::endl ;
     if (speak_)  std::cout << "  found " << treeVars_.nClusters << " basic clusters" << std::endl ;
-    if (speak_)  std::cout << "  found " << treeVars_.nXtals << " crystals\n" ;    
 
     // Plot the control hists
     // doControlHists();
