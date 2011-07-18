@@ -643,6 +643,31 @@ int main (int argc, char** argv)
     if (speak_)  std::cout << "  found " << treeVars_.nSuperClusters << " superclusters" << std::endl ;
     if (speak_)  std::cout << "  found " << treeVars_.nClusters << " basic clusters" << std::endl ;
 
+    for (int sc1=0; sc1<treeVars_.nSuperClusters; sc1++){
+
+      float et1 = treeVars_.superClusterRawEnergy[sc1]/cosh( treeVars_.superClusterEta[sc1] );
+      if (et1<20) continue;
+
+      math::PtEtaPhiELorentzVectorD  el1(et1  ,
+					 treeVars_.superClusterEta[sc1],
+					 treeVars_.superClusterPhi[sc1],
+					 et1 );
+	
+      
+      for (int sc2=(sc1+1); sc2<treeVars_.nSuperClusters; sc2++){
+
+	float et2 = treeVars_.superClusterRawEnergy[sc2]/cosh( treeVars_.superClusterEta[sc2] );
+	if (et2<20) continue;
+	
+	math::PtEtaPhiELorentzVectorD  el2(treeVars_.superClusterRawEnergy[sc2]/cosh( treeVars_.superClusterEta[sc2] ) ,
+					   treeVars_.superClusterEta[sc2],
+					   treeVars_.superClusterPhi[sc2],
+					   treeVars_.superClusterRawEnergy[sc2]/cosh( treeVars_.superClusterEta[sc2] ) );
+      
+	//reco::Particle::LorentzVector Zraw( 0 );
+      }
+    }
+
     // Plot the control hists
     // doControlHists();
 
