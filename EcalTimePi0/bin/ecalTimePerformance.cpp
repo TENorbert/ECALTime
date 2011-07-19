@@ -86,7 +86,7 @@ std::vector<std::vector<double> > ttrigIncludeVector;
 std::vector<std::vector<double> > ttrigExcludeVector;
 
 
-float minAmpliOverSigma_   = 10;    // dimensionless
+float minAmpliOverSigma_   = 13;    // dimensionless
 
 float maxChi2NDF_ = 20;  //TODO: gf configurable
 
@@ -144,13 +144,13 @@ const float sigmaNoiseEE          = 2.10;  // ADC ; using total single-sample no
 // const float timingResParamN       = 35.1; // ns ; Fig. 2 from CFT-09-006
 // const float timingResParamConst   = 0.020; //ns ;   "
 const float timingResParamNEB     = 28.51;   // ns ; plots approved http://indico.cern.ch/conferenceDisplay.py?confId=92739
-const float timingResParamConstEB = 0.02565; //ns ;   "
+const float timingResParamConstEB = 0.3;     // ns ; rough, probably conservative estimate
 const float timingResParamNEE     = 31.84;   // ns ; Fig. 2 from CFT-09-006
-const float timingResParamConstEE = 0.01816;  //ns ;
+const float timingResParamConstEE = 0.3;     // ns ; rough, probably conservative estimate
 
 // -------- Histograms -------------------------------------
-// xtals
 TH1F* xtalEnergyHist_;
+TH1F* clusTimeDiffHist_;
 
 
 // ---------------------------------------------------------------------------------------
@@ -419,16 +419,10 @@ void parseArguments(int argc, char** argv)
 // ---------------------------------------------------------------------------------------
 // ------------------ Function to initialize the histograms ------------------------------
 void initializeHists(){
-//initializeHists
-  //int numChi2Bins = 150;
-  //int chi2Max = 150;
-  //int numChi2NDFBins = 100;
-  //int chi2NDFMax = 100;
-
   saving_->cd();
   // Initialize histograms -- xtals
-  xtalEnergyHist_ = new TH1F("XtalEnergy","Crystal energy;GeV",110,-1,10);
-
+  xtalEnergyHist_   = new TH1F("XtalEnergy","Crystal energy;GeV",110,-1,10);
+  clusTimeDiffHist_ = new TH1F("cluster time difference","cluster time difference; #Deltat [ns]",200,-10,10);
 }//end initializeHists
 
 // ---------------------------------------------------------------------------------------
@@ -441,6 +435,7 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex)
   int   numCrystals = 0;
   float timingResParamN    =0;
   float timingResParamConst=0;
+
   // loop on the cry components of a basic cluster; get timeBest and uncertainty 
   for(int thisCry=0; thisCry<treeVars_.nXtalsInCluster[bClusterIndex]; thisCry++)
   {
@@ -457,13 +452,20 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex)
       timingResParamConst=timingResParamConstEE;
       thisIsInEB=false;    }
     else    {  std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
+
     float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] / sigmaNoiseOfThis; 
+
+    // minimum amplitude and spike rejection (could be updated)
     if( ampliOverSigOfThis < minAmpliOverSigma_) continue;
     if( treeVars_.xtalInBCSwissCross[bClusterIndex][thisCry] > 0.95) continue;
 
     numCrystals++;
     float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry];
-    float sigmaOfThis = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
+    //    old estimated: fully parameterized
+    //    float sigmaOfThis = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
+    //    new estimate: error from ratio + constant term  
+    float sigmaOfThis = pow( treeVars_.xtalInBCTimeErr[bClusterIndex][thisCry], 2 ) + pow( timingResParamConst, 2);
+    sigmaOfThis       = sqrt(sigmaOfThis);
 
     //std::cout << "GFdeb eampli: " << treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] //gfdebug
     //          << " ampliOverSigOfThis: " << ampliOverSigOfThis
@@ -533,8 +535,8 @@ void writeHists()
   // write out control histograms
   TDirectory *controlPlots = saving_->mkdir("control");
   controlPlots->cd();
-  xtalEnergyHist_->Write(); 
-
+  xtalEnergyHist_   ->Write(); 
+  clusTimeDiffHist_ ->Write(); 
 }
 
 
@@ -651,7 +653,7 @@ int main (int argc, char** argv)
       math::PtEtaPhiELorentzVectorD  el1(et1  ,
 					 treeVars_.superClusterEta[sc1],
 					 treeVars_.superClusterPhi[sc1],
-					 et1 );
+					 treeVars_.superClusterRawEnergy[sc1] );
 	
       
       for (int sc2=(sc1+1); sc2<treeVars_.nSuperClusters; sc2++){
@@ -659,62 +661,39 @@ int main (int argc, char** argv)
 	float et2 = treeVars_.superClusterRawEnergy[sc2]/cosh( treeVars_.superClusterEta[sc2] );
 	if (et2<20) continue;
 	
-	math::PtEtaPhiELorentzVectorD  el2(treeVars_.superClusterRawEnergy[sc2]/cosh( treeVars_.superClusterEta[sc2] ) ,
+	math::PtEtaPhiELorentzVectorD  el2(et2 ,
 					   treeVars_.superClusterEta[sc2],
 					   treeVars_.superClusterPhi[sc2],
-					   treeVars_.superClusterRawEnergy[sc2]/cosh( treeVars_.superClusterEta[sc2] ) );
+					   treeVars_.superClusterRawEnergy[sc2] );
       
-	//reco::Particle::LorentzVector Zraw( 0 );
-      }
-    }
+	float d2vertex = pow(treeVars_.superClusterVertexX[sc1]-treeVars_.superClusterVertexX[sc2],2);
+	d2vertex       += pow(treeVars_.superClusterVertexY[sc1]-treeVars_.superClusterVertexY[sc2],2);
+	d2vertex       += pow(treeVars_.superClusterVertexZ[sc1]-treeVars_.superClusterVertexZ[sc2],2);
+	d2vertex       = sqrt(d2vertex);
+	
+	math::PtEtaPhiELorentzVectorD diEle = el1;
+	diEle += el2;
+	
+	std::cout << "di-electron system mass: " << diEle.M() << " vertex distance: " << d2vertex << std::endl;
 
-    // Plot the control hists
-    // doControlHists();
+	if( fabs( diEle.M() - 91 ) > 20 ) continue;
+	if ( d2vertex > 0.1 )             continue;
 
-    // Make pairs of all BasicClusters
-    //SetOfIntPairs allBCPairs;
-    //for (int bCluster=0; bCluster < treeVars_.nClusters; bCluster++)
-    //{
-    //  for (int bClusterA=bCluster+1; bClusterA < treeVars_.nClusters; bClusterA++)
-    //  {
-    //    allBCPairs.insert(std::make_pair<int,int>(bCluster,bClusterA));
-    //  }
-    //}
-    //// Do singleCluster plots -- all BC pairs (no pi-zero selection)
-    //std::set<int> allMyBasicClusterIndicies = makeUniqueList1D(allBCPairs);
-    //doSingleClusterResolutionPlots(allMyBasicClusterIndicies,false);
-    //// Do doubleCluster plots -- all BC pairs (no pi-zero selection)
-    //doDoubleClusterResolutionPlots(allBCPairs,false);
-    //
-    //// ---------------- Select Pi-zeros
-    //SetOfIntPairs myPi0BasicClusterPairs = selectPi0Candidates();
-    //
-    //// Do double cluster plots
-    //doDoubleClusterResolutionPlots(myPi0BasicClusterPairs,true);
-    //
-    //// Make unique list of BasicClusters from the list of pairs
-    //std::set<int> myPi0BasicClusters = makeUniqueList1D(myPi0BasicClusterPairs);
-    //// Do the singleCluster again on the pi0 BasicClusters
-    //doSingleClusterResolutionPlots(myPi0BasicClusters,true);
-    //
-    //doTimingAndVertexPlots();
+	
+	
+	
+	
+	
+      }// end loop sc2
+    }// end loop sc1
 
   }   // end of loop over entries
-  // now you have di-mass plots filled => get masses
 
-
-  // Fit the invariant mass spectra
-  //fitMassSpectra();
-  // FIXME
-  // fit to mass to be made robust
-  // re-set masses to a-priori values for now 
   pi0MassEB_  = 0.111;
   pi0WidthEB_ = 0.013; 
   pi0MassEE_  = 0.126;
   pi0WidthEE_  = 0.030;
 
-  // Do plots that need histograms to be filled with events
-  //doFinalPlots();
 
   // now save the plots
   writeHists();
