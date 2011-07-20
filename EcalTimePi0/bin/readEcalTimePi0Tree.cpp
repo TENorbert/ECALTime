@@ -1911,7 +1911,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
       float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry] / sigmaNoiseOfThis; 
       float ampliOfThis        = treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry]; 
       float sigmaOfThis        = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
-      float swissCrossOfThis   = treeVars_.xtalInBCSwissCross[bCluster][thisCry];
+      //float swissCrossOfThis   = treeVars_.xtalInBCSwissCross[bCluster][thisCry];
 
       // remove too low amplitudes and remove spikes as well 
       if( ampliOverSigOfThis < minAmpliOverSigma_) continue;
