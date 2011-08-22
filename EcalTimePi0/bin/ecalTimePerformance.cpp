@@ -452,18 +452,18 @@ struct HistSet{
   TH1 * nVertices_;
   TH1F* mass_;
   TH1F* dZvertices_;
-  TH1F* chi2EE_, *chi2EB_;
-  TH1F* seedTimeEE_, *seedTimeEB_;
-  TH1F* seedTimeDiffHist_, *seedTimeDiffHistEE_, *seedTimeDiffHistEB_;
-  TH1F* clusTimeDiffHist_, *clusTimeDiffHistEE_, *clusTimeDiffHistEB_;
-  TH1F* clusTimeDiffHistTOF_, *clusTimeDiffHistEETOF_, *clusTimeDiffHistEBTOF_;
+  TH1F* chi2_;
+  TH1F* seedTime_;
+  TH1F* seedTimeDiffHist_;
+  TH1F* clusTimeDiffHist_;
+  TH1F* clusTimeDiffHistTOF_;
   TH1F* numCryBC1, *numCryBC2;
   TH2F* timeVsEtaLead_, *timeVsEtaSub_, *timeVsEta_; 
-  TH1F* seedAmpliEB_, *seedAmpliEE_;
-  TH1F* secondAmpliEB_, *secondAmpliEE_;
-  TH1F* diffSeedOtherEB_, *diffSeedOtherEE_, *diffSeedOtherOverErrEB_, *diffSeedOtherOverErrEE_;
-  TH1F* diffSeedSecondEB_, *diffSeedSecondEE_, *diffSeedSecondOverErrEB_, *diffSeedSecondOverErrEE_;
-  TH2F* seedSecondEB_;  
+  TH1F* seedAmpli_;
+  TH1F* secondAmpli_;
+  TH1F* diffSeedOther_, *diffSeedOtherOverErr_;
+  TH1F* diffSeedSecond_, *diffSeedSecondOverErr_;
+  TH2F* seedSecond_;  
 
 } theHists;
 // ---------------------------------------------------------------------------------------
@@ -626,53 +626,32 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex)
 
 void HistSet::book(TFileDirectory subDir, const std::string& post) {
 
-  //FIXME not sure what post is useful for....
-
-  std::string title;
-  //  title=std::string("num electrons ")+post+std::string("; num electrons");
-  //  nElec=subDir.make<TH1D>("num electrons","num electrons; num electrons",10,-0.5,9.5);
-  //title=std::string("num vertices ")+post+std::string("; num vertices");
   nVertices_=subDir.make<TH1F>("num vertices","num vertices; num vertices",41,-0.5,40.5);
   mass_         =(TH1F*) subDir.make<TH1F>("mass","mass; GeV",80,50,130);
   dZvertices_   =(TH1F*) subDir.make<TH1F>("dZvertices","dZvertices; #DeltaZ(ele_{1},ele_{2}) [cms]",250,0,25);
 
   // Initialize histograms -- xtals
-  //chi2EE_ =(TH1F*) subDir.make<TH1F>("chi2 EE","chi2 EE; #Chi^{2}",100,0,10);
-  chi2EB_ =(TH1F*) subDir.make<TH1F>("chi2 EB","chi2 EB; #Chi^{2}",100,0,10);
-  //  seedTimeEE_ =(TH1F*) subDir.make<TH1F>("EE seed time","EE seed time; #t [ns]",1000,-5,5);
-  seedTimeEB_ =(TH1F*) subDir.make<TH1F>("EB seed time","EB seed time; #t [ns]",1000,-5,5);
+  chi2_ =(TH1F*) subDir.make<TH1F>("chi2 ","chi2 ; #Chi^{2}",100,0,10);
+  seedTime_ =(TH1F*) subDir.make<TH1F>(" seed time"," seed time; #t [ns]",1000,-5,5);
   seedTimeDiffHist_ =(TH1F*) subDir.make<TH1F>("seed time difference","seed time difference; #Deltat [ns]",1000,-5,5);
-  //  seedTimeDiffHistEE_ =(TH1F*) subDir.make<TH1F>("EE seed time difference","EE seed time difference; #Deltat [ns]",1000,-5,5);
-  seedTimeDiffHistEB_ =(TH1F*) subDir.make<TH1F>("EB seed time difference","EB seed time difference; #Deltat [ns]",1000,-5,5);
   clusTimeDiffHist_ =(TH1F*) subDir.make<TH1F>("cluster time difference","cluster time difference; #Deltat [ns]",1000,-5,5);
-  //  clusTimeDiffHistEE_ =(TH1F*) subDir.make<TH1F>("EE cluster time difference","EE cluster time difference; #Deltat [ns]",1000,-5,5);
-  clusTimeDiffHistEB_ =(TH1F*) subDir.make<TH1F>("EB cluster time difference","EB cluster time difference; #Deltat [ns]",1000,-5,5);
   clusTimeDiffHistTOF_ =(TH1F*) subDir.make<TH1F>("TOF-corr cluster time difference","TOF-corr cluster time difference; #Deltat [ns]",1000,-5,5);
-  //  clusTimeDiffHistEETOF_ =(TH1F*) subDir.make<TH1F>("TOF-corr EE cluster time difference","TOF-corr EE cluster time difference; #Deltat [ns]",1000,-5,5);
-  clusTimeDiffHistEBTOF_ =(TH1F*) subDir.make<TH1F>("TOF-corr EB cluster time difference","TOF-corr EB cluster time difference; #Deltat [ns]",1000,-5,5);
   numCryBC1 =(TH1F*) subDir.make<TH1F>("num cry in bc1","num cry in bc1; num cry",25,0,25);
   numCryBC2 =(TH1F*) subDir.make<TH1F>("num cry in bc2","num cry in bc2; num cry",25,0,25);
   timeVsEta_ =(TH2F*) subDir.make<TH2F>("timeVsEta","timeVsEta",50,-2.5,2.5,150,-1.5,1.5);
   timeVsEtaLead_ =(TH2F*) subDir.make<TH2F>("timeVsEtaLead","timeVsEtaLead",50,-2.5,2.5,150,-1.5,1.5);
   timeVsEtaSub_ =(TH2F*) subDir.make<TH2F>("timeVsEtaSub","timeVsEtaSub",50,-2.5,2.5,150,-1.5,1.5);
-  seedAmpliEB_ =(TH1F*) subDir.make<TH1F>("E(seed) EB ","E(seed) EB; E [GeV]",130,0,130);
-  //  seedAmpliEE_ =(TH1F*) subDir.make<TH1F>("E(seed) EE ","E(seed) EE; E [GeV]",130,0,260);
-  secondAmpliEB_ =(TH1F*) subDir.make<TH1F>("E(second) EB ","E(second) EB; E [GeV]",130,0,130);
-  //  secondAmpliEE_ =(TH1F*) subDir.make<TH1F>("E(second) EE ","E(second) EE; E [GeV]",130,0,260);
-  diffSeedOtherEB_ =(TH1F*) subDir.make<TH1F>("EB  t_{seed}-t_{others} ","EB t_{seed}-t_{others}; t_{seed}-t_{others} [ns]",150,-1.5,1.5);
-  //  diffSeedOtherEE_ =(TH1F*) subDir.make<TH1F>("EE  t_{seed}-t_{others} ","EE t_{seed}-t_{others}; t_{seed}-t_{others} [ns]",150,-1.5,1.5);
-  diffSeedOtherOverErrEB_ =(TH1F*) subDir.make<TH1F>("EB  (t_{seed}-t_{others})/#sigma ","EB (t_{seed}-t_{others})/#sigma; (t_{seed}-t_{others})/#sigma ",100,-5,5);
-  //  diffSeedOtherOverErrEE_ =(TH1F*) subDir.make<TH1F>("EE  (t_{seed}-t_{others})/#sigma ","EE (t_{seed}-t_{others}; (t_{seed}-t_{others})/#sigma ",100,-5,5);
-  diffSeedSecondEB_ =(TH1F*) subDir.make<TH1F>("EB  t_{seed}-t_{second} ","EB t_{seed}-t_{second}; t_{seed}-t_{second} [ns]",150,-1.5,1.5);
-  //  diffSeedSecondEE_ =(TH1F*) subDir.make<TH1F>("EE  t_{seed}-t_{second} ","EE t_{seed}-t_{second}; t_{seed}-t_{second} [ns]",150,-1.5,1.5);
-  diffSeedSecondOverErrEB_ =(TH1F*) subDir.make<TH1F>("EB  (t_{seed}-t_{second})/#sigma ","EB (t_{seed}-t_{second})/#sigma; (t_{seed}-t_{second})/#sigma ",100,-5,5);
-  //  diffSeedSecondOverErrEE_ =(TH1F*) subDir.make<TH1F>("EE  (t_{seed}-t_{second})/#sigma ","EE (t_{seed}-t_{second}; (t_{seed}-t_{second})/#sigma ",100,-5,5);
-  seedSecondEB_ =(TH2F*) subDir.make<TH2F>("EB  t_{seed} VS t_{second} ","EB t_{seed} VS t_{second}; t_{seed} [ns]; t_{second} [ns]",75,-1.5,1.5,75,-1.5,1.5);
+  seedAmpli_ =(TH1F*) subDir.make<TH1F>("E(seed)  ","E(seed) ; E [GeV]",130,0,130);
+  secondAmpli_ =(TH1F*) subDir.make<TH1F>("E(second)  ","E(second) ; E [GeV]",130,0,130);
+  diffSeedOther_ =(TH1F*) subDir.make<TH1F>("  t_{seed}-t_{others} "," t_{seed}-t_{others}; t_{seed}-t_{others} [ns]",150,-1.5,1.5);
+  diffSeedOtherOverErr_ =(TH1F*) subDir.make<TH1F>("  (t_{seed}-t_{others})/#sigma "," (t_{seed}-t_{others})/#sigma; (t_{seed}-t_{others})/#sigma ",100,-5,5);
+  diffSeedSecond_ =(TH1F*) subDir.make<TH1F>("  t_{seed}-t_{second} "," t_{seed}-t_{second}; t_{seed}-t_{second} [ns]",150,-1.5,1.5);
+  diffSeedSecondOverErr_ =(TH1F*) subDir.make<TH1F>("  (t_{seed}-t_{second})/#sigma "," (t_{seed}-t_{second})/#sigma; (t_{seed}-t_{second})/#sigma ",100,-5,5);
+  seedSecond_ =(TH2F*) subDir.make<TH2F>("  t_{seed} VS t_{second} "," t_{seed} VS t_{second}; t_{seed} [ns]; t_{second} [ns]",75,-1.5,1.5,75,-1.5,1.5);
 
 }
   
 void HistSet::fill(int sc1, int sc2, int bc1, int bc2 ){
-  std::cout << "filling  " << std::endl;
 
   float et1 = treeVars_.superClusterRawEnergy[sc1]/cosh( treeVars_.superClusterEta[sc1] );
   math::PtEtaPhiELorentzVectorD  el1(et1  ,
@@ -705,27 +684,27 @@ void HistSet::fill(int sc1, int sc2, int bc1, int bc2 ){
   clusTimeDiffHistTOF_ -> Fill( (bcTime1.time - extraTravelTime(sc1,treeVars_) ) - (bcTime2.time -extraTravelTime(sc2,treeVars_)) );
   
   
-  chi2EB_->Fill(bcTime1.chi2);	  chi2EB_->Fill(bcTime2.chi2);
-  seedTimeEB_->Fill(bcTime1.seedtime);  	  seedTimeEB_->Fill(bcTime2.seedtime); 
-  seedTimeDiffHistEB_ -> Fill(bcTime1.seedtime - bcTime2.seedtime );
-  clusTimeDiffHistEB_ -> Fill(bcTime1.time - bcTime2.time );
-  clusTimeDiffHistEBTOF_ -> Fill( (bcTime1.time - extraTravelTime(sc1,treeVars_) ) - (bcTime2.time -extraTravelTime(sc2,treeVars_)) );
-  seedAmpliEB_->Fill(treeVars_.xtalInBCEnergy[bc1][bcTime1.seed]);
-  seedAmpliEB_->Fill(treeVars_.xtalInBCEnergy[bc2][bcTime2.seed]);
-  if(bcTime1.second>-1) secondAmpliEB_->Fill(treeVars_.xtalInBCEnergy[bc1][bcTime1.second]);  // check that there's crystals beyond seed
-  else                  secondAmpliEB_->Fill(0);  
-  if(bcTime2.second>-1) secondAmpliEB_->Fill(treeVars_.xtalInBCEnergy[bc2][bcTime2.second]);
-  else                  secondAmpliEB_->Fill(0);  
+  chi2_->Fill(bcTime1.chi2);	  chi2_->Fill(bcTime2.chi2);
+  seedTime_->Fill(bcTime1.seedtime);  	  seedTime_->Fill(bcTime2.seedtime); 
+  seedTimeDiffHist_ -> Fill(bcTime1.seedtime - bcTime2.seedtime );
+  clusTimeDiffHist_ -> Fill(bcTime1.time - bcTime2.time );
+  clusTimeDiffHistTOF_ -> Fill( (bcTime1.time - extraTravelTime(sc1,treeVars_) ) - (bcTime2.time -extraTravelTime(sc2,treeVars_)) );
+  seedAmpli_->Fill(treeVars_.xtalInBCEnergy[bc1][bcTime1.seed]);
+  seedAmpli_->Fill(treeVars_.xtalInBCEnergy[bc2][bcTime2.seed]);
+  if(bcTime1.second>-1) secondAmpli_->Fill(treeVars_.xtalInBCEnergy[bc1][bcTime1.second]);  // check that there's crystals beyond seed
+  else                  secondAmpli_->Fill(0);  
+  if(bcTime2.second>-1) secondAmpli_->Fill(treeVars_.xtalInBCEnergy[bc2][bcTime2.second]);
+  else                  secondAmpli_->Fill(0);  
   
   // std::cout << "otherstime:  " << bcTime1.otherstime << "\t" << bcTime2.otherstime << std::endl;
   // std::cout << "seedtime:  " << bcTime1.seedtime << "\t" << bcTime2.seedtime << std::endl;
   if(bcTime1.otherstime>-999) // check that there's crystals beyond seed
     {
-      diffSeedOtherEB_ -> Fill(bcTime1.seedtime-bcTime1.otherstime); 
-      diffSeedOtherOverErrEB_->Fill( (bcTime1.seedtime-bcTime1.otherstime) / sqrt( pow(treeVars_.xtalInBCTimeErr[bc1][bcTime1.seed],2) -0.6*0.6+timingResParamConstEB*timingResParamConstEB + pow(bcTime1.otherstimeErr,2)) );
-      diffSeedSecondEB_ -> Fill(bcTime1.seedtime-treeVars_.xtalInBCTime[bc1][bcTime1.second]); 
-      seedSecondEB_ -> Fill(treeVars_.xtalInBCTime[bc1][bcTime1.second],bcTime1.seedtime); 
-      diffSeedSecondOverErrEB_    -> Fill( (bcTime1.seedtime-treeVars_.xtalInBCTime[bc1][bcTime1.second]) 
+      diffSeedOther_ -> Fill(bcTime1.seedtime-bcTime1.otherstime); 
+      diffSeedOtherOverErr_->Fill( (bcTime1.seedtime-bcTime1.otherstime) / sqrt( pow(treeVars_.xtalInBCTimeErr[bc1][bcTime1.seed],2) -0.6*0.6+timingResParamConstEB*timingResParamConstEB + pow(bcTime1.otherstimeErr,2)) );
+      diffSeedSecond_ -> Fill(bcTime1.seedtime-treeVars_.xtalInBCTime[bc1][bcTime1.second]); 
+      seedSecond_ -> Fill(treeVars_.xtalInBCTime[bc1][bcTime1.second],bcTime1.seedtime); 
+      diffSeedSecondOverErr_    -> Fill( (bcTime1.seedtime-treeVars_.xtalInBCTime[bc1][bcTime1.second]) 
 					   / sqrt( pow(treeVars_.xtalInBCTimeErr[bc1][bcTime1.seed],2) 
 						   +  pow(treeVars_.xtalInBCTimeErr[bc1][bcTime1.second],2)
 						   - 2* 0.6*0.6 + 2*timingResParamConstEB*timingResParamConstEB 
@@ -734,10 +713,10 @@ void HistSet::fill(int sc1, int sc2, int bc1, int bc2 ){
     }
   if(bcTime2.otherstime>-999) // check that there's crystals beyond seed
     {
-      diffSeedOtherEB_           -> Fill(bcTime2.seedtime-bcTime2.otherstime);
-      diffSeedOtherOverErrEB_    ->Fill( (bcTime2.seedtime-bcTime2.otherstime) / sqrt( pow(treeVars_.xtalInBCTime[bc2][bcTime2.seed],2) -0.6*0.6+timingResParamConstEB*timingResParamConstEB + pow(bcTime2.otherstimeErr,2)) ); 
-      diffSeedSecondEB_          -> Fill(bcTime2.seedtime-treeVars_.xtalInBCTime[bc2][bcTime2.second]); 
-      diffSeedSecondOverErrEB_    -> Fill( (bcTime2.seedtime-treeVars_.xtalInBCTime[bc2][bcTime2.second]) 
+      diffSeedOther_           -> Fill(bcTime2.seedtime-bcTime2.otherstime);
+      diffSeedOtherOverErr_    ->Fill( (bcTime2.seedtime-bcTime2.otherstime) / sqrt( pow(treeVars_.xtalInBCTime[bc2][bcTime2.seed],2) -0.6*0.6+timingResParamConstEB*timingResParamConstEB + pow(bcTime2.otherstimeErr,2)) ); 
+      diffSeedSecond_          -> Fill(bcTime2.seedtime-treeVars_.xtalInBCTime[bc2][bcTime2.second]); 
+      diffSeedSecondOverErr_    -> Fill( (bcTime2.seedtime-treeVars_.xtalInBCTime[bc2][bcTime2.second]) 
 					   / sqrt( pow(treeVars_.xtalInBCTimeErr[bc2][bcTime2.seed],2) 
 						   +  pow(treeVars_.xtalInBCTimeErr[bc2][bcTime2.second],2)
 						   - 2* 0.6*0.6 + 2*timingResParamConstEB*timingResParamConstEB 
@@ -763,72 +742,8 @@ void initializeHists(TFileDirectory subDir){
   dZvertices_   = subDir.make<TH1F>("dZvertices","dZvertices; #DeltaZ(ele_{1},ele_{2}) [cms]",250,0,25);
   nVertices_=subDir.make<TH1F>("num vertices","num vertices; num vertices",41,-0.5,40.5);
 
-  saving_->cd();
-  // Initialize histograms -- xtals
-  chi2EE_ = new TH1F("chi2 EE","chi2 EE; #Chi^{2}",100,0,10);
-  chi2EB_ = new TH1F("chi2 EB","chi2 EB; #Chi^{2}",100,0,10);
-  seedTimeEE_ = new TH1F("EE seed time","EE seed time; #t [ns]",1000,-5,5);
-  seedTimeEB_ = new TH1F("EB seed time","EB seed time; #t [ns]",1000,-5,5);
-  seedTimeDiffHist_ = new TH1F("seed time difference","seed time difference; #Deltat [ns]",1000,-5,5);
-  seedTimeDiffHistEE_ = new TH1F("EE seed time difference","EE seed time difference; #Deltat [ns]",1000,-5,5);
-  seedTimeDiffHistEB_ = new TH1F("EB seed time difference","EB seed time difference; #Deltat [ns]",1000,-5,5);
-  clusTimeDiffHist_ = new TH1F("cluster time difference","cluster time difference; #Deltat [ns]",1000,-5,5);
-  clusTimeDiffHistEE_ = new TH1F("EE cluster time difference","EE cluster time difference; #Deltat [ns]",1000,-5,5);
-  clusTimeDiffHistEB_ = new TH1F("EB cluster time difference","EB cluster time difference; #Deltat [ns]",1000,-5,5);
-  clusTimeDiffHistTOF_ = new TH1F("TOF-corr cluster time difference","TOF-corr cluster time difference; #Deltat [ns]",1000,-5,5);
-  clusTimeDiffHistEETOF_ = new TH1F("TOF-corr EE cluster time difference","TOF-corr EE cluster time difference; #Deltat [ns]",1000,-5,5);
-  clusTimeDiffHistEBTOF_ = new TH1F("TOF-corr EB cluster time difference","TOF-corr EB cluster time difference; #Deltat [ns]",1000,-5,5);
-  numCryBC1 = new TH1F("num cry in bc1","num cry in bc1; num cry",25,0,25);
-  numCryBC2 = new TH1F("num cry in bc2","num cry in bc2; num cry",25,0,25);
-  timeVsEta_ = new TH2F("timeVsEta","timeVsEta",50,-2.5,2.5,150,-1.5,1.5);
-  timeVsEtaLead_ = new TH2F("timeVsEtaLead","timeVsEtaLead",50,-2.5,2.5,150,-1.5,1.5);
-  timeVsEtaSub_ = new TH2F("timeVsEtaSub","timeVsEtaSub",50,-2.5,2.5,150,-1.5,1.5);
-  seedAmpliEB_ = new TH1F("E(seed) EB ","E(seed) EB; E [GeV]",130,0,130);
-  seedAmpliEE_ = new TH1F("E(seed) EE ","E(seed) EE; E [GeV]",130,0,260);
-  secondAmpliEB_ = new TH1F("E(second) EB ","E(second) EB; E [GeV]",130,0,130);
-  secondAmpliEE_ = new TH1F("E(second) EE ","E(second) EE; E [GeV]",130,0,260);
-  diffSeedOtherEB_ = new TH1F("EB  t_{seed}-t_{others} ","EB t_{seed}-t_{others}; t_{seed}-t_{others} [ns]",150,-1.5,1.5);
-  diffSeedOtherEE_ = new TH1F("EE  t_{seed}-t_{others} ","EE t_{seed}-t_{others}; t_{seed}-t_{others} [ns]",150,-1.5,1.5);
-  diffSeedOtherOverErrEB_ = new TH1F("EB  (t_{seed}-t_{others})/#sigma ","EB (t_{seed}-t_{others})/#sigma; (t_{seed}-t_{others})/#sigma ",100,-5,5);
-  diffSeedOtherOverErrEE_ = new TH1F("EE  (t_{seed}-t_{others})/#sigma ","EE (t_{seed}-t_{others}; (t_{seed}-t_{others})/#sigma ",100,-5,5);
-  diffSeedSecondEB_ = new TH1F("EB  t_{seed}-t_{second} ","EB t_{seed}-t_{second}; t_{seed}-t_{second} [ns]",150,-1.5,1.5);
-  diffSeedSecondEE_ = new TH1F("EE  t_{seed}-t_{second} ","EE t_{seed}-t_{second}; t_{seed}-t_{second} [ns]",150,-1.5,1.5);
-  diffSeedSecondOverErrEB_ = new TH1F("EB  (t_{seed}-t_{second})/#sigma ","EB (t_{seed}-t_{second})/#sigma; (t_{seed}-t_{second})/#sigma ",100,-5,5);
-  diffSeedSecondOverErrEE_ = new TH1F("EE  (t_{seed}-t_{second})/#sigma ","EE (t_{seed}-t_{second}; (t_{seed}-t_{second})/#sigma ",100,-5,5);
-  seedSecondEB_ = new TH2F("EB  t_{seed} VS t_{second} ","EB t_{seed} VS t_{second}; t_{seed} [ns]; t_{second} [ns]",75,-1.5,1.5,75,-1.5,1.5);
 }//end initializeHists
 
-
-
-// ---------------------------------------------------------------------------------------
-// ------------------ Function to write hists --------------------------------------------
-void writeHists()
-{
-  saving_->cd();
-  // write out control histograms
-  TDirectory *controlPlots = saving_->mkdir("ecalTimePerformance-plots");
-  controlPlots->cd();
-  mass_   ->Write(); 
-  dZvertices_->Write(); 
-  chi2EE_->Write(); 
-  chi2EB_->Write();
-  seedTimeEE_ ->Write();   seedTimeEB_ ->Write(); 
-  seedTimeDiffHist_ ->Write();   seedTimeDiffHistEE_ ->Write();   seedTimeDiffHistEB_ ->Write(); 
-  clusTimeDiffHist_ ->Write();   clusTimeDiffHistEE_ ->Write();   clusTimeDiffHistEB_ ->Write(); 
-  clusTimeDiffHistTOF_ ->Write();   clusTimeDiffHistEETOF_ ->Write();   clusTimeDiffHistEBTOF_ ->Write(); 
-  numCryBC1 ->Write();
-  numCryBC2 ->Write();
-  timeVsEta_->Write();
-  timeVsEtaLead_->Write();
-  timeVsEtaSub_->Write();
-  seedAmpliEB_ ->Write();    seedAmpliEE_  ->Write();
-  secondAmpliEB_ ->Write(); secondAmpliEE_ ->Write();
-  diffSeedOtherEB_  ->Write();   diffSeedOtherEE_ ->Write();
-  diffSeedOtherOverErrEB_ ->Write();   diffSeedOtherOverErrEE_ ->Write();
-  diffSeedSecondEB_  ->Write();   diffSeedSecondEE_ ->Write();
-  seedSecondEB_ -> Write();
-  diffSeedSecondOverErrEB_ ->Write();   diffSeedSecondOverErrEE_ ->Write();
-}
 
 
 
@@ -900,7 +815,7 @@ int main (int argc, char** argv)
   
 
   // Initialize output root file
-  saving_ = new TFile(outputRootName_.c_str (),"recreate");
+  //saving_ = new TFile(outputRootName_.c_str (),"recreate");
 
   // Initialize the histograms
   TFileDirectory subDirGeneral=fs->mkdir("General");  
@@ -1038,105 +953,7 @@ int main (int argc, char** argv)
 	// fill the structures which hold all the plots
 	plotsEBEB.fill(sc1,sc2, bc1,bc2);
 	plotsEEEE.fill(sc1,sc2, bc1,bc2);
-	
-	//seedTimeDiffHist_ -> Fill(bcTime1.seedtime - bcTime2.seedtime );
-	
-	//clusTimeDiffHist_    -> Fill(bcTime1.time - bcTime2.time );
-	//clusTimeDiffHistTOF_ -> Fill( (bcTime1.time - extraTravelTime(sc1,treeVars_) ) - (bcTime2.time -extraTravelTime(sc2,treeVars_)) );
 
-
-//
-//	
-//	if ( fabs(treeVars_.clusterEta[bc1]) < 1.4 &&  fabs(treeVars_.clusterEta[bc2]) < 1.4){
-//	  chi2EB_->Fill(bcTime1.chi2);	  chi2EB_->Fill(bcTime2.chi2);
-//	  seedTimeEB_->Fill(bcTime1.seedtime);  	  seedTimeEB_->Fill(bcTime2.seedtime); 
-//	  seedTimeDiffHistEB_ -> Fill(bcTime1.seedtime - bcTime2.seedtime );
-//	  clusTimeDiffHistEB_ -> Fill(bcTime1.time - bcTime2.time );
-//	  clusTimeDiffHistEBTOF_ -> Fill( (bcTime1.time - extraTravelTime(sc1,treeVars_) ) - (bcTime2.time -extraTravelTime(sc2,treeVars_)) );
-//	  seedAmpliEB_->Fill(treeVars_.xtalInBCEnergy[bc1][bcTime1.seed]);
-//	  seedAmpliEB_->Fill(treeVars_.xtalInBCEnergy[bc2][bcTime2.seed]);
-//	  if(bcTime1.second>-1) secondAmpliEB_->Fill(treeVars_.xtalInBCEnergy[bc1][bcTime1.second]);  // check that there's crystals beyond seed
-//	  else                  secondAmpliEB_->Fill(0);  
-//	  if(bcTime2.second>-1) secondAmpliEB_->Fill(treeVars_.xtalInBCEnergy[bc2][bcTime2.second]);
-//	  else                  secondAmpliEB_->Fill(0);  
-//	  
-//	  // std::cout << "otherstime:  " << bcTime1.otherstime << "\t" << bcTime2.otherstime << std::endl;
-//	  // std::cout << "seedtime:  " << bcTime1.seedtime << "\t" << bcTime2.seedtime << std::endl;
-// 	  if(bcTime1.otherstime>-999) // check that there's crystals beyond seed
-//	    {
-//	      diffSeedOtherEB_ -> Fill(bcTime1.seedtime-bcTime1.otherstime); 
-//	      diffSeedOtherOverErrEB_->Fill( (bcTime1.seedtime-bcTime1.otherstime) / sqrt( pow(treeVars_.xtalInBCTimeErr[bc1][bcTime1.seed],2) -0.6*0.6+timingResParamConstEB*timingResParamConstEB + pow(bcTime1.otherstimeErr,2)) );
-//	      diffSeedSecondEB_ -> Fill(bcTime1.seedtime-treeVars_.xtalInBCTime[bc1][bcTime1.second]); 
-//	      seedSecondEB_ -> Fill(treeVars_.xtalInBCTime[bc1][bcTime1.second],bcTime1.seedtime); 
-//	      diffSeedSecondOverErrEB_    -> Fill( (bcTime1.seedtime-treeVars_.xtalInBCTime[bc1][bcTime1.second]) 
-//						  / sqrt( pow(treeVars_.xtalInBCTimeErr[bc1][bcTime1.seed],2) 
-//							  +  pow(treeVars_.xtalInBCTimeErr[bc1][bcTime1.second],2)
-//							  - 2* 0.6*0.6 + 2*timingResParamConstEB*timingResParamConstEB 
-//							  )   
-//						   ); 
-//	    }
-//	  if(bcTime2.otherstime>-999) // check that there's crystals beyond seed
-//	    {
-//	      diffSeedOtherEB_           -> Fill(bcTime2.seedtime-bcTime2.otherstime);
-//	      diffSeedOtherOverErrEB_    ->Fill( (bcTime2.seedtime-bcTime2.otherstime) / sqrt( pow(treeVars_.xtalInBCTime[bc2][bcTime2.seed],2) -0.6*0.6+timingResParamConstEB*timingResParamConstEB + pow(bcTime2.otherstimeErr,2)) ); 
-//	      diffSeedSecondEB_          -> Fill(bcTime2.seedtime-treeVars_.xtalInBCTime[bc2][bcTime2.second]); 
-//	      diffSeedSecondOverErrEB_    -> Fill( (bcTime2.seedtime-treeVars_.xtalInBCTime[bc2][bcTime2.second]) 
-//						  / sqrt( pow(treeVars_.xtalInBCTimeErr[bc2][bcTime2.seed],2) 
-//							  +  pow(treeVars_.xtalInBCTimeErr[bc2][bcTime2.second],2)
-//							  - 2* 0.6*0.6 + 2*timingResParamConstEB*timingResParamConstEB 
-//							  )   
-//						  ); 
-//	    }
-//	}// this is EB
-//	else{ // now starts !(EB-EB)
-//	  chi2EE_->Fill(bcTime1.chi2);	  chi2EE_->Fill(bcTime2.chi2);
-//	  if(  fabs(treeVars_.clusterEta[bc1]) < 1.4 ) seedTimeEB_->Fill(bcTime1.seedtime);
-//	  else                                         seedTimeEB_->Fill(bcTime1.seedtime);
-//	  if(  fabs(treeVars_.clusterEta[bc2]) < 1.4 ) seedTimeEB_->Fill(bcTime2.seedtime);
-//	  else                                         seedTimeEB_->Fill(bcTime2.seedtime);
-//
-//
-//	  seedTimeDiffHistEE_ -> Fill(bcTime1.seedtime - bcTime2.seedtime );
-//	  clusTimeDiffHistEE_ -> Fill(bcTime1.time - bcTime2.time );
-//	  clusTimeDiffHistEETOF_ -> Fill( (bcTime1.time - extraTravelTime(sc1,treeVars_) ) - (bcTime2.time -extraTravelTime(sc2,treeVars_)) );
-//	  seedAmpliEE_->Fill(treeVars_.xtalInBCEnergy[bc1][bcTime1.seed]);
-//	  seedAmpliEE_->Fill(treeVars_.xtalInBCEnergy[bc2][bcTime2.seed]);
-//	  if(bcTime1.second>-1) secondAmpliEE_->Fill(treeVars_.xtalInBCEnergy[bc1][bcTime1.second]); // check that there's crystals beyond seed
-//	  else                  secondAmpliEE_->Fill(0);  
-//	  if(bcTime2.second>-1) secondAmpliEE_->Fill(treeVars_.xtalInBCEnergy[bc2][bcTime2.second]);
-//	  else                  secondAmpliEE_->Fill(0);  
-//	  if(bcTime1.otherstime>-999) // check that there's crystals beyond seed
-//	    {
-//	      diffSeedOtherEE_ -> Fill(bcTime1.seedtime-bcTime1.otherstime); 
-//	      diffSeedOtherOverErrEE_->Fill( (bcTime1.seedtime-bcTime1.otherstime) / sqrt( pow(treeVars_.xtalInBCTime[bc1][bcTime1.seed],2) -0.6*0.6+timingResParamConstEB*timingResParamConstEB + pow(bcTime1.otherstimeErr,2)) );	
-//	      diffSeedSecondEE_ -> Fill(bcTime1.seedtime-treeVars_.xtalInBCTime[bc1][bcTime1.second]); 
-//	      diffSeedSecondOverErrEE_    -> Fill( (bcTime1.seedtime-treeVars_.xtalInBCTime[bc1][bcTime1.second]) 
-//						   / sqrt( pow(treeVars_.xtalInBCTimeErr[bc1][bcTime1.seed],2) 
-//							   +  pow(treeVars_.xtalInBCTimeErr[bc1][bcTime1.second],2)
-//							   - 2* 0.6*0.6 + 2*timingResParamConstEB*timingResParamConstEB 
-//							   )   
-//						   ); 
-//	    }
-//	  if(bcTime2.otherstime>-999) // check that there's crystals beyond seed
-//	    {
-//	      diffSeedOtherEE_ -> Fill(bcTime2.seedtime-bcTime2.otherstime);
-//	      diffSeedOtherOverErrEE_->Fill( (bcTime2.seedtime-bcTime2.otherstime) / sqrt( pow(treeVars_.xtalInBCTime[bc2][bcTime2.seed],2) -0.6*0.6+timingResParamConstEB*timingResParamConstEB + pow(bcTime2.otherstimeErr,2)) ); }
-//	  diffSeedSecondEE_ -> Fill(bcTime2.seedtime-treeVars_.xtalInBCTime[bc2][bcTime2.second]); 
-//	  diffSeedSecondOverErrEE_    -> Fill( (bcTime2.seedtime-treeVars_.xtalInBCTime[bc2][bcTime2.second]) 
-//					       / sqrt( pow(treeVars_.xtalInBCTimeErr[bc2][bcTime2.seed],2) 
-//						       +  pow(treeVars_.xtalInBCTimeErr[bc2][bcTime2.second],2)
-//						       - 2* 0.6*0.6 + 2*timingResParamConstEB*timingResParamConstEB 
-//						       )   
-//					       ); 
-//	} // end if !(EB-EB)
-
-	
-	numCryBC1->Fill(bcTime1.numCry);
-	numCryBC2->Fill(bcTime2.numCry);
-	timeVsEta_ -> Fill( treeVars_.superClusterEta[sc1] , (bcTime1.time - extraTravelTime(sc1,treeVars_) ) );
-	timeVsEtaLead_ -> Fill( treeVars_.superClusterEta[sc1] , (bcTime1.time - extraTravelTime(sc1,treeVars_) ) );
-	timeVsEtaSub_  -> Fill( treeVars_.superClusterEta[sc2] , (bcTime2.time - extraTravelTime(sc2,treeVars_) ) ); 
-	
 	// if I've found a pair of supercluster, bail out of loop to repeat using twice the same supercluster
 	break;	
 	
@@ -1145,10 +962,6 @@ int main (int argc, char** argv)
     
   }   // end of loop over entries
   
-
-  // now save the plots
-  writeHists();
-  saving_->Close();
 
   delete chain ;
   
