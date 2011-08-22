@@ -2804,7 +2804,7 @@ int main (int argc, char** argv)
     if (flagOneVertex_ ==1 && (!verticesAreOnlyNextToNominalIP) ) continue;
     if (flagOneVertex_ ==2 && (verticesAreOnlyNextToNominalIP) )  continue;
 
-    int currentLS = treeVars_.lumiSection;
+    //int currentLS = treeVars_.lumiSection;
 
     // this is specific to fill 
 //    if( !(
