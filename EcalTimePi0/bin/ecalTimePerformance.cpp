@@ -91,6 +91,9 @@ float s4s9GammaMinEE_ = 0.85;
 float eTPi0MinEE_     = 0.800;
 float swissCrossMaxEB_ = 0.95; // 1-E4/E1
 float swissCrossMaxEE_ = 0.95; // 1-E4/E1
+// based on range and bins, the bin width is 50 ps
+float rangeTDistro_ = 3; // 1-E4/E1
+int   binsTDistro_  = 120; // 1-E4/E1
 std::vector<std::vector<double> > trigIncludeVector;
 std::vector<std::vector<double> > trigExcludeVector;
 std::vector<std::vector<double> > ttrigIncludeVector;
@@ -155,26 +158,16 @@ const float sigmaNoiseEE          = 2.10;  // ADC ; using total single-sample no
 // const float timingResParamN    = 35.1;    // ns ; Fig. 2 from CFT-09-006
 // const float timingResParamConst= 0.020;   // ns ;   "
 const float timingResParamNEB     = 28.51;   // ns ; plots approved http://indico.cern.ch/conferenceDisplay.py?confId=92739
-const float timingResParamConstEB = 0.2;     // ns ; 
+const float timingResParamConstEB = 0.1;     // ns ; 
 const float timingResParamNEE     = 31.84;   // ns ; Fig. 2 from CFT-09-006
 const float timingResParamConstEE = 0.4;     // ns ; rough, probably conservative estimate
 
 // -------- Histograms -------------------------------------
+TH1 * nVertices_;
 TH1F* mass_;
-TH1F* nVertices_;
 TH1F* dZvertices_;
-TH1F* chi2EE_, *chi2EB_;
-TH1F* seedTimeEE_, *seedTimeEB_;
-TH1F* seedTimeDiffHist_, *seedTimeDiffHistEE_, *seedTimeDiffHistEB_;
-TH1F* clusTimeDiffHist_, *clusTimeDiffHistEE_, *clusTimeDiffHistEB_;
-TH1F* clusTimeDiffHistTOF_, *clusTimeDiffHistEETOF_, *clusTimeDiffHistEBTOF_;
-TH1F* numCryBC1, *numCryBC2;
-TH2F* timeVsEtaLead_, *timeVsEtaSub_, *timeVsEta_; 
-TH1F* seedAmpliEB_, *seedAmpliEE_;
-TH1F* secondAmpliEB_, *secondAmpliEE_;
-TH1F* diffSeedOtherEB_, *diffSeedOtherEE_, *diffSeedOtherOverErrEB_, *diffSeedOtherOverErrEE_;
-TH1F* diffSeedSecondEB_, *diffSeedSecondEE_, *diffSeedSecondOverErrEB_, *diffSeedSecondOverErrEE_;
-TH2F* seedVSSecondEB_;
+TH1F* Zvertices_;
+
 
 // ---------------------------------------------------------------------------------------
 // - Function to decide to include/exclude event based on the vectors passed for triggers 
@@ -453,18 +446,21 @@ struct HistSet{
   TH1 * nVertices_;
   TH1F* mass_;
   TH1F* dZvertices_;
+  TH1F* Zvertices_;
   TH1F* chi2_;
   TH1F* seedTime_;
   TH1F* secondTime_;
   TH1F* clusterTime_;
   TH1F* seedTimeDiffHist_;
+  TH1F* TOFcorrections_;
+  TH2F* TOFcorrectionsVSdeltaEta_;
   TH1F* seedTimeDiffHistTOF_;
   TH1F* secondTimeDiffHist_;
   TH1F* secondTimeDiffHistTOF_;
   TH1F* clusTimeDiffHist_;
   TH1F* clusTimeDiffHistTOF_;
   TH1F* numCryBC1, *numCryBC2;
-  TH2F* timeVsEtaLead_, *timeVsEtaSub_, *timeVsEta_; 
+  TH2F* timeVsEtaLead_, *timeVsEtaSub_, *timeVsEta_, *outliersVsEtaPhi_; 
   TH1F* seedAmpli_;
   TH1F* secondAmpli_;
   TH1F* diffSeedOther_, *diffSeedOtherOverErr_;
@@ -635,37 +631,45 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex)
 void HistSet::book(TFileDirectory subDir, const std::string& post) {
 
   nVertices_=subDir.make<TH1F>("num vertices","num vertices; num vertices",41,-0.5,40.5);
-  mass_         =(TH1F*) subDir.make<TH1F>("mass","mass; GeV",80,50,130);
-  dZvertices_   =(TH1F*) subDir.make<TH1F>("dZvertices","dZvertices; #DeltaZ(ele_{1},ele_{2}) [cms]",250,0,25);
+  mass_         =(TH1F*) subDir.make<TH1F>("mass","mass; m(ele,ele) [GeV]",80,50,130);
+  dZvertices_   =(TH1F*) subDir.make<TH1F>("dZvertices","dZvertices; #DeltaZ(ele_{1},ele_{2}) [cm]",250,0,25);
+  Zvertices_    =(TH1F*) subDir.make<TH1F>("Zvertices","Zvertices; z vertex [cm]",250,-25,25);
 
   // Initialize histograms -- xtals
   chi2_                =(TH1F*) subDir.make<TH1F>("cluster chi2 ","cluster chi2 ; #chi^{2}",100,0,10);
 
-  seedTime_            =(TH1F*) subDir.make<TH1F>("seed time","seed time; t_{seed} [ns]",1000,-5,5);
-  secondTime_          =(TH1F*) subDir.make<TH1F>("second time","second time; t_{second} [ns]",1000,-5,5);
-  clusterTime_         =(TH1F*) subDir.make<TH1F>("cluster time","cluster time; t_{cluster} [ns]",1000,-5,5);
+  seedTime_            =(TH1F*) subDir.make<TH1F>("seed time","seed time; t_{seed} [ns]; num. seeds/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
+  secondTime_          =(TH1F*) subDir.make<TH1F>("second time","second time; t_{second} [ns]; num. secs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
+  clusterTime_         =(TH1F*) subDir.make<TH1F>("cluster time","cluster time; t_{cluster} [ns]; num. clusters/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
 
-  seedTimeDiffHist_    =(TH1F*) subDir.make<TH1F>("time difference of seeds","seeds time difference; t_{seed1} - t_{seed2} [ns]",1000,-5,5);
-  seedTimeDiffHistTOF_ =(TH1F*) subDir.make<TH1F>("TOF-corr time difference of seeds","TOF-corr seed time difference; (t_{seed1} - t_{seed2}) TOF-corrected   [ns]",1000,-5,5);
 
-  secondTimeDiffHist_  =(TH1F*) subDir.make<TH1F>("time difference of seconds","second time difference; t_{second1} - t_{second2} [ns]",1000,-5,5);//GF new
-  secondTimeDiffHistTOF_ =(TH1F*) subDir.make<TH1F>("TOF-corr time difference of seconds","TOF-corr seconds time difference;  (t_{second1} - t_{second2}) TOF-corrected [ns]",1000,-5,5);
+  TOFcorrections_      = (TH1F*) subDir.make<TH1F>("TOF difference","TOF difference; #Delta TOF [ns]; num. seeds/0.05ns",binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
+  TOFcorrectionsVSdeltaEta_=(TH2F*) subDir.make<TH2F>("TOF corrections VS #Delta#eta","TOF corrections VS #Delta#eva; #Delta#eta; #Delta TOF [ns]; ",30,0,3.,binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
 
-  clusTimeDiffHist_    =(TH1F*) subDir.make<TH1F>("cluster time difference","cluster time difference;  t_{clus1} - t_{clus2} [ns]",1000,-5,5);
-  clusTimeDiffHistTOF_ =(TH1F*) subDir.make<TH1F>("TOF-corr cluster time difference","TOF-corr cluster time difference; (t_{clus1} - t_{clus2}) TOF-corrected [ns]",1000,-5,5);
+
+  seedTimeDiffHist_    =(TH1F*) subDir.make<TH1F>("time difference of seeds","seeds time difference; t_{seed1} - t_{seed2} [ns]; num. seed pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
+  seedTimeDiffHistTOF_ =(TH1F*) subDir.make<TH1F>("TOF-corr time difference of seeds","TOF-corr seed time difference; (t_{seed1} - t_{seed2}) TOF-corrected   [ns]; num. seed pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
+
+  secondTimeDiffHist_  =(TH1F*) subDir.make<TH1F>("time difference of seconds","second time difference; t_{second1} - t_{second2} [ns]; num. seed pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);//GF new
+  secondTimeDiffHistTOF_ =(TH1F*) subDir.make<TH1F>("TOF-corr time difference of seconds","TOF-corr seconds time difference;  (t_{second1} - t_{second2}) TOF-corrected [ns]; num. sec pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
+
+  clusTimeDiffHist_    =(TH1F*) subDir.make<TH1F>("cluster time difference","cluster time difference;  t_{clus1} - t_{clus2} [ns]; num. cluster pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
+  clusTimeDiffHistTOF_ =(TH1F*) subDir.make<TH1F>("TOF-corr cluster time difference","TOF-corr cluster time difference; (t_{clus1} - t_{clus2}) TOF-corrected [ns]; num. cluster pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
 
   numCryBC1            =(TH1F*) subDir.make<TH1F>("num cry in bc1","num cry in bc1; num cry",25,0,25);
   numCryBC2            =(TH1F*) subDir.make<TH1F>("num cry in bc2","num cry in bc2; num cry",25,0,25);
-  timeVsEta_           =(TH2F*) subDir.make<TH2F>("timeVsEta","timeVsEta",50,-2.5,2.5,150,-1.5,1.5);
-  timeVsEtaLead_       =(TH2F*) subDir.make<TH2F>("timeVsEtaLead","timeVsEtaLead",50,-2.5,2.5,150,-1.5,1.5);
-  timeVsEtaSub_        =(TH2F*) subDir.make<TH2F>("timeVsEtaSub","timeVsEtaSub",50,-2.5,2.5,150,-1.5,1.5);
+  timeVsEta_           =(TH2F*) subDir.make<TH2F>("timeVsEta","timeVsEta;; #eta t [ns]",50,-2.5,2.5,150,-1.5,1.5);
+  timeVsEtaLead_       =(TH2F*) subDir.make<TH2F>("timeVsEtaLead","timeVsEtaLead;#eta_{lead}; t [ns]",50,-2.5,2.5,150,-1.5,1.5);
+  timeVsEtaSub_        =(TH2F*) subDir.make<TH2F>("timeVsEtaSub","timeVsEtaSub; #eta_{sublead}; t [ns]",50,-2.5,2.5,150,-1.5,1.5);
+  outliersVsEtaPhi_    =(TH2F*) subDir.make<TH2F>("outliersVsEtaPhi","outliersVsEtaPhi; #eta; #phi",50,-2.5,2.5,72,-3.14,3.14);
   seedAmpli_           =(TH1F*) subDir.make<TH1F>("E(seed)  ","E(seed) ; E [GeV]",130,0,130);
   secondAmpli_         =(TH1F*) subDir.make<TH1F>("E(second)  ","E(second) ; E [GeV]",130,0,130);
-  diffSeedOther_       =(TH1F*) subDir.make<TH1F>("  t_{seed}-t_{others} "," t_{seed}-t_{others}; t_{seed}-t_{others} [ns]",150,-1.5,1.5);
-  diffSeedOtherOverErr_ =(TH1F*) subDir.make<TH1F>("  (t_{seed}-t_{others})/#sigma "," (t_{seed}-t_{others})/#sigma; (t_{seed}-t_{others})/#sigma ",100,-5,5);
-  diffSeedSecond_      =(TH1F*) subDir.make<TH1F>("  t_{seed}-t_{second} "," t_{seed}-t_{second}; t_{seed}-t_{second} [ns]",150,-1.5,1.5);
-  diffSeedSecondOverErr_ =(TH1F*) subDir.make<TH1F>("  (t_{seed}-t_{second})/#sigma "," (t_{seed}-t_{second})/#sigma; (t_{seed}-t_{second})/#sigma ",100,-5,5);
-  seedVSSecond_        =(TH2F*) subDir.make<TH2F>("  t_{seed} VS t_{second} "," t_{seed} VS t_{second}; t_{seed} [ns]; t_{second} [ns]",75,-1.5,1.5,75,-1.5,1.5);
+  diffSeedOther_       =(TH1F*) subDir.make<TH1F>("t_{seed}-t_{others}","t_{seed}-t_{others}; t_{seed}-t_{others} [ns]; num./0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
+  diffSeedOtherOverErr_ =(TH1F*) subDir.make<TH1F>("(t_{seed}-t_{others})/#sigma","(t_{seed}-t_{others})/#sigma; (t_{seed}-t_{others})/#sigma; num./0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
+
+  diffSeedSecond_      =(TH1F*) subDir.make<TH1F>("t_{seed}-t_{second}","t_{seed}-t_{second}; t_{seed}-t_{second} [ns]; num./0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
+  diffSeedSecondOverErr_ =(TH1F*) subDir.make<TH1F>("(t_{seed}-t_{second})/#sigma","(t_{seed}-t_{second})/#sigma; (t_{seed}-t_{second})/#sigma; num./0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
+  seedVSSecond_        =(TH2F*) subDir.make<TH2F>("t_{seed} VS t_{second}","t_{seed} VS t_{second}; t_{seed} [ns]; t_{second} [ns]",75,-1.5,1.5,75,-1.5,1.5);
 
 }
   
@@ -691,15 +695,14 @@ void HistSet::fill(int sc1, int sc2, int bc1, int bc2 ){
   //dvertex       += pow(treeVars_.superClusterVertexX[sc1]-treeVars_.superClusterVertexX[sc2],2);
   dvertex       = sqrt(dvertex);
   dZvertices_->Fill(dvertex);
+  Zvertices_->Fill( (treeVars_.superClusterVertexZ[sc1]+treeVars_.superClusterVertexZ[sc2])/2 );
   nVertices_->Fill(treeVars_.nVertices);
 
   ClusterTime bcTime1 = timeAndUncertSingleCluster(bc1);
   ClusterTime bcTime2 = timeAndUncertSingleCluster(bc2);
   
-  
-  clusTimeDiffHist_    -> Fill(bcTime1.time - bcTime2.time );
-  clusTimeDiffHistTOF_ -> Fill( (bcTime1.time - extraTravelTime(sc1,treeVars_) ) - (bcTime2.time -extraTravelTime(sc2,treeVars_)) );
-  
+  TOFcorrections_           -> Fill(extraTravelTime(sc2,treeVars_) - extraTravelTime(sc1,treeVars_) );
+  TOFcorrectionsVSdeltaEta_ -> Fill(  fabs(treeVars_.superClusterEta[sc2]-treeVars_.superClusterEta[sc1]) , extraTravelTime(sc2,treeVars_) - extraTravelTime(sc1,treeVars_)  );
   
   chi2_->Fill(bcTime1.chi2);	  chi2_->Fill(bcTime2.chi2);
 
@@ -760,7 +763,10 @@ void HistSet::fill(int sc1, int sc2, int bc1, int bc2 ){
   timeVsEta_ -> Fill( treeVars_.superClusterEta[sc1] , (bcTime1.time - extraTravelTime(sc1,treeVars_) ) );
   timeVsEtaLead_ -> Fill( treeVars_.superClusterEta[sc1] , (bcTime1.time - extraTravelTime(sc1,treeVars_) ) );
   timeVsEtaSub_  -> Fill( treeVars_.superClusterEta[sc2] , (bcTime2.time - extraTravelTime(sc2,treeVars_) ) ); 
-	  
+  // catch location of time outliers
+  if ( fabs(    (bcTime1.seedtime - extraTravelTime(sc1,treeVars_))    )>1.5 )  outliersVsEtaPhi_ -> Fill( treeVars_.superClusterEta[sc1] , treeVars_.superClusterPhi[sc1]); 
+  if ( fabs(    (bcTime2.seedtime - extraTravelTime(sc2,treeVars_))    )>1.5 )  outliersVsEtaPhi_ -> Fill( treeVars_.superClusterEta[sc2] , treeVars_.superClusterPhi[sc2]); 
+
 }
 // end HistSet::fill
 
@@ -769,9 +775,10 @@ void HistSet::fill(int sc1, int sc2, int bc1, int bc2 ){
 // ------------------ Function to initialize the histograms ------------------------------
 void initializeHists(TFileDirectory subDir){
 
-  mass_         = subDir.make<TH1F>("mass","mass; GeV",80,50,130);
-  dZvertices_   = subDir.make<TH1F>("dZvertices","dZvertices; #DeltaZ(ele_{1},ele_{2}) [cms]",250,0,25);
-  nVertices_=subDir.make<TH1F>("num vertices","num vertices; num vertices",41,-0.5,40.5);
+  mass_         = subDir.make<TH1F>("mass global","mass (global); m(ele,ele) [GeV]",80,50,130);
+  dZvertices_   = subDir.make<TH1F>("dZvertices global","dZvertices (global); #DeltaZ(ele_{1},ele_{2}) [cm]",250,0,25);
+  Zvertices_    = subDir.make<TH1F>("Zvertices global","Zvertices (global); z vertex [cm]",250,-25,25);
+  nVertices_=subDir.make<TH1F>("num vertices global","num vertices (global); num vertices",41,-0.5,40.5);
 
 }//end initializeHists
 
@@ -835,7 +842,6 @@ int main (int argc, char** argv)
   static edm::ServiceToken services(edm::ServiceRegistry::createSet(psets));
   static edm::ServiceRegistry::Operate operate(services);
   edm::Service<TFileService> fs;
-  
 
   TFileDirectory subDirECALECAL=fs->mkdir("ECALECAL");  
   HistSet plotsECALECAL;
@@ -848,14 +854,23 @@ int main (int argc, char** argv)
   TFileDirectory subDirEEEE=fs->mkdir("EEEE");  
   HistSet plotsEEEE;
   plotsEEEE.book(subDirEEEE,std::string("EEEE"));
-  
-  
+    
   TFileDirectory subDirEBEE=fs->mkdir("EBEE");  
   HistSet plotsEBEE;
   plotsEBEE.book(subDirEBEE,std::string("EBEE"));
+    
+  TFileDirectory subDirEBEBequalShare=fs->mkdir("EBEBequalShare");  
+  HistSet plotsEBEBequalShare;
+  plotsEBEBequalShare.book(subDirEBEBequalShare,std::string("EBEBequalShare"));
+    
+  TFileDirectory subDirEBEBunevenShare=fs->mkdir("EBEBunevenShare");  
+  HistSet plotsEBEBunevenShare;
+  plotsEBEBunevenShare.book(subDirEBEBunevenShare,std::string("EBEBunevenShare"));
   
 
-  // Initialize output root file
+
+
+  //Initialize output root file
   //saving_ = new TFile(outputRootName_.c_str (),"recreate");
 
   // Initialize the histograms
@@ -943,6 +958,7 @@ int main (int argc, char** argv)
 	// ////////////////////////
 	mass_      ->Fill(diEle.M());
 	dZvertices_->Fill(dvertex);
+	Zvertices_->Fill( (treeVars_.superClusterVertexZ[sc1]-treeVars_.superClusterVertexZ[sc2])/2 );
 	nVertices_->Fill(treeVars_.nVertices);
 
 	// require invariant mass
@@ -993,7 +1009,23 @@ int main (int argc, char** argv)
 
 	// fill the structures which hold all the plots
 	plotsECALECAL.fill(sc1,sc2, bc1,bc2);
-	if      ( fabs(treeVars_.clusterEta[bc1])<1.4    &&  fabs(treeVars_.clusterEta[bc2])<1.4 ) 	  plotsEBEB.fill(sc1,sc2, bc1,bc2);
+	if      ( fabs(treeVars_.clusterEta[bc1])<1.4    &&  fabs(treeVars_.clusterEta[bc2])<1.4 ){
+ 	  plotsEBEB.fill(sc1,sc2, bc1,bc2);
+
+	  float energyRatio1 = treeVars_.xtalInBCEnergy[bc1][bcTime1.seed];
+	  if(bcTime1.second>-1) {energyRatio1 /= treeVars_.xtalInBCEnergy[bc1][bcTime1.second]; }
+	  else { energyRatio1 /= 99999; }
+	  float energyRatio2 = treeVars_.xtalInBCEnergy[bc2][bcTime2.seed];
+	  if(bcTime2.second>-1) {energyRatio2 /= treeVars_.xtalInBCEnergy[bc2][bcTime2.second]; }
+	  else { energyRatio2 /= 99999; }
+
+	  float minRatio = 0.7; float maxRatio = 1.3;
+	  if(minRatio<energyRatio1 && minRatio<energyRatio2 && energyRatio1<maxRatio && energyRatio2<maxRatio) 	  plotsEBEBequalShare.fill(sc1,sc2, bc1,bc2);  
+
+	  minRatio = 2; maxRatio = 10;
+	  if(minRatio<energyRatio1 && minRatio<energyRatio2 && energyRatio1<maxRatio && energyRatio2<maxRatio) 	  plotsEBEBunevenShare.fill(sc1,sc2, bc1,bc2);  
+	  
+	}// if EBEB
 	else if ( fabs(treeVars_.clusterEta[bc1])>1.5    &&  fabs(treeVars_.clusterEta[bc2])>1.5 ) 	  plotsEEEE.fill(sc1,sc2, bc1,bc2);
 	else if ( fabs(treeVars_.clusterEta[bc1])>1.5    &&  fabs(treeVars_.clusterEta[bc2])>1.5 ) 	  plotsEEEE.fill(sc1,sc2, bc1,bc2);
 	else if ( (fabs(treeVars_.clusterEta[bc1])<1.4 && fabs(treeVars_.clusterEta[bc2])>1.5) ||
