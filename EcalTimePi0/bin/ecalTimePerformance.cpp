@@ -37,6 +37,7 @@
 typedef std::set<std::pair<int,int> > SetOfIntPairs;
 float travelDistance(int sc_num, EcalTimeTreeContent treeVars_);
 float extraTravelTime(int sc_num, EcalTimeTreeContent & treeVars_);
+float extraTravelTime(int sc_num, int vtx_num, EcalTimeTreeContent & treeVars_);
 
 // authors: S. Cooper and G. Franzoni (UMN)
 
@@ -454,11 +455,12 @@ struct HistSet{
   TH1F* seedTimeDiffHist_;
   TH1F* TOFcorrections_;
   TH2F* TOFcorrectionsVSdeltaEta_;
+  TH2F* clusTimeDiffHistTOFVSdeltaEtaRightVertex_, *clusTimeDiffHistTOFVSdeltaEtaWrongVertex_;
   TH1F* seedTimeDiffHistTOF_;
   TH1F* secondTimeDiffHist_;
   TH1F* secondTimeDiffHistTOF_;
   TH1F* clusTimeDiffHist_;
-  TH1F* clusTimeDiffHistTOF_;
+  TH1F* clusTimeDiffHistTOF_, *clusTimeDiffHistTOFwrongVertex_;
   TH1F* numCryBC1, *numCryBC2;
   TH2F* timeVsEtaLead_, *timeVsEtaSub_, *timeVsEta_, *outliersVsEtaPhi_; 
   TH1F* seedAmpli_;
@@ -644,7 +646,9 @@ void HistSet::book(TFileDirectory subDir, const std::string& post) {
 
 
   TOFcorrections_      = (TH1F*) subDir.make<TH1F>("TOF difference","TOF difference; #Delta TOF [ns]; num. seeds/0.05ns",binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
-  TOFcorrectionsVSdeltaEta_=(TH2F*) subDir.make<TH2F>("TOF corrections VS #Delta#eta","TOF corrections VS #Delta#eva; #Delta#eta; #Delta TOF [ns]; ",30,0,3.,binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
+  TOFcorrectionsVSdeltaEta_=(TH2F*) subDir.make<TH2F>("TOF corrections VS #Delta#eta","TOF corrections VS #Delta#eta; #Delta#eta; #Delta TOF [ns]; ",30,0,3.,binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
+  clusTimeDiffHistTOFVSdeltaEtaRightVertex_=(TH2F*) subDir.make<TH2F>("TOF-corr cluster time difference VS #Delta#eta RightVertex","TOF-corr cluster time difference VS #Delta#eta RightVertex; |#Delta#eta|; (t_{clus1} - t_{clus2}) TOF-corrected [ns]; ",30,0,3.,binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
+  clusTimeDiffHistTOFVSdeltaEtaWrongVertex_=(TH2F*) subDir.make<TH2F>("TOF-corr cluster time difference VS #Delta#eta WrongVertex","TOF-corr cluster time difference VS #Delta#eta WrongVertex; |#Delta#eta|;  (t_{clus1} - t_{clus2}) TOF-corrected [ns]; ",30,0,3.,binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
 
 
   seedTimeDiffHist_    =(TH1F*) subDir.make<TH1F>("time difference of seeds","seeds time difference; t_{seed1} - t_{seed2} [ns]; num. seed pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
@@ -655,6 +659,8 @@ void HistSet::book(TFileDirectory subDir, const std::string& post) {
 
   clusTimeDiffHist_    =(TH1F*) subDir.make<TH1F>("cluster time difference","cluster time difference;  t_{clus1} - t_{clus2} [ns]; num. cluster pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
   clusTimeDiffHistTOF_ =(TH1F*) subDir.make<TH1F>("TOF-corr cluster time difference","TOF-corr cluster time difference; (t_{clus1} - t_{clus2}) TOF-corrected [ns]; num. cluster pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
+  //  clusTimeDiffHistTOFwrongVertex_ =(TH1F*) subDir.make<TH1F>("TOF-corr cluster time difference","TOF-corr cluster time difference; (t_{clus1} - t_{clus2}) TOF-corrected [ns]; num. cluster pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
+  clusTimeDiffHistTOFwrongVertex_=(TH1F*) subDir.make<TH1F>("TOF-corr cluster time difference wrong vertex","TOF-corr cluster time difference wronge vertex; (t_{clus1} - t_{clus2}) TOF-corrected [ns]; num. cluster pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
 
   numCryBC1            =(TH1F*) subDir.make<TH1F>("num cry in bc1","num cry in bc1; num cry",25,0,25);
   numCryBC2            =(TH1F*) subDir.make<TH1F>("num cry in bc2","num cry in bc2; num cry",25,0,25);
@@ -703,7 +709,37 @@ void HistSet::fill(int sc1, int sc2, int bc1, int bc2 ){
   
   TOFcorrections_           -> Fill(extraTravelTime(sc2,treeVars_) - extraTravelTime(sc1,treeVars_) );
   TOFcorrectionsVSdeltaEta_ -> Fill(  fabs(treeVars_.superClusterEta[sc2]-treeVars_.superClusterEta[sc1]) , extraTravelTime(sc2,treeVars_) - extraTravelTime(sc1,treeVars_)  );
-  
+
+  int vtxOfThisEle=-99;
+  // look for the vertex which electrons  are attached to: 
+  for(int u=0; u<treeVars_.nVertices; u++){
+    // matching done with 1mm tolerance
+    if( fabs(treeVars_.superClusterVertexZ[sc2]-treeVars_.vtxZ[u]) < 0.1) {       vtxOfThisEle=u;     }
+    //std::cout << u << "\t" << treeVars_.superClusterVertexZ[sc2] << "\t" << treeVars_.vtxZ[u] << std::endl;
+  }
+  //std::cout << "\n\tdebugging vertices" << std::endl;
+  if(vtxOfThisEle >-99){
+
+    for(int u=0; u<treeVars_.nVertices; u++){
+      if(u==vtxOfThisEle) {
+	clusTimeDiffHistTOFVSdeltaEtaRightVertex_ -> Fill(  fabs(treeVars_.superClusterEta[sc2]-treeVars_.superClusterEta[sc1]) , 
+							    (bcTime1.seedtime-extraTravelTime(sc1,u,treeVars_))  - (bcTime2.seedtime-extraTravelTime(sc2,u,treeVars_))
+							    //(bcTime1.seedtime-extraTravelTime(sc1,treeVars_))  - (bcTime2.seedtime-extraTravelTime(sc2,treeVars_))
+							    );
+      }// if correct vertex
+      else   {
+	clusTimeDiffHistTOFVSdeltaEtaWrongVertex_ -> Fill(  fabs(treeVars_.superClusterEta[sc2]-treeVars_.superClusterEta[sc1]) , 
+							    (bcTime1.seedtime-extraTravelTime(sc1,u,treeVars_))  - (bcTime2.seedtime-extraTravelTime(sc2,u,treeVars_))
+							    //(bcTime1.seedtime-extraTravelTime(sc1,treeVars_))  - (bcTime2.seedtime-extraTravelTime(sc2,treeVars_))
+							    );
+	clusTimeDiffHistTOFwrongVertex_           -> Fill( (bcTime1.seedtime-extraTravelTime(sc1,u,treeVars_))  - (bcTime2.seedtime-extraTravelTime(sc2,u,treeVars_) ));
+      }// if wrong vertex
+    }//loop on vertices
+
+    //   std::cout << "extra2" << extraTravelTime(sc2,treeVars_) << "\t" << " from vertex: " << extraTravelTime(sc2,vtxOfThisEle,treeVars_) << "\t" << " difference: " << (extraTravelTime(sc2,treeVars_)-extraTravelTime(sc2,vtxOfThisEle,treeVars_)) << std::endl;
+  } // if vertex matching succeeded
+  //  else std::cout << "vertex was not found which matches electrons track... " << std::endl;
+ 
   chi2_->Fill(bcTime1.chi2);	  chi2_->Fill(bcTime2.chi2);
 
   // take care of the seeds
@@ -1054,6 +1090,7 @@ float travelDistance(int sc_num, EcalTimeTreeContent treeVars_) {
 		  );
 }
 
+
 float extraTravelTime(int sc_num, EcalTimeTreeContent & treeVars_) { // extra travel time with respect to collision at IP, in ns
   
   float travelled = sqrt (	  pow( (treeVars_.superClusterX[sc_num]-treeVars_.superClusterVertexX[sc_num]), 2) +
@@ -1066,6 +1103,26 @@ float extraTravelTime(int sc_num, EcalTimeTreeContent & treeVars_) { // extra tr
 				  );
 
   //std::cout << "extraTravelTime [ns]: " <<  (travelled-nominal)/100./lightSpeed*1e9 << std::endl;
+  return  (travelled-nominal)/100./lightSpeed*1e9;
+
+}
+
+
+float extraTravelTime(int sc_num, int vtx_num, EcalTimeTreeContent & treeVars_) { // extra travel time with respect to an arbitrary vertex
+  if(vtx_num<0 || vtx_num>=treeVars_.nVertices){
+    std::cout<< "Usnig invalid vtx_num "<<vtx_num<<" within extraTravelTime(int sc_num, int vtx_num, EcalTimeTreeContent & treeVars_). Stopping the program." << std::endl;
+    assert(0);
+  }
+  
+  float travelled = sqrt (	  pow( (treeVars_.superClusterX[sc_num]-treeVars_.vtxX[vtx_num]), 2) +
+				  pow( (treeVars_.superClusterY[sc_num]-treeVars_.vtxY[vtx_num]), 2) +   
+				  pow( (treeVars_.superClusterZ[sc_num]-treeVars_.vtxZ[vtx_num]), 2)
+				  );
+  float nominal = sqrt (	  pow( (treeVars_.superClusterX[sc_num]), 2) +
+				  pow( (treeVars_.superClusterY[sc_num]), 2) +   
+				  pow( (treeVars_.superClusterZ[sc_num]), 2)
+				  );
+
   return  (travelled-nominal)/100./lightSpeed*1e9;
 
 }
