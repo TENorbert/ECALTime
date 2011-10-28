@@ -177,9 +177,9 @@ void timeCorrector::initEE(std::string version){
 
    } else if (version==std::string("EE")){
 
-    theCorrectionsEE.push_back(0);   theBinsEE.push_back(30.5506);
-    theCorrectionsEE.push_back(0);   theBinsEE.push_back(34.2752);
-    theCorrectionsEE.push_back(0);   theBinsEE.push_back(38.4542);
+    //theCorrectionsEE.push_back(0);   theBinsEE.push_back(30.5506);
+    //theCorrectionsEE.push_back(0);   theBinsEE.push_back(34.2752);
+    //theCorrectionsEE.push_back(0);   theBinsEE.push_back(38.4542);
     theCorrectionsEE.push_back(-0.167688);   theBinsEE.push_back(43.1432);
     theCorrectionsEE.push_back(-0.136405);   theBinsEE.push_back(48.4044);
     theCorrectionsEE.push_back(-0.10191);   theBinsEE.push_back(54.3075);
@@ -237,8 +237,7 @@ void timeCorrector::initEE(std::string version){
     theCorrectionsEE.push_back(-0.485963);   theBinsEE.push_back(21610);
     theCorrectionsEE.push_back(-0.526979);   theBinsEE.push_back(24246.8);
     theCorrectionsEE.push_back(-0.320099);   theBinsEE.push_back(27205.4);
-    theCorrectionsEE.push_back(0);   theBinsEE.push_back(0.000463988);
-
+    //theCorrectionsEE.push_back(0);   theBinsEE.push_back(0.000463988);
    }
    else {
    std::cout << "you've selected a correction type (" << version << ") for EE which does not exist" << std::endl;
