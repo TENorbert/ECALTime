@@ -76,12 +76,12 @@ float timeCorrector::getCorrection(float A, float eta){
   if (myBin == -1)
     {
       // if A below the covered range, return time correction for the lowest A bin
-      theCorrection = theCorrections.at(0);
+      theCorrection = -1 *  theCorrections.at(0);
     }    
   else if  ( myBin == ((int)(theBins.size()-1))   ) 
     {
       // if A above the covered range, return time correction for the highest A bin
-      theCorrection = theCorrections.at( myBin );      
+      theCorrection = -1 * theCorrections.at( myBin );      
     }    
   else if  ( -1 < myBin   &&   myBin <  ((int)theBins.size()-1) )
     {
@@ -100,7 +100,7 @@ float timeCorrector::getCorrection(float A, float eta){
   // std::cout << "\nA: " << A << " eta: " << eta<< " nmyBin is: " << myBin << " and my corr is: " << theCorrection << "\n"<< std::endl; //GF 
 
   // return correction in ns
-  return theCorrection;
+  return -1 * theCorrection;
 
 }
   
@@ -110,7 +110,7 @@ void timeCorrector::initEE(std::string version){
    std::cout << "\ninitializing corrections for EE" << std::endl;
    theCorrectionsEE.clear();          theBinsEE.clear();
  
-   // these corrections are in nanosecond
+   // this is binned measured bias in nanosecond; correction needs be the opposited. 
    if(version==std::string("EElow")){
 
     //theCorrectionsEE.push_back(0);   theBinsEE.push_back(18.9123);
@@ -260,7 +260,7 @@ void timeCorrector::initEB(std::string version){
 
    theCorrectionsEB.clear();          theBinsEB.clear();
 
-   // these corrections are in nanosecond
+   // this is binned measured bias in nanosecond; correction needs be the opposited. 
    if(version==std::string("EBmod4")){
 
    theCorrectionsEB.push_back(0.0427097);   theBinsEB.push_back(30.5506);
