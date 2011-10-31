@@ -75,13 +75,13 @@ float timeCorrector::getCorrection(float A, float eta){
   
   if (myBin == -1)
     {
-      // if A below the covered range, return time correction for the lowest A bin
-      theCorrection = -1 *  theCorrections.at(0);
+      // if A below the covered range, return time correction for the lowest A bin; sign will be flipped at the end, since correction = -1*effect 
+      theCorrection = theCorrections.at(0);
     }    
   else if  ( myBin == ((int)(theBins.size()-1))   ) 
     {
-      // if A above the covered range, return time correction for the highest A bin
-      theCorrection = -1 * theCorrections.at( myBin );      
+      // if A above the covered range, return time correction for the highest A bin sign; will be flipped at the end, since correction = -1*effect 
+      theCorrection = theCorrections.at( myBin );      
     }    
   else if  ( -1 < myBin   &&   myBin <  ((int)theBins.size()-1) )
     {
@@ -99,6 +99,7 @@ float timeCorrector::getCorrection(float A, float eta){
   // debug
   // std::cout << "\nA: " << A << " eta: " << eta<< " nmyBin is: " << myBin << " and my corr is: " << theCorrection << "\n"<< std::endl; //GF 
 
+  // flip the sing since: correction = -1*effect
   // return correction in ns
   return -1 * theCorrection;
 
