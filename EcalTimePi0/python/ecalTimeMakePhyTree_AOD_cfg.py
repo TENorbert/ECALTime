@@ -59,7 +59,7 @@ process.ecalTimePhyTree.muonCuts      = cms.vdouble( 25, 2.1, 0.2, 0.3 )
 
 process.dumpEvContent = cms.EDAnalyzer("EventContentAnalyzer")
 
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(1000))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(10000))
 
 
 
@@ -110,7 +110,7 @@ process.myPhotonIDSequence = cms.Sequence(PhotonIDProd)
 process.uncleanPhotons = cms.Sequence(
                process.uncleanSCRecovered*
                #process.photonSequence *      # romans
-               process.myPhotonSequence *    # gf
+               process.myPhotonSequence *     # gf
                #process.photonIDSequence *
                process.myPhotonIDSequence
                )
@@ -137,7 +137,7 @@ process.MessageLogger = cms.Service("MessageLogger",
     destinations = cms.untracked.vstring('cout')
 )
 process.load("FWCore.MessageService.MessageLogger_cfi")
-process.MessageLogger.cerr.FwkReport.reportEvery = cms.untracked.int32(1)
+process.MessageLogger.cerr.FwkReport.reportEvery = cms.untracked.int32(100)
 
 
 # dbs search --query "find file where dataset=/ExpressPhysics/BeamCommissioning09-Express-v2/FEVT and run=124020" | grep store | awk '{printf "\"%s\",\n", $1}'
@@ -147,7 +147,7 @@ process.source = cms.Source(
     
     # a few files from:    /MinimumBias/Commissioning10-GR_R_35X_V7A_SD_EG-v2/RECO
     fileNames = (cms.untracked.vstring(
-    'file:/data/franzoni/data/Run2011A_DoubleElectron_AOD_PromptReco-v4_000_166_946_CE9FBCFF-4B98-E011-A6C3-003048F11C58.root'
+    'file:/data/franzoni/data/Run2011B-DoubleElectron-AOD-PromptReco-v1-000-179-889-F87DC321-BB01-E111-AD50-001D09F24DA8.root'
     )
                  ),
     # explicitly drop photons resident in AOD/RECO, to make sure only those locally re-made (uncleaned photons) are used
