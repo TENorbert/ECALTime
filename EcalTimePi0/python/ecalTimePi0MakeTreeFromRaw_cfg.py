@@ -125,7 +125,7 @@ process.multi5x5SuperClustersTimePi0Endcap =  RecoEcal.EgammaClusterProducers.mu
 
 # this is the ntuple producer
 process.load("ECALTime.EcalTimePi0.ecalTimePi0Tree_cfi")
-process.ecalTimePi0Tree.fileName = 'EcalTimePi0Tree'
+process.ecalTimePi0Tree.fileName = 'EcalTimeTree'
 process.ecalTimePi0Tree.muonCollection = cms.InputTag("muons")
 process.ecalTimePi0Tree.runNum = 135149
 process.ecalTimePi0Tree.useRaw = cms.untracked.bool(True)
