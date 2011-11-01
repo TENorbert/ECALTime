@@ -18,8 +18,11 @@
 <use   name="RecoEcal/EgammaCoreTools"/>
 <use   name="TrackingTools/TrackAssociator"/>
 <use   name="DQM/EcalCommon"/>
+<use   name="CalibCalorimetry/EcalLaserCorrection"/>
+<use   name="ECALTime/EcalTimePi0"/>
 <use   name="root"/>
 <use   name="rootcore"/>
+<use   name="xerces-c"/>
 <library   file="*.cc" name="ECALTimeEcalTimePi0Plugins">
   <flags   EDM_PLUGIN="1"/>
 </library>
