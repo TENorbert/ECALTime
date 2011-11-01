@@ -13,7 +13,7 @@ Implementation:
 //
 // Authors:                   Shih-Chuan Kao, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePhyTreeMaker.cc,v 1.3 2011/10/31 14:07:00 sckao Exp $
+// $Id: EcalTimePhyTreeMaker.cc,v 1.1 2011/11/01 21:39:02 franzoni Exp $
 //
 //
 
@@ -84,12 +84,9 @@ EcalTimePhyTreeMaker::EcalTimePhyTreeMaker (const edm::ParameterSet& iConfig) :
   electronCuts_         (iConfig.getParameter<std::vector<double> >("electronCuts")),
   muonCuts_             (iConfig.getParameter<std::vector<double> >("muonCuts")),
   fileName_             (iConfig.getUntrackedParameter<std::string> ("fileName", std::string ("EcalTimePhyTreeMaker"))),
+  doTimeVSAmpliCorrection_(iConfig.getParameter<bool> ("doTimeVSAmpliCorrection")),
   naiveId_ (0)              
-
 {
-  // TrackAssociator parameters // gfwork: can we remove this? 
-  edm::ParameterSet trkParameters = iConfig.getParameter<edm::ParameterSet> ("TrackAssociatorParameters") ;
-  trackParameters_.loadParameters ( trkParameters ) ;
 
   // Create File
   fileName_ += "_"+intToString (runNum_)+".root" ;
@@ -99,6 +96,10 @@ EcalTimePhyTreeMaker::EcalTimePhyTreeMaker (const edm::ParameterSet& iConfig) :
   // Initialize Tree
   tree_ = new TTree ( "EcalTimeAnalysis","EcalTimeAnalysis" ) ;
   setBranches (tree_, myTreeVariables_) ;
+  
+  // initialize the time corrector
+  theTimeCorrector_.initEB("EB");
+  theTimeCorrector_.initEE("EE");
 
 }
 
@@ -596,7 +597,6 @@ void EcalTimePhyTreeMaker::dumpBarrelClusterInfo (const edm::Event& iEvent,
 	   
 	     // thisamp is the EB amplitude of the current rechit
 	     double thisamp  = myhit.energy () ;
-	     double thistime = myhit.time ();
 	     double thisChi2 = myhit.chi2 ();
 	     double thisOutOfTimeChi2 = myhit.outOfTimeChi2 ();
 
@@ -635,6 +635,11 @@ void EcalTimePhyTreeMaker::dumpBarrelClusterInfo (const edm::Event& iEvent,
 	        std::swap (maxDet, secDet) ;
 	     }
 
+	     GlobalPoint pos = theGeometry->getPosition((myhit).detid());
+	     myTreeVariables_.xtalInBCEta[numberOfClusters][numberOfXtalsInCluster]=      pos.eta();
+	     myTreeVariables_.xtalInBCPhi[numberOfClusters][numberOfXtalsInCluster]=      pos.phi();
+	     double thistime = myhit.time();
+	     if(doTimeVSAmpliCorrection_)  thistime += theTimeCorrector_.getCorrection((float) thisamp/(icalconst*lasercalib*adcToGeV), pos.eta()  );
 	   
 	    if(myhit.isTimeErrorValid())
               myTreeVariables_.xtalInBCTimeErr[numberOfClusters][numberOfXtalsInCluster]= myhit.timeError();
@@ -657,10 +662,6 @@ void EcalTimePhyTreeMaker::dumpBarrelClusterInfo (const edm::Event& iEvent,
             myTreeVariables_.xtalInBCSwissCross[numberOfClusters][numberOfXtalsInCluster] =
              EcalTools::swissCross(detitr->first,*theBarrelEcalRecHits,0.5);
 
-  
-	    GlobalPoint pos = theGeometry->getPosition((myhit).detid());
-	    myTreeVariables_.xtalInBCEta[numberOfClusters][numberOfXtalsInCluster]=      pos.eta();
-	    myTreeVariables_.xtalInBCPhi[numberOfClusters][numberOfXtalsInCluster]=      pos.phi();
 	   
 	    numberOfXtalsInCluster++ ; // increment number of crystals in basic cluster
 	   
@@ -841,7 +842,6 @@ void EcalTimePhyTreeMaker::dumpEndcapClusterInfo (const edm::Event& iEvent,
 
 	     // thisamp is the EE amplitude of the current rechit
 	     double thisamp  = myhit.energy () ;
-	     double thistime = myhit.time ();
 	     double thisChi2 = myhit.chi2 ();
 	     double thisOutOfTimeChi2 = myhit.outOfTimeChi2 ();
 
@@ -881,6 +881,15 @@ void EcalTimePhyTreeMaker::dumpEndcapClusterInfo (const edm::Event& iEvent,
                  std::swap (maxDet, secDet) ;
                }
 
+	     
+	     
+	     GlobalPoint pos = theGeometry->getPosition((myhit).detid());
+	     myTreeVariables_.xtalInBCEta[numberOfClusters][numberOfXtalsInCluster]=      pos.eta();
+	     myTreeVariables_.xtalInBCPhi[numberOfClusters][numberOfXtalsInCluster]=      pos.phi();
+	     
+	     double thistime = myhit.time ();
+	     if(doTimeVSAmpliCorrection_)  thistime += theTimeCorrector_.getCorrection((float) thisamp/(icalconst*lasercalib*adcToGeV), pos.eta()  );
+
 	      // xtal variables inside an endcap basic cluster 
 	      myTreeVariables_.xtalInBCEnergy[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp;
 	      myTreeVariables_.xtalInBCTime[numberOfClusters][numberOfXtalsInCluster]=        (float) thistime;
@@ -895,10 +904,6 @@ void EcalTimePhyTreeMaker::dumpEndcapClusterInfo (const edm::Event& iEvent,
               myTreeVariables_.xtalInBCOutOfTimeChi2[numberOfClusters][numberOfXtalsInCluster]=thisOutOfTimeChi2;
               myTreeVariables_.xtalInBCSwissCross[numberOfClusters][numberOfXtalsInCluster] =
                 EcalTools::swissCross(detitr->first,*theEndcapEcalRecHits,0.5);
-
-              GlobalPoint pos = theGeometry->getPosition((myhit).detid());
-              myTreeVariables_.xtalInBCEta[numberOfClusters][numberOfXtalsInCluster]=      pos.eta();
-              myTreeVariables_.xtalInBCPhi[numberOfClusters][numberOfXtalsInCluster]=      pos.phi();
 
               numberOfXtalsInCluster++ ; // increment number of crystals in basic cluster
 	     
