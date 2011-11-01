@@ -43,6 +43,7 @@ process.ecalTimePhyTree.endcapBasicClusterCollection = cms.InputTag("multi5x5Bas
 process.ecalTimePhyTree.barrelSuperClusterCollection = cms.InputTag("correctedHybridSuperClusters","")
 process.ecalTimePhyTree.endcapSuperClusterCollection = cms.InputTag("correctedMulti5x5SuperClustersWithPreshower","")
 process.ecalTimePhyTree.PhotonSource = cms.InputTag("myphotons")
+#process.ecalTimePhyTree.PhotonSource = cms.InputTag("photons")
 process.ecalTimePhyTree.muonCollection = cms.InputTag("muons")
 process.ecalTimePhyTree.runNum = 999999
 
