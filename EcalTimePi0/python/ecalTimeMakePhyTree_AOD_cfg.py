@@ -26,8 +26,6 @@ process.load("L1TriggerConfig.L1ScalesProducers.L1MuTriggerPtScaleConfig_cff")
 process.load("L1TriggerConfig.L1GtConfigProducers.L1GtBoardMapsConfig_cff")
 process.load("L1TriggerConfig.L1GtConfigProducers.L1GtConfig_cff")
 process.load("L1TriggerConfig.L1GtConfigProducers.Luminosity.startup.L1Menu_startup2_v2_Unprescaled_cff")
-import FWCore.Modules.printContent_cfi
-process.dumpEv = FWCore.Modules.printContent_cfi.printContent.clone()
 
 import EventFilter.L1GlobalTriggerRawToDigi.l1GtUnpack_cfi
 process.gtDigis = EventFilter.L1GlobalTriggerRawToDigi.l1GtUnpack_cfi.l1GtUnpack.clone()
@@ -58,11 +56,6 @@ process.ecalTimePhyTree.photonCuts    = cms.vdouble( 30, 2.4, 0.3, 1 )
 process.ecalTimePhyTree.electronCuts  = cms.vdouble( 25, 2.4, 0.15, 0.3 )
 process.ecalTimePhyTree.muonCuts      = cms.vdouble( 25, 2.1, 0.2, 0.3 )
 
-process.dumpEvContent = cms.EDAnalyzer("EventContentAnalyzer")
-
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(10000))
-
-
 
 
 #################### ala romans ####################################
@@ -87,31 +80,32 @@ process.photons.isolationSumsCalculatorSet=newisolationSumsCalculator
 
 
 
-
 ################################################################################# gf
 import RecoEgamma.EgammaPhotonProducers.photonCore_cfi
 import RecoEgamma.EgammaPhotonProducers.photons_cfi
+
+process.myphotonCores=RecoEgamma.EgammaPhotonProducers.photonCore_cfi.photonCore.clone()
+process.myphotonCores.scHybridBarrelProducer=cms.InputTag ("uncleanSCRecovered:uncleanHybridSuperClusters")
 
 process.myphotons=RecoEgamma.EgammaPhotonProducers.photons_cfi.photons.clone()
 process.myphotons.barrelEcalHits=cms.InputTag("reducedEcalRecHitsEB")	
 process.myphotons.endcapEcalHits=cms.InputTag("reducedEcalRecHitsEE")
 process.myphotons.isolationSumsCalculatorSet=newisolationSumsCalculator	
+process.myphotons.photonCoresProducer=cms.InputTag("myphotonCores")
 
-process.myphotonCore=RecoEgamma.EgammaPhotonProducers.photonCore_cfi.photonCore.clone()
-process.myphotonCore.scHybridBarrelProducer=cms.InputTag ("uncleanSCRecovered:uncleanHybridSuperClusters")
-
-process.myPhotonSequence = cms.Sequence(process.myphotonCore+process.myphotons)
+process.myPhotonSequence = cms.Sequence(process.myphotonCores+
+                                        process.myphotons)
 
 from RecoEgamma.PhotonIdentification.photonId_cfi import *
 # photonID sequence
 process.myPhotonIDSequence = cms.Sequence(PhotonIDProd)
-
+process.PhotonIDProd.photonProducer=cms.string("myphotons")
 
 ###########  USE UNCLEANED SUPERCLUSTERS  ################ MS
 process.uncleanPhotons = cms.Sequence(
-               process.uncleanSCRecovered*
+                process.uncleanSCRecovered*
                #process.photonSequence *      # romans
-               process.myPhotonSequence *     # gf
+                process.myPhotonSequence *     # gf
                #process.photonIDSequence *
                process.myPhotonIDSequence
                )
@@ -140,7 +134,6 @@ process.MessageLogger = cms.Service("MessageLogger",
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.cerr.FwkReport.reportEvery = cms.untracked.int32(100)
 
-
 # dbs search --query "find file where dataset=/ExpressPhysics/BeamCommissioning09-Express-v2/FEVT and run=124020" | grep store | awk '{printf "\"%s\",\n", $1}'
 process.source = cms.Source(
     "PoolSource",
@@ -148,7 +141,7 @@ process.source = cms.Source(
     
     # a few files from:    /MinimumBias/Commissioning10-GR_R_35X_V7A_SD_EG-v2/RECO
     fileNames = (cms.untracked.vstring(
-    'file:/data/franzoni/data/Run2011B-DoubleElectron-AOD-PromptReco-v1-000-179-889-F87DC321-BB01-E111-AD50-001D09F24DA8.root'
+    'file:/data/franzoni/data/Run2011B-PhotonHad-AOD-PromptReco-v1-000-179-558-5CDAF51F-A800-E111-ADD4-BCAEC518FF52.root'
     )
                  ),
     # explicitly drop photons resident in AOD/RECO, to make sure only those locally re-made (uncleaned photons) are used
@@ -157,3 +150,7 @@ process.source = cms.Source(
                                           #, 'drop *_photons_*_RECO' # drop photons as remade in this process
                                           )
 )
+
+process.dumpEvContent = cms.EDAnalyzer("EventContentAnalyzer")
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
+
