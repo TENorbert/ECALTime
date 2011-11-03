@@ -45,6 +45,8 @@ process.ecalTimePhyTree.endcapSuperClusterCollection = cms.InputTag("correctedMu
 process.ecalTimePhyTree.PhotonSource = cms.InputTag("myphotons")
 #process.ecalTimePhyTree.PhotonSource = cms.InputTag("photons")
 process.ecalTimePhyTree.muonCollection = cms.InputTag("muons")
+# switch on or off Tambe's analysis level corrections
+process.ecalTimePhyTree.doTimeVSAmpliCorrection = cms.bool(True)
 process.ecalTimePhyTree.runNum = 999999
 
 
