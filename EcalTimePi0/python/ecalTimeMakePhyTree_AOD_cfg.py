@@ -36,9 +36,11 @@ process.load("ECALTime.EcalTimePi0.ecalTimePhyTree_cfi")
 process.ecalTimePhyTree.fileName = 'EcalTimeTree'
 process.ecalTimePhyTree.barrelEcalRecHitCollection = cms.InputTag("reducedEcalRecHitsEB","")
 process.ecalTimePhyTree.endcapEcalRecHitCollection = cms.InputTag("reducedEcalRecHitsEE","")
-process.ecalTimePhyTree.barrelBasicClusterCollection = cms.InputTag("hybridSuperClusters","hybridBarrelBasicClusters")
+process.ecalTimePhyTree.barrelBasicClusterCollection = cms.InputTag("uncleanSCRecovered","uncleanHybridBarrelBasicClusters")
+#process.ecalTimePhyTree.barrelBasicClusterCollection = cms.InputTag("hybridSuperClusters","hybridBarrelBasicClusters")
 process.ecalTimePhyTree.endcapBasicClusterCollection = cms.InputTag("multi5x5BasicClusters","multi5x5EndcapBasicClusters")
-process.ecalTimePhyTree.barrelSuperClusterCollection = cms.InputTag("correctedHybridSuperClusters","")
+process.ecalTimePhyTree.barrelSuperClusterCollection = cms.InputTag("uncleanSCRecovered","uncleanHybridSuperClusters")
+#process.ecalTimePhyTree.barrelSuperClusterCollection = cms.InputTag("correctedHybridSuperClusters","")
 process.ecalTimePhyTree.endcapSuperClusterCollection = cms.InputTag("correctedMulti5x5SuperClustersWithPreshower","")
 process.ecalTimePhyTree.PhotonSource = cms.InputTag("myphotons")
 #process.ecalTimePhyTree.PhotonSource = cms.InputTag("photons")
@@ -110,6 +112,8 @@ process.uncleanPhotons = cms.Sequence(
                process.myPhotonIDSequence
                )
 
+process.dumpEvContent = cms.EDAnalyzer("EventContentAnalyzer")
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(10))
 
 process.p = cms.Path(
     process.uncleanPhotons * 
@@ -150,7 +154,3 @@ process.source = cms.Source(
                                           #, 'drop *_photons_*_RECO' # drop photons as remade in this process
                                           )
 )
-
-process.dumpEvContent = cms.EDAnalyzer("EventContentAnalyzer")
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
-
