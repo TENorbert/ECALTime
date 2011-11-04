@@ -16,7 +16,7 @@ Implementation:
 //
 // Authors:                   Shih-Chuan Kao, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePhyTreeMaker.h,v 1.1 2011/11/01 21:39:02 franzoni Exp $
+// $Id: EcalTimePhyTreeMaker.h,v 1.2 2011/11/01 22:29:24 franzoni Exp $
 //
 //
 
@@ -218,7 +218,6 @@ class EcalTimePhyTreeMaker : public edm::EDAnalyzer
       std::vector<double> electronCuts_ ;
       std::vector<double> muonCuts_ ;
       std::string fileName_ ;
-      int  naiveId_ ; 
 
       EcalTimePhyTreeContent myTreeVariables_ ;
 
@@ -245,6 +244,7 @@ class EcalTimePhyTreeMaker : public edm::EDAnalyzer
 
       bool          doTimeVSAmpliCorrection_;
       timeCorrector theTimeCorrector_;
+      int  naiveId_ ; 
 
 } ;
 

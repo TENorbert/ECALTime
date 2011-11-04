@@ -13,7 +13,7 @@ Implementation:
 //
 // Authors:                   Shih-Chuan Kao, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePhyTreeMaker.cc,v 1.1 2011/11/01 21:39:02 franzoni Exp $
+// $Id: EcalTimePhyTreeMaker.cc,v 1.2 2011/11/01 22:29:49 franzoni Exp $
 //
 //
 
@@ -62,7 +62,7 @@ using namespace std ;
 EcalTimePhyTreeMaker::EcalTimePhyTreeMaker (const edm::ParameterSet& iConfig) :
   barrelEcalRecHitCollection_              (iConfig.getParameter<edm::InputTag> ("barrelEcalRecHitCollection")),
   endcapEcalRecHitCollection_              (iConfig.getParameter<edm::InputTag> ("endcapEcalRecHitCollection")),
-  barrelBasicClusterCollection_            (iConfig.getParameter<edm::InputTag> ("barrelBasicClusterCollection")),
+  barrelBasicClusterCollection_            (iConfig.getParameter<edm::InputTag> ("barrelBasicClusterCollection")),//GF
   endcapBasicClusterCollection_            (iConfig.getParameter<edm::InputTag> ("endcapBasicClusterCollection")),
   barrelSuperClusterCollection_            (iConfig.getParameter<edm::InputTag> ("barrelSuperClusterCollection")),
   endcapSuperClusterCollection_            (iConfig.getParameter<edm::InputTag> ("endcapSuperClusterCollection")),
@@ -170,7 +170,9 @@ void EcalTimePhyTreeMaker::analyze (const edm::Event& iEvent, const edm::EventSe
       LogWarning ("EcalTimePhyTreeMaker") << barrelSuperClusterCollection_ 
                                      << " not available" ;
       return ;
-    }
+    } else {
+    //std::cout << "EB superclusters: " << barrelSuperClusterCollection_ << std::endl; 
+  }
   
   // Endcap SuperClusters
   edm::Handle<reco::SuperClusterCollection> pEndcapSuperClusters ;
@@ -188,14 +190,16 @@ void EcalTimePhyTreeMaker::analyze (const edm::Event& iEvent, const edm::EventSe
   // Barrel BasicClusters
   edm::Handle<reco::BasicClusterCollection> pBarrelBasicClusters ;
   iEvent.getByLabel (barrelBasicClusterCollection_, pBarrelBasicClusters) ;
-  const reco::BasicClusterCollection* theBarrelBasicClusters = pBarrelBasicClusters.product () ;
+  const reco::BasicClusterCollection* theBarrelBasicClusters = pBarrelBasicClusters.product () ;//GF
 
   if (! (pBarrelBasicClusters.isValid ()) )
     {
       LogWarning ("EcalTimePhyTreeMaker") << barrelBasicClusterCollection_ 
                                      << " not available" ;
       return ;
-    }
+    }else {
+    //std::cout << "EB basiclusters: " << barrelBasicClusterCollection_ << std::endl; 
+  }
 
   // Endcap BasicClusters
   edm::Handle<reco::BasicClusterCollection> pEndcapBasicClusters ;
@@ -309,6 +313,10 @@ std::string EcalTimePhyTreeMaker::intToString (int num)
 // -----------------------------------------------------------------------------------------
 bool EcalTimePhyTreeMaker::dumpEvtObjectInfo (const edm::Event& iEvent )
 {
+  // applies selection to physics objects and store them (for possible later usage)
+  // with thos objects, applies event-based selection
+  // if event passes selection, store objects into ntuple
+
    edm::Handle<reco::PhotonCollection> photons; 
    edm::Handle<reco::GsfElectronCollection> electrons; 
    edm::Handle<reco::MuonCollection> muons; 
@@ -404,11 +412,13 @@ bool EcalTimePhyTreeMaker::dumpEvtObjectInfo (const edm::Event& iEvent )
    int nPho   = static_cast<int> ( selectedPhotons.size() ) ;
    int nMuon  = static_cast<int> ( selectedMuons.size() ) ;
 
+   // apply event-based selection
    bool pass = true ;
    if ( nPho< photonCuts_[3] ) pass = false ;
-   if ( nJet < jetCuts_[3] ) pass = false ;
+   if ( nJet < jetCuts_[3] )   pass = false ;
 
-   // fill out the information
+   // fill out the information for:
+   //%%%%%%% Jets 
    if ( pass ) {
       for ( size_t k=0; k< selectedJets.size(); k++ ) {
           if ( k >= 10 ) break ;
@@ -440,6 +450,7 @@ bool EcalTimePhyTreeMaker::dumpEvtObjectInfo (const edm::Event& iEvent )
       //cout<<" N_m: "<< selectedMuons.size() <<" N_J:" << selectedJets.size() << endl;
       myTreeVariables_.nJets = nJet ;
 
+      //%%%%%%% Muons 
       for ( size_t k=0; k< selectedMuons.size(); k++ ) {
           if ( k >= 10 ) break ;
 	  myTreeVariables_.muPx[k] = selectedMuons[k]->p4().Px() ;
@@ -449,6 +460,7 @@ bool EcalTimePhyTreeMaker::dumpEvtObjectInfo (const edm::Event& iEvent )
       }
       myTreeVariables_.nMuons = nMuon ;
 
+      //%%%%%%% Electrons 
       for ( size_t k=0; k< selectedElectrons.size(); k++ ) {
           if ( k >= 10 ) break ;
 	  myTreeVariables_.elePx[k] = selectedElectrons[k]->p4().Px() ;
@@ -458,6 +470,7 @@ bool EcalTimePhyTreeMaker::dumpEvtObjectInfo (const edm::Event& iEvent )
       }
       myTreeVariables_.nElectrons = nEle ;
 
+      //%%%%%%% Photons 
       for ( size_t k=0; k< selectedPhotons.size(); k++ ) {
           if ( k >= 10 ) break ;
 	  myTreeVariables_.phoPx[k] = selectedPhotons[k]->p4().Px() ;
@@ -485,7 +498,7 @@ void EcalTimePhyTreeMaker::dumpBarrelClusterInfo (const edm::Event& iEvent,
   // get number of of objects already present in the tree (none if dumpBarrelClusterInfo is called first)
   // this will be the index looping over the SC collection;
   //numberOfSuperClusters = myTreeVariables_.nSuperClusters;
-  // this will be the index looping over the BC collection;
+  //this will be the index looping over the BC collection;
   //numberOfClusters      = myTreeVariables_.nClusters;
 
   const EcalIntercalibConstantMap& icalMap = ical->getMap();
@@ -502,6 +515,7 @@ void EcalTimePhyTreeMaker::dumpBarrelClusterInfo (const edm::Event& iEvent,
        // matching SC from e, photon, mu
        bool getSC = false ;
        float objMatchId = -1 ;
+       // sclist holds list of SC's matched to any of the selected objects
        for ( size_t i=0; i< sclist.size(); i++) {
            if ( sclist[i].first.isNull() )     continue; 
            if ( sclist[i].first.get()->eta() == sclus->eta() && sclist[i].first.get()->phi() == sclus->phi() ) {
@@ -509,8 +523,8 @@ void EcalTimePhyTreeMaker::dumpBarrelClusterInfo (const edm::Event& iEvent,
               getSC = true ;
               objMatchId = sclist[i].second ;
               break ;
-           }
-       }
+           } // loop over SC's matched to object
+       }// loop over all SC's
        if ( !getSC ) continue ;
 
        //    int numberOfXtalsInSuperCluster = 0 ;//counter for all xtals in supercluster 
@@ -528,15 +542,12 @@ void EcalTimePhyTreeMaker::dumpBarrelClusterInfo (const edm::Event& iEvent,
        myTreeVariables_.superClusterPhiWidth[numberOfSuperClusters] = sclus -> phiWidth () ;
        myTreeVariables_.superClusterEtaWidth[numberOfSuperClusters] = sclus -> etaWidth () ;
 
-      
- // GF - FIXME : at some point we may want to loop only over BC's which are included inside a give SC
- // more natural. But even what we have (i.e. two separate loops) should not generate inconsistencies
-
-      ///////////////////////////////////////////////////////////////////////////////////////
-      // loop on barrel basic clusters from SC
+       
+       ///////////////////////////////////////////////////////////////////////////////////////
+       // loop on barrel basic clusters from SC
 
       for ( reco::CaloCluster_iterator  clus =  sclus->clustersBegin()  ;
-            clus != sclus->clustersEnd()  && numberOfClusters<MAXC;   ++clus) // loop on barrel Bclusters
+            clus != sclus->clustersEnd()  && numberOfClusters<MAXC;   ++clus) // loop on barrel Sclusters
           {
 
           double energy = (*clus)->energy () ;
@@ -563,8 +574,7 @@ void EcalTimePhyTreeMaker::dumpBarrelClusterInfo (const edm::Event& iEvent,
 	      detitr != clusterDetIds.end ()  && numberOfXtalsInCluster<MAXXTALINC; // && numberOfXtals<MAXXTAL ; 
 	      ++detitr)// loop on rechics of barrel basic clusters
 	   {
-
-	      // Here I use the "find" on a digi collection... I have been warned...   (GFdoc: ??)
+	      // Here I use the "find" on a recHit collection... I have been warned...   (GFdoc: ??)
    	      // GFdoc: check if DetId belongs to ECAL; if so, find it among those if this basic cluster
     	     if ( (detitr -> first).det () != DetId::Ecal) 
 	        { 
@@ -592,14 +602,13 @@ void EcalTimePhyTreeMaker::dumpBarrelClusterInfo (const edm::Event& iEvent,
              // SIC Feb 14 2011 -- Add check on RecHit flags (takes care of spike cleaning in 42X)
              uint32_t rhFlag = myhit.recoFlag();
              if( !(rhFlag == EcalRecHit::kGood || rhFlag == EcalRecHit::kOutOfTime ||
-                 rhFlag == EcalRecHit::kPoorCalib) )
+		   rhFlag == EcalRecHit::kPoorCalib) )
                  continue;
 	   
 	     // thisamp is the EB amplitude of the current rechit
 	     double thisamp  = myhit.energy () ;
 	     double thisChi2 = myhit.chi2 ();
 	     double thisOutOfTimeChi2 = myhit.outOfTimeChi2 ();
-
 	   
 	     EcalIntercalibConstantMap::const_iterator icalit = icalMap.find(detitr->first);
 	     EcalIntercalibConstant icalconst = 1;
@@ -634,12 +643,17 @@ void EcalTimePhyTreeMaker::dumpBarrelClusterInfo (const edm::Event& iEvent,
 	        std::swap (time, secondTime) ; 
 	        std::swap (maxDet, secDet) ;
 	     }
-
+	     
 	     GlobalPoint pos = theGeometry->getPosition((myhit).detid());
 	     myTreeVariables_.xtalInBCEta[numberOfClusters][numberOfXtalsInCluster]=      pos.eta();
 	     myTreeVariables_.xtalInBCPhi[numberOfClusters][numberOfXtalsInCluster]=      pos.phi();
 	     double thistime = myhit.time();
-	     if(doTimeVSAmpliCorrection_)  thistime += theTimeCorrector_.getCorrection((float) thisamp/(icalconst*lasercalib*adcToGeV), pos.eta()  );
+	     if(doTimeVSAmpliCorrection_)  {
+	       thistime += theTimeCorrector_.getCorrection((float) thisamp/(icalconst*lasercalib*adcToGeV), pos.eta()  );
+	       //std::cout << "EB: " << thisamp << "\t" << ((float) thisamp/(icalconst*lasercalib*adcToGeV)) << "\t" << pos.eta() 
+	       //<< "\t\t" << theTimeCorrector_.getCorrection((float) thisamp/(icalconst*lasercalib*adcToGeV), pos.eta()  ) 
+	       //<< std::endl;
+	     } else { /* std::cout << "not doing correction " << std::endl;*/ }
 	   
 	    if(myhit.isTimeErrorValid())
               myTreeVariables_.xtalInBCTimeErr[numberOfClusters][numberOfXtalsInCluster]= myhit.timeError();
@@ -788,7 +802,7 @@ void EcalTimePhyTreeMaker::dumpEndcapClusterInfo (const edm::Event& iEvent,
 
   ///////////////////////////////////////////////////////////////////////////////////////
    for ( reco::CaloCluster_iterator  clus =  sclus->clustersBegin()  ;
-         clus != sclus->clustersEnd()  && numberOfClusters<MAXC;   ++clus) // loop on barrel Bclusters
+         clus != sclus->clustersEnd()  && numberOfClusters<MAXC;   ++clus) // loop on barrel Sclusters
        {
 
          double energy = (*clus)->energy () ;
@@ -888,9 +902,14 @@ void EcalTimePhyTreeMaker::dumpEndcapClusterInfo (const edm::Event& iEvent,
 	     myTreeVariables_.xtalInBCPhi[numberOfClusters][numberOfXtalsInCluster]=      pos.phi();
 	     
 	     double thistime = myhit.time ();
-	     if(doTimeVSAmpliCorrection_)  thistime += theTimeCorrector_.getCorrection((float) thisamp/(icalconst*lasercalib*adcToGeV), pos.eta()  );
+	     if(doTimeVSAmpliCorrection_)  {
+	       thistime += theTimeCorrector_.getCorrection((float) thisamp/(icalconst*lasercalib*adcToGeV), pos.eta()  );
+	       //std::cout << "EE: " << thisamp << "\t" << ((float) thisamp/(icalconst*lasercalib*adcToGeV)) << "\t" << pos.eta() 
+	       // << "\t\t" << theTimeCorrector_.getCorrection((float) thisamp/(icalconst*lasercalib*adcToGeV), pos.eta()  ) 
+	       //<< std::endl;
+	     } else { /*std::cout << "not doing correction " << std::endl; */}
 
-	      // xtal variables inside an endcap basic cluster 
+	     // xtal variables inside an endcap basic cluster 
 	      myTreeVariables_.xtalInBCEnergy[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp;
 	      myTreeVariables_.xtalInBCTime[numberOfClusters][numberOfXtalsInCluster]=        (float) thistime;
 	      myTreeVariables_.xtalInBCHashedIndex[numberOfClusters][numberOfXtalsInCluster]= EEDetId (detitr -> first).hashedIndex () ; 
@@ -983,8 +1002,8 @@ void EcalTimePhyTreeMaker::dumpJetBarrelClusterInfo (const edm::Event& iEvent,
   const EcalIntercalibConstantMap& icalMap = ical->getMap();
   float adcToGeV = float(agc->getEBValue());
   
-      ///////////////////////////////////////////////////////////////////////////////////////
-      // loop on barrel basic clusters 
+  ///////////////////////////////////////////////////////////////////////////////////////
+  // loop on barrel basic clusters 
    bool getC = false;
    for (reco::BasicClusterCollection::const_iterator clus = theBarrelBasicClusters->begin () ;
         clus != theBarrelBasicClusters->end ()  && numberOfClusters<MAXC;  ++clus) {   
