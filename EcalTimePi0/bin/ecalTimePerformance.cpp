@@ -23,6 +23,7 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
+#include "ECALTime/EcalTimePi0/interface/timeVsAmpliCorrector.h"
 
 #include "TChain.h"
 #include "TH1.h"
@@ -456,6 +457,8 @@ struct HistSet{
   TH1F* TOFcorrections_;
   TH2F* TOFcorrectionsVSdeltaEta_;
   TH2F* clusTimeDiffHistTOFVSdeltaEtaRightVertex_, *clusTimeDiffHistTOFVSdeltaEtaWrongVertex_;
+  TH1F* tColl_;
+  TH2F* tCollVSdeltaEtaRightVertex_, * tCollVStimeDiffHistTOF_;
   TH1F* seedTimeDiffHistTOF_;
   TH1F* secondTimeDiffHist_;
   TH1F* secondTimeDiffHistTOF_;
@@ -650,6 +653,9 @@ void HistSet::book(TFileDirectory subDir, const std::string& post) {
   clusTimeDiffHistTOFVSdeltaEtaRightVertex_=(TH2F*) subDir.make<TH2F>("TOF-corr cluster time difference VS #Delta#eta RightVertex","TOF-corr cluster time difference VS #Delta#eta RightVertex; |#Delta#eta|; (t_{clus1} - t_{clus2}) TOF-corrected [ns]; ",30,0,3.,binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
   clusTimeDiffHistTOFVSdeltaEtaWrongVertex_=(TH2F*) subDir.make<TH2F>("TOF-corr cluster time difference VS #Delta#eta WrongVertex","TOF-corr cluster time difference VS #Delta#eta WrongVertex; |#Delta#eta|;  (t_{clus1} - t_{clus2}) TOF-corrected [ns]; ",30,0,3.,binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
 
+  tCollVSdeltaEtaRightVertex_=(TH2F*) subDir.make<TH2F>("t_{coll} VS #Delta#eta RightVertex","t_{coll} VS #Delta#eta RightVertex; |#Delta#eta|; t_{coll} [ns]; ",30,0,3.,binsTDistro_,-rangeTDistro_/4.,rangeTDistro_/4.);
+  tCollVStimeDiffHistTOF_=(TH2F*) subDir.make<TH2F>("TOF-corrected: (t_{clus1} + t_{clus2})/2  VS  (t_{clus1} - t_{clus2})/2","TOF-corrected: (t_{clus1} + t_{clus2})/2  VS  (t_{clus1} - t_{clus2})/2 [ns]; (t_{clus1} - t_{clus2})/2 ; (t_{clus1} + t_{clus2})/2 VS [ns]; ",binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.,binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
+
 
   seedTimeDiffHist_    =(TH1F*) subDir.make<TH1F>("time difference of seeds","seeds time difference; t_{seed1} - t_{seed2} [ns]; num. seed pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
   seedTimeDiffHistTOF_ =(TH1F*) subDir.make<TH1F>("TOF-corr time difference of seeds","TOF-corr seed time difference; (t_{seed1} - t_{seed2}) TOF-corrected   [ns]; num. seed pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
@@ -661,6 +667,9 @@ void HistSet::book(TFileDirectory subDir, const std::string& post) {
   clusTimeDiffHistTOF_ =(TH1F*) subDir.make<TH1F>("TOF-corr cluster time difference","TOF-corr cluster time difference; (t_{clus1} - t_{clus2}) TOF-corrected [ns]; num. cluster pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
   //  clusTimeDiffHistTOFwrongVertex_ =(TH1F*) subDir.make<TH1F>("TOF-corr cluster time difference","TOF-corr cluster time difference; (t_{clus1} - t_{clus2}) TOF-corrected [ns]; num. cluster pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
   clusTimeDiffHistTOFwrongVertex_=(TH1F*) subDir.make<TH1F>("TOF-corr cluster time difference wrong vertex","TOF-corr cluster time difference wronge vertex; (t_{clus1} - t_{clus2}) TOF-corrected [ns]; num. cluster pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
+
+  tColl_=(TH1F*) subDir.make<TH1F>("t_{coll}","t_{coll} [ns];  (t_{clus1} + t_{clus2})/2 [ns]",binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
+
 
   numCryBC1            =(TH1F*) subDir.make<TH1F>("num cry in bc1","num cry in bc1; num cry",25,0,25);
   numCryBC2            =(TH1F*) subDir.make<TH1F>("num cry in bc2","num cry in bc2; num cry",25,0,25);
@@ -723,20 +732,28 @@ void HistSet::fill(int sc1, int sc2, int bc1, int bc2 ){
     for(int u=0; u<treeVars_.nVertices; u++){
       if(u==vtxOfThisEle) {
 	clusTimeDiffHistTOFVSdeltaEtaRightVertex_ -> Fill(  fabs(treeVars_.superClusterEta[sc2]-treeVars_.superClusterEta[sc1]) , 
-							    (bcTime1.seedtime-extraTravelTime(sc1,u,treeVars_))  - (bcTime2.seedtime-extraTravelTime(sc2,u,treeVars_))
-							    //(bcTime1.seedtime-extraTravelTime(sc1,treeVars_))  - (bcTime2.seedtime-extraTravelTime(sc2,treeVars_))
+							    (bcTime1.time-extraTravelTime(sc1,u,treeVars_))  - (bcTime2.time-extraTravelTime(sc2,u,treeVars_))
+							    //(bcTime1.time-extraTravelTime(sc1,treeVars_))  - (bcTime2.time-extraTravelTime(sc2,treeVars_))
 							    );
+
+	tCollVSdeltaEtaRightVertex_-> Fill(  fabs(treeVars_.superClusterEta[sc2]-treeVars_.superClusterEta[sc1]) , 
+					     ( (bcTime1.time-extraTravelTime(sc1,u,treeVars_)) + (bcTime2.time-extraTravelTime(sc2,u,treeVars_)) ) /2.
+					     );
+	tCollVStimeDiffHistTOF_    -> Fill(  ( (bcTime1.time-extraTravelTime(sc1,u,treeVars_)) - (bcTime2.time-extraTravelTime(sc2,u,treeVars_)) ) /2. ,
+					     ( (bcTime1.time-extraTravelTime(sc1,u,treeVars_)) + (bcTime2.time-extraTravelTime(sc2,u,treeVars_)) ) /2.
+					     );
+	tColl_                     -> Fill( ( (bcTime1.time-extraTravelTime(sc1,u,treeVars_)) + (bcTime2.time-extraTravelTime(sc2,u,treeVars_)) ) /2. );
+
       }// if correct vertex
       else   {
 	clusTimeDiffHistTOFVSdeltaEtaWrongVertex_ -> Fill(  fabs(treeVars_.superClusterEta[sc2]-treeVars_.superClusterEta[sc1]) , 
-							    (bcTime1.seedtime-extraTravelTime(sc1,u,treeVars_))  - (bcTime2.seedtime-extraTravelTime(sc2,u,treeVars_))
-							    //(bcTime1.seedtime-extraTravelTime(sc1,treeVars_))  - (bcTime2.seedtime-extraTravelTime(sc2,treeVars_))
+							    (bcTime1.time-extraTravelTime(sc1,u,treeVars_))  - (bcTime2.time-extraTravelTime(sc2,u,treeVars_))
+							    //(bcTime1.time-extraTravelTime(sc1,treeVars_))  - (bcTime2.time-extraTravelTime(sc2,treeVars_))
 							    );
-	clusTimeDiffHistTOFwrongVertex_           -> Fill( (bcTime1.seedtime-extraTravelTime(sc1,u,treeVars_))  - (bcTime2.seedtime-extraTravelTime(sc2,u,treeVars_) ));
+	clusTimeDiffHistTOFwrongVertex_           -> Fill( (bcTime1.time-extraTravelTime(sc1,u,treeVars_))  - (bcTime2.time-extraTravelTime(sc2,u,treeVars_) ));
       }// if wrong vertex
     }//loop on vertices
 
-    //   std::cout << "extra2" << extraTravelTime(sc2,treeVars_) << "\t" << " from vertex: " << extraTravelTime(sc2,vtxOfThisEle,treeVars_) << "\t" << " difference: " << (extraTravelTime(sc2,treeVars_)-extraTravelTime(sc2,vtxOfThisEle,treeVars_)) << std::endl;
   } // if vertex matching succeeded
   //  else std::cout << "vertex was not found which matches electrons track... " << std::endl;
  
@@ -759,7 +776,7 @@ void HistSet::fill(int sc1, int sc2, int bc1, int bc2 ){
   }
   
   
-  clusterTime_         ->Fill(bcTime1.time);              clusterTime_ ->Fill(bcTime2.time);
+  clusterTime_         -> Fill(bcTime1.time);              clusterTime_ ->Fill(bcTime2.time);
   clusTimeDiffHist_    -> Fill(bcTime1.time - bcTime2.time );
   clusTimeDiffHistTOF_ -> Fill( (bcTime1.time - extraTravelTime(sc1,treeVars_) ) - (bcTime2.time -extraTravelTime(sc2,treeVars_)) );
 
@@ -903,7 +920,13 @@ int main (int argc, char** argv)
   HistSet plotsEBEBunevenShare;
   plotsEBEBunevenShare.book(subDirEBEBunevenShare,std::string("EBEBunevenShare"));
   
-
+  timeCorrector theCorr;
+  std::cout << "\ncreated object theCorr to be used for timeVsAmpliCorrections" << std::endl;
+  std::cout << "\ninitializing theCorr" << std::endl;
+  //theCorr.initEB( std::string("EBmod4") );
+  //theCorr.initEE( std::string("EElow") );
+  theCorr.initEB( std::string("EB") );
+  theCorr.initEE( std::string("EE") );
 
 
   //Initialize output root file
@@ -1061,8 +1084,7 @@ int main (int argc, char** argv)
 	  minRatio = 2; maxRatio = 10;
 	  if(minRatio<energyRatio1 && minRatio<energyRatio2 && energyRatio1<maxRatio && energyRatio2<maxRatio) 	  plotsEBEBunevenShare.fill(sc1,sc2, bc1,bc2);  
 	  
-	}// if EBEB
-	else if ( fabs(treeVars_.clusterEta[bc1])>1.5    &&  fabs(treeVars_.clusterEta[bc2])>1.5 ) 	  plotsEEEE.fill(sc1,sc2, bc1,bc2);
+	}// if EBEB, and subcases
 	else if ( fabs(treeVars_.clusterEta[bc1])>1.5    &&  fabs(treeVars_.clusterEta[bc2])>1.5 ) 	  plotsEEEE.fill(sc1,sc2, bc1,bc2);
 	else if ( (fabs(treeVars_.clusterEta[bc1])<1.4 && fabs(treeVars_.clusterEta[bc2])>1.5) ||
 		  (fabs(treeVars_.clusterEta[bc1])>1.5 && fabs(treeVars_.clusterEta[bc2])<1.4)    ) 	plotsEBEE.fill(sc1,sc2, bc1,bc2);
