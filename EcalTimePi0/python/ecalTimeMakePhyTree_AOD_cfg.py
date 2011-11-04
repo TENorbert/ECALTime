@@ -62,40 +62,33 @@ process.ecalTimePhyTree.muonCuts      = cms.vdouble( 25, 2.1, 0.2, 0.3 )
 
 
 
-#################### ala romans ####################################
-process.load("RecoEgamma.EgammaPhotonProducers.photonSequence_cff")
-process.load("RecoEgamma.PhotonIdentification.photonId_cff")
-process.load("RecoLocalCalo.EcalRecAlgos.EcalSeverityLevelESProducer_cfi")
+
 ###########  USE UNCLEANED SUPERCLUSTERS  ######################### MS
 
 process.load("RecoEcal.EgammaClusterProducers.uncleanSCRecovery_cfi") 
 process.uncleanSCRecovered.cleanScCollection=cms.InputTag ("correctedHybridSuperClusters")	
-process.photonCore.scHybridBarrelProducer=cms.InputTag ("uncleanSCRecovered:uncleanHybridSuperClusters")	
-
-process.photons.barrelEcalHits=cms.InputTag("reducedEcalRecHitsEB")	
-process.photons.endcapEcalHits=cms.InputTag("reducedEcalRecHitsEE")	
-
    
-from RecoEgamma.PhotonIdentification.isolationCalculator_cfi import*	
-newisolationSumsCalculator = isolationSumsCalculator.clone()	  
-newisolationSumsCalculator.barrelEcalRecHitCollection = cms.InputTag('reducedEcalRecHitsEB')	
-newisolationSumsCalculator.endcapEcalRecHitCollection = cms.InputTag('reducedEcalRecHitsEE')	
-process.photons.isolationSumsCalculatorSet=newisolationSumsCalculator	
-
-
-
 ################################################################################# gf
+
+process.load("RecoEgamma.PhotonIdentification.photonId_cff")
+process.load("RecoLocalCalo.EcalRecAlgos.EcalSeverityLevelESProducer_cfi")
+
 import RecoEgamma.EgammaPhotonProducers.photonCore_cfi
 import RecoEgamma.EgammaPhotonProducers.photons_cfi
 
 process.myphotonCores=RecoEgamma.EgammaPhotonProducers.photonCore_cfi.photonCore.clone()
 process.myphotonCores.scHybridBarrelProducer=cms.InputTag ("uncleanSCRecovered:uncleanHybridSuperClusters")
 
+from RecoEgamma.PhotonIdentification.isolationCalculator_cfi import*	
+newisolationSumsCalculator = isolationSumsCalculator.clone()	  
+newisolationSumsCalculator.barrelEcalRecHitCollection = cms.InputTag('reducedEcalRecHitsEB')	
+newisolationSumsCalculator.endcapEcalRecHitCollection = cms.InputTag('reducedEcalRecHitsEE')
+
 process.myphotons=RecoEgamma.EgammaPhotonProducers.photons_cfi.photons.clone()
 process.myphotons.barrelEcalHits=cms.InputTag("reducedEcalRecHitsEB")	
 process.myphotons.endcapEcalHits=cms.InputTag("reducedEcalRecHitsEE")
 process.myphotons.isolationSumsCalculatorSet=newisolationSumsCalculator	
-process.myphotons.photonCoresProducer=cms.InputTag("myphotonCores")
+process.myphotons.photonCoreProducer=cms.InputTag("myphotonCores")
 
 process.myPhotonSequence = cms.Sequence(process.myphotonCores+
                                         process.myphotons)
@@ -107,15 +100,13 @@ process.PhotonIDProd.photonProducer=cms.string("myphotons")
 
 ###########  USE UNCLEANED SUPERCLUSTERS  ################ MS
 process.uncleanPhotons = cms.Sequence(
-                process.uncleanSCRecovered*
-               #process.photonSequence *      # romans
-                process.myPhotonSequence *     # gf
-               #process.photonIDSequence *
+                process.uncleanSCRecovered *
+                process.myPhotonSequence *
                process.myPhotonIDSequence
                )
 
 process.dumpEvContent = cms.EDAnalyzer("EventContentAnalyzer")
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(10))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 
 process.p = cms.Path(
     process.uncleanPhotons * 
