@@ -1,4 +1,5 @@
 #include "CalibCalorimetry/EcalTiming/interface/EcalTimeTreeContent.h"
+#define lightSpeed 299792458
 
 // Consts
 const float sigmaNoiseEB          = 1.06;  // ADC ; using total single-sample noise
@@ -29,3 +30,8 @@ struct ClusterTime {
 ClusterTime timeAndUncertSingleCluster (int bClusterIndex, EcalTimeTreeContent treeVars_);
 ClusterTime timeAndUncertyPhoton       (int bClusterIndex, EcalTimeTreeContent treeVars_);
 ClusterTime timeAndUncertyJet          (int bClusterIndex, EcalTimeTreeContent treeVars_);
+
+
+float travelDistance(int sc_num, EcalTimeTreeContent treeVars_);
+float extraTravelTime(int sc_num, EcalTimeTreeContent & treeVars_);
+float extraTravelTime(int sc_num, int vtx_num, EcalTimeTreeContent & treeVars_);

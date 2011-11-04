@@ -12,8 +12,8 @@ ecalTimePhyTree = cms.EDAnalyzer("EcalTimePhyTreeMaker",
     # SUPER and BASIC cluster collections come from AOD (no longer in-house made 3x3's)
     barrelBasicClusterCollection = cms.InputTag("hybridSuperClusters","hybridBarrelBasicClusters"),
     endcapBasicClusterCollection = cms.InputTag("multi5x5BasicClusters","multi5x5EndcapBasicClusters"),
-    barrelSuperClusterCollection = cms.InputTag("correctedHybridSuperClusters",""),
     endcapSuperClusterCollection = cms.InputTag("correctedMulti5x5SuperClustersWithPreshower",""),
+    barrelSuperClusterCollection = cms.InputTag("correctedHybridSuperClusters",""),
     JetSource = cms.InputTag("kt6PFJets"), # Romans use these jets
     METSource = cms.InputTag("pfMet"),
     MuonSource = cms.InputTag("muons"),

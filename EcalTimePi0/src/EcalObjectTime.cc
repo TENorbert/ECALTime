@@ -1,6 +1,23 @@
 #include "ECALTime/EcalTimePi0/interface/EcalObjectTime.h"
 #include <iostream>
 #include <math.h> 
+#include <assert.h>
+
+
+// ---------------------------------------------------------------------------------------
+// --------------- Function to compute time and error for a physics object ---------------
+
+ClusterTime timeAndUncertyPhoton(int bClusterIndex, EcalTimeTreeContent treeVars_)
+{
+  return timeAndUncertSingleCluster( bClusterIndex, treeVars_);
+}
+
+ClusterTime timeAndUncertyJet(int bClusterIndex, EcalTimeTreeContent treeVars_)
+{
+  return timeAndUncertSingleCluster( bClusterIndex, treeVars_);
+}
+
+
 
 // ---------------------------------------------------------------------------------------
 // ------------------ Function to compute time and error for a cluster -------------------
@@ -161,12 +178,76 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex, EcalTimeTreeContent tr
 }// end timeAndUncertSingleCluster
 
 
-ClusterTime timeAndUncertyPhoton(int bClusterIndex, EcalTimeTreeContent treeVars_)
-{
-  return timeAndUncertSingleCluster( bClusterIndex, treeVars_);
+
+// ---------------------------------------------------------------------------------------
+// ----------------  Functios to handle time of flight of supercluster -------------------
+
+float travelDistance(int sc_num, EcalTimeTreeContent treeVars_) {
+  return
+    sqrt (	  pow( (treeVars_.superClusterVertexX[sc_num]-treeVars_.superClusterX[sc_num]), 2) +
+		  pow( (treeVars_.superClusterVertexY[sc_num]-treeVars_.superClusterY[sc_num]), 2) +   
+		  pow( (treeVars_.superClusterVertexZ[sc_num]-treeVars_.superClusterZ[sc_num]), 2)
+		  );
 }
 
-ClusterTime timeAndUncertyJet(int bClusterIndex, EcalTimeTreeContent treeVars_)
-{
-  return timeAndUncertSingleCluster( bClusterIndex, treeVars_);
+
+float extraTravelTime(int sc_num, EcalTimeTreeContent & treeVars_) { // extra travel time with respect to collision at IP, in ns
+  
+  float travelled = sqrt (	  pow( (treeVars_.superClusterX[sc_num]-treeVars_.superClusterVertexX[sc_num]), 2) +
+				  pow( (treeVars_.superClusterY[sc_num]-treeVars_.superClusterVertexY[sc_num]), 2) +   
+				  pow( (treeVars_.superClusterZ[sc_num]-treeVars_.superClusterVertexZ[sc_num]), 2)
+				  );
+  float nominal = sqrt (	  pow( (treeVars_.superClusterX[sc_num]), 2) +
+				  pow( (treeVars_.superClusterY[sc_num]), 2) +   
+				  pow( (treeVars_.superClusterZ[sc_num]), 2)
+				  );
+
+  //std::cout << "extraTravelTime [ns]: " <<  (travelled-nominal)/100./lightSpeed*1e9 << std::endl;
+  return  (travelled-nominal)/100./lightSpeed*1e9;
+
 }
+
+
+float extraTravelTime(int sc_num, int vtx_num, EcalTimeTreeContent & treeVars_) { // extra travel time with respect to an arbitrary vertex
+  if(vtx_num<0 || vtx_num>=treeVars_.nVertices){
+    std::cout<< "Usnig invalid vtx_num "<<vtx_num<<" within extraTravelTime(int sc_num, int vtx_num, EcalTimeTreeContent & treeVars_). Stopping the program." << std::endl;
+    assert(0);
+  }
+  
+  float travelled = sqrt (	  pow( (treeVars_.superClusterX[sc_num]-treeVars_.vtxX[vtx_num]), 2) +
+				  pow( (treeVars_.superClusterY[sc_num]-treeVars_.vtxY[vtx_num]), 2) +   
+				  pow( (treeVars_.superClusterZ[sc_num]-treeVars_.vtxZ[vtx_num]), 2)
+				  );
+  float nominal = sqrt (	  pow( (treeVars_.superClusterX[sc_num]), 2) +
+				  pow( (treeVars_.superClusterY[sc_num]), 2) +   
+				  pow( (treeVars_.superClusterZ[sc_num]), 2)
+				  );
+
+  return  (travelled-nominal)/100./lightSpeed*1e9;
+
+}
+
+
+
+/*
+	// computing extra time of flight due to bending of electrons
+	float r_curv1 = et1 / 0.3 / 3.8 ; // in meters
+	float distShowerToVertex =        // IP - shower distance in transverse plane (~ ECAL Radius)
+	pow( (treeVars_.superClusterVertexX[sc1]-treeVars_.superClusterX[sc1]), 2) +
+	pow( (treeVars_.superClusterVertexY[sc1]-treeVars_.superClusterY[sc1]), 2);  
+	// pow( (treeVars_.superClusterVertexZ[sc1]-treeVars_.superClusterZ[sc1]), 2);
+	distShowerToVertex = sqrt(distShowerToVertex) / 100;  // in meters
+	//std::cout << "distShowerToVertex: " << distShowerToVertex << std::endl;
+	float alpha = asin( 0.5 * distShowerToVertex / r_curv1 ) ;
+	float road  = r_curv1 * 2 * alpha;
+	road        = sqrt( road*road + pow(  (treeVars_.superClusterVertexZ[sc1]-treeVars_.superClusterZ[sc1])  ,2)/100./100. );
+	// actual time of flight of electron subtracted of straight line 
+	float roadMoreThanPhoton = road - 
+	sqrt( pow( (treeVars_.superClusterVertexX[sc1]-treeVars_.superClusterX[sc1]), 2) +
+	pow( (treeVars_.superClusterVertexY[sc1]-treeVars_.superClusterY[sc1]), 2) +
+	pow( (treeVars_.superClusterVertexZ[sc1]-treeVars_.superClusterZ[sc1]), 2)
+	)/100.;
+	std::cout << "eta: " << treeVars_.superClusterEta[sc1] << " pt: " << treeVars_.superClusterRawEnergy[sc1] 
+	<< " r_curv1: " << r_curv1 << " transv-distShowerToVertex: " << distShowerToVertex 
+	<< " path: " << road << " roadMoreThanPhoton: " << roadMoreThanPhoton << std::endl;
+*/
