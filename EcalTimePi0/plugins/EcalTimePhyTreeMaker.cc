@@ -13,7 +13,7 @@ Implementation:
 //
 // Authors:                   Shih-Chuan Kao, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePhyTreeMaker.cc,v 1.3 2011/11/04 11:23:08 franzoni Exp $
+// $Id: EcalTimePhyTreeMaker.cc,v 1.4 2011/11/07 12:19:49 franzoni Exp $
 //
 //
 
@@ -600,7 +600,6 @@ void EcalTimePhyTreeMaker::dumpBarrelClusterInfo (const edm::Event& iEvent,
 	     EcalRecHit myhit = (*thishit) ;
 	   
              // SIC Feb 14 2011 -- Add check on RecHit flags (takes care of spike cleaning in 42X)
-             //uint32_t rhFlag = myhit.recoFlag();
              if( !( myhit.checkFlag(EcalRecHit::kGood) ||
                     myhit.checkFlag(EcalRecHit::kOutOfTime) ||
                     myhit.checkFlag(EcalRecHit::kPoorCalib) 
