@@ -13,7 +13,7 @@ Implementation:
 //
 // Authors:                   Shih-Chuan Kao, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePhyTreeMaker.cc,v 1.2 2011/11/01 22:29:49 franzoni Exp $
+// $Id: EcalTimePhyTreeMaker.cc,v 1.3 2011/11/04 11:23:08 franzoni Exp $
 //
 //
 
@@ -600,12 +600,15 @@ void EcalTimePhyTreeMaker::dumpBarrelClusterInfo (const edm::Event& iEvent,
 	     EcalRecHit myhit = (*thishit) ;
 	   
              // SIC Feb 14 2011 -- Add check on RecHit flags (takes care of spike cleaning in 42X)
-             uint32_t rhFlag = myhit.recoFlag();
-             if( !(rhFlag == EcalRecHit::kGood || rhFlag == EcalRecHit::kOutOfTime ||
-		   rhFlag == EcalRecHit::kPoorCalib) )
+             //uint32_t rhFlag = myhit.recoFlag();
+             if( !( myhit.checkFlag(EcalRecHit::kGood) ||
+                    myhit.checkFlag(EcalRecHit::kOutOfTime) ||
+                    myhit.checkFlag(EcalRecHit::kPoorCalib) 
+		    ) 
+		 )
                  continue;
-	   
-	     // thisamp is the EB amplitude of the current rechit
+
+             // thisamp is the EB amplitude of the current rechit
 	     double thisamp  = myhit.energy () ;
 	     double thisChi2 = myhit.chi2 ();
 	     double thisOutOfTimeChi2 = myhit.outOfTimeChi2 ();
@@ -849,10 +852,12 @@ void EcalTimePhyTreeMaker::dumpEndcapClusterInfo (const edm::Event& iEvent,
              EcalRecHit myhit = (*thishit) ;
              
              // SIC Feb 14 2011 -- Add check on RecHit flags (takes care of spike cleaning in 42X)
-             uint32_t rhFlag = myhit.recoFlag();
-             if( !(rhFlag == EcalRecHit::kGood || rhFlag == EcalRecHit::kOutOfTime ||
-                   rhFlag == EcalRecHit::kPoorCalib) )
-               continue;
+             if( !( myhit.checkFlag(EcalRecHit::kGood) ||
+                    myhit.checkFlag(EcalRecHit::kOutOfTime) ||
+                    myhit.checkFlag(EcalRecHit::kPoorCalib) 
+		    ) 
+		 )
+                 continue;
 
 	     // thisamp is the EE amplitude of the current rechit
 	     double thisamp  = myhit.energy () ;
@@ -1085,9 +1090,11 @@ void EcalTimePhyTreeMaker::dumpJetBarrelClusterInfo (const edm::Event& iEvent,
 	     EcalRecHit myhit = (*thishit) ;
 	   
              // SIC Feb 14 2011 -- Add check on RecHit flags (takes care of spike cleaning in 42X)
-             uint32_t rhFlag = myhit.recoFlag();
-             if( !(rhFlag == EcalRecHit::kGood || rhFlag == EcalRecHit::kOutOfTime ||
-                 rhFlag == EcalRecHit::kPoorCalib) )
+             if( !( myhit.checkFlag(EcalRecHit::kGood) ||
+                    myhit.checkFlag(EcalRecHit::kOutOfTime) ||
+                    myhit.checkFlag(EcalRecHit::kPoorCalib) 
+		    ) 
+		 )
                  continue;
 	   
 	     // thisamp is the EB amplitude of the current rechit
@@ -1325,11 +1332,13 @@ void EcalTimePhyTreeMaker::dumpJetEndcapClusterInfo (const edm::Event& iEvent,
 	     EcalRecHit myhit = (*thishit) ;
 	   
              // SIC Feb 14 2011 -- Add check on RecHit flags (takes care of spike cleaning in 42X)
-             uint32_t rhFlag = myhit.recoFlag();
-             if( !(rhFlag == EcalRecHit::kGood || rhFlag == EcalRecHit::kOutOfTime ||
-                 rhFlag == EcalRecHit::kPoorCalib) )
+             if( !( myhit.checkFlag(EcalRecHit::kGood) ||
+                    myhit.checkFlag(EcalRecHit::kOutOfTime) ||
+                    myhit.checkFlag(EcalRecHit::kPoorCalib) 
+		    ) 
+		 )
                  continue;
-	   
+
 	     // thisamp is the EE amplitude of the current rechit
 	     double thisamp  = myhit.energy () ;
 	     double thistime = myhit.time ();
