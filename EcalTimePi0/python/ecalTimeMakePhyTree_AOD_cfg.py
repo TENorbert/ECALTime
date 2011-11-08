@@ -51,15 +51,32 @@ process.ecalTimePhyTree.runNum = 999999
 
 
 
-# Set up cuts for physics objects
-# jet cuts                                           pt    eta  nJets
-process.ecalTimePhyTree.jetCuts       = cms.vdouble( 25. , 2.4, 3 )
-process.ecalTimePhyTree.metCuts       = cms.vdouble( 20  )
-# photon cuts                                        pt  eta  dR   nPhoton
-process.ecalTimePhyTree.photonCuts    = cms.vdouble( 30, 2.4, 0.3, 1 )
-process.ecalTimePhyTree.electronCuts  = cms.vdouble( 25, 2.4, 0.15, 0.3 )
-process.ecalTimePhyTree.muonCuts      = cms.vdouble( 25, 2.1, 0.2, 0.3 )
+# Set up cuts for physics objects;
+# nJets and nPhoton constitute event-based selections 
 
+###################### signal preselection cuts ##########################
+## jet cuts                                           pt   |eta|  nJets
+#process.ecalTimePhyTree.jetCuts       = cms.vdouble( 25. , 2.4, 3 )
+## met cuts                                           Et
+#process.ecalTimePhyTree.metCuts       = cms.vdouble( 20  )
+## photon cuts                                        pt |eta|  dR   nPhoton
+#process.ecalTimePhyTree.photonCuts    = cms.vdouble( 30, 2.4, 0.3, 1 )
+## electron cuts                                      pt |eta| relIso dR
+#process.ecalTimePhyTree.electronCuts  = cms.vdouble( 25, 2.4, 0.15, 0.3 )
+## muon cuts                                          pt |eta| relIso dR
+#process.ecalTimePhyTree.muonCuts      = cms.vdouble( 25, 2.1, 0.2, 0.3 )
+
+##################### loose selection for studies ##########################
+# jet cuts                                           pt   |eta|  nJets
+process.ecalTimePhyTree.jetCuts       = cms.vdouble( 20. , 2.4, 1 )
+# met cuts                                           Et
+process.ecalTimePhyTree.metCuts       = cms.vdouble( 0.  )
+# photon cuts                                        pt |eta|  dR   nPhoton
+process.ecalTimePhyTree.photonCuts    = cms.vdouble( 70, 2.4, 0.3, 1 )
+# electron cuts                                      pt |eta| relIso dR
+process.ecalTimePhyTree.electronCuts  = cms.vdouble( 25, 2.4, 0.15, 0.3 )
+# muon cuts                                          pt |eta| relIso dR
+process.ecalTimePhyTree.muonCuts      = cms.vdouble( 25, 2.1, 0.2, 0.3 )
 
 
 
@@ -106,7 +123,7 @@ process.uncleanPhotons = cms.Sequence(
                )
 
 process.dumpEvContent = cms.EDAnalyzer("EventContentAnalyzer")
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(2))
 
 process.p = cms.Path(
     process.uncleanPhotons * 
