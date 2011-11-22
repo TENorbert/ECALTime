@@ -13,7 +13,7 @@ Implementation:
 //
 // Authors:                   Shih-Chuan Kao, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePhyTreeMaker.cc,v 1.4 2011/11/07 12:19:49 franzoni Exp $
+// $Id: EcalTimePhyTreeMaker.cc,v 1.5 2011/11/07 12:33:28 franzoni Exp $
 //
 //
 
@@ -265,6 +265,7 @@ void EcalTimePhyTreeMaker::analyze (const edm::Event& iEvent, const edm::EventSe
      dumpVertexInfo(theRecVtxs, myTreeVariables_);
 
      tree_ -> Fill();
+     delete lazyTools;
   }
 }
 
