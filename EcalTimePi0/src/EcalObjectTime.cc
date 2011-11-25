@@ -101,7 +101,7 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex, EcalTimeTreeContent tr
     // supposedly a large time constant is already included in the cxtalInBCTimeErr of 600 ps; rough estimate is that it's actually 300 (EB)
 
     // remove 0.6 constant term, put in timingResParamConstEB 
-    float sigmaOfThis = pow( treeVars_.xtalInBCTimeErr[bClusterIndex][thisCry], 2) - 0.6*0.6 + timingResParamConstEB*timingResParamConstEB ;
+    float sigmaOfThis = pow( treeVars_.xtalInBCTimeErr[bClusterIndex][thisCry], 2) - 0.6*0.6 + timingResParamConst*timingResParamConst ;
     sigmaOfThis       = sqrt(sigmaOfThis);
 
     if(0) std::cout << "t: " << timeOfThis << " a/s: " << ampliOverSigOfThis << " sig: " << sigmaOfThis << "\t\t";
@@ -126,15 +126,12 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex, EcalTimeTreeContent tr
     chi2=0;
     for(int thisCry=0; thisCry<treeVars_.nXtalsInCluster[bClusterIndex]; thisCry++)
       {
-  	//bool  thisIsInEB=false;
   	float sigmaNoiseOfThis=0;
   	if(treeVars_.xtalInBCIEta[bClusterIndex][thisCry]!=-999999)       {
   	  sigmaNoiseOfThis=sigmaNoiseEB;
-  	  //thisIsInEB=true;
   	}
   	else if(treeVars_.xtalInBCIy[bClusterIndex][thisCry]!=-999999)    {
   	  sigmaNoiseOfThis=sigmaNoiseEE;
-  	  //thisIsInEB=false;    
   	}
   	else    {  std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
   	
@@ -144,13 +141,18 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex, EcalTimeTreeContent tr
 	// remove hits beyond gain switch
 	if ( treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] > 3950 )  continue;
 	if( treeVars_.xtalInBCSwissCross[bClusterIndex][thisCry] > 0.95) continue;
-
+	
+	// best is using time error as estimated from the ratio method itself; keep the old approach around
+	float doAnalytically=false;
   	float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry];
   	float sigmaOfThis = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
-  	
+	if(!doAnalytically){
+	  sigmaOfThis = pow( treeVars_.xtalInBCTimeErr[bClusterIndex][thisCry], 2) - 0.6*0.6 + timingResParamConst*timingResParamConst ;
+	}
+  	// we're computing chi2 here; theResult.numCry is available if you want chi2/ndf 
   	chi2 += pow( (timeOfThis-bestTime)/sigmaOfThis, 2);
   	
-      }// end loop on cry
+      }// end loop on cry, including amplitude selection
   }//end if
 
   
