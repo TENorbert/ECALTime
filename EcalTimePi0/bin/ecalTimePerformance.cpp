@@ -8,6 +8,8 @@
 #include <set>
 #include <boost/tokenizer.hpp>
 
+#include "ECALTime/EcalTimePi0/interface/EcalObjectTime.h"
+
 #include "CalibCalorimetry/EcalTiming/interface/EcalTimeTreeContent.h"
 #include "DataFormats/GeometryVector/interface/GlobalPoint.h"
 #include "DataFormats/DetId/interface/DetId.h"
@@ -54,22 +56,6 @@ float extraTravelTime(int sc_num, int vtx_num, EcalTimeTreeContent & treeVars_);
 #define NSlices 54   // # of slices in log(A)
 #define LogStep 0.05 // size of Slices log(A)
 
-#define lightSpeed 299792458
-
-struct ClusterTime {
-  bool  isvalid;
-  int   numCry;
-  int   seed;
-  int   second;
-  float seedtime;
-  float secondtime;
-  float time;
-  float timeErr;
-  float otherstime;
-  float otherstimeErr;
-  float chi2;
-} ;
-
 
 // -------- Globals ----------------------------------------
 EcalTimeTreeContent treeVars_; 
@@ -100,11 +86,6 @@ std::vector<std::vector<double> > trigIncludeVector;
 std::vector<std::vector<double> > trigExcludeVector;
 std::vector<std::vector<double> > ttrigIncludeVector;
 std::vector<std::vector<double> > ttrigExcludeVector;
-
-
-float minAmpliOverSigma_   = 30;    // dimensionless
-
-float maxChi2NDF_ = 20;  //TODO: gf configurable
 
 int  minEntriesForFit_ = 7;
 int  flagOneVertex_ = 0;
@@ -151,18 +132,6 @@ float  AoSigmaBinCentersEE_[32][32];  float  AoSigmaBinCentersErrEE_[32][32];  f
 
 int numDtBins_  = 75;
 int DtMax_      = 15; // useful to catch tails also at low Aeff (<10)
-
-// Consts
-//const float sigmaNoiseEB        = 0.75;  // ADC ; using high frequency noise
-//const float sigmaNoiseEE        = 1.58;  // ADC ; using high frequency noise
-const float sigmaNoiseEB          = 1.06;  // ADC ; using total single-sample noise
-const float sigmaNoiseEE          = 2.10;  // ADC ; using total single-sample noise
-// const float timingResParamN    = 35.1;    // ns ; Fig. 2 from CFT-09-006
-// const float timingResParamConst= 0.020;   // ns ;   "
-const float timingResParamNEB     = 28.51;   // ns ; plots approved http://indico.cern.ch/conferenceDisplay.py?confId=92739
-const float timingResParamConstEB = 0.1;     // ns ; 
-const float timingResParamNEE     = 31.84;   // ns ; Fig. 2 from CFT-09-006
-const float timingResParamConstEE = 0.4;     // ns ; rough, probably conservative estimate
 
 // -------- Histograms -------------------------------------
 TH1 * nVertices_;
@@ -665,7 +634,7 @@ void HistSet::book(TFileDirectory subDir, const std::string& post) {
 
   clusTimeDiffHist_    =(TH1F*) subDir.make<TH1F>("cluster time difference","cluster time difference;  t_{clus1} - t_{clus2} [ns]; num. cluster pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
   clusTimeDiffHistTOF_ =(TH1F*) subDir.make<TH1F>("TOF-corr cluster time difference","TOF-corr cluster time difference; (t_{clus1} - t_{clus2}) TOF-corrected [ns]; num. cluster pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
-  //  clusTimeDiffHistTOFwrongVertex_ =(TH1F*) subDir.make<TH1F>("TOF-corr cluster time difference","TOF-corr cluster time difference; (t_{clus1} - t_{clus2}) TOF-corrected [ns]; num. cluster pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
+
   clusTimeDiffHistTOFwrongVertex_=(TH1F*) subDir.make<TH1F>("TOF-corr cluster time difference wrong vertex","TOF-corr cluster time difference wronge vertex; (t_{clus1} - t_{clus2}) TOF-corrected [ns]; num. cluster pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
 
   tColl_=(TH1F*) subDir.make<TH1F>("t_{coll}","t_{coll} [ns];  (t_{clus1} + t_{clus2})/2 [ns]",binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
@@ -1101,52 +1070,6 @@ int main (int argc, char** argv)
   delete chain ;
   
   return 0 ;
-}
-
-
-float travelDistance(int sc_num, EcalTimeTreeContent treeVars_) {
-  return
-    sqrt (	  pow( (treeVars_.superClusterVertexX[sc_num]-treeVars_.superClusterX[sc_num]), 2) +
-		  pow( (treeVars_.superClusterVertexY[sc_num]-treeVars_.superClusterY[sc_num]), 2) +   
-		  pow( (treeVars_.superClusterVertexZ[sc_num]-treeVars_.superClusterZ[sc_num]), 2)
-		  );
-}
-
-
-float extraTravelTime(int sc_num, EcalTimeTreeContent & treeVars_) { // extra travel time with respect to collision at IP, in ns
-  
-  float travelled = sqrt (	  pow( (treeVars_.superClusterX[sc_num]-treeVars_.superClusterVertexX[sc_num]), 2) +
-				  pow( (treeVars_.superClusterY[sc_num]-treeVars_.superClusterVertexY[sc_num]), 2) +   
-				  pow( (treeVars_.superClusterZ[sc_num]-treeVars_.superClusterVertexZ[sc_num]), 2)
-				  );
-  float nominal = sqrt (	  pow( (treeVars_.superClusterX[sc_num]), 2) +
-				  pow( (treeVars_.superClusterY[sc_num]), 2) +   
-				  pow( (treeVars_.superClusterZ[sc_num]), 2)
-				  );
-
-  //std::cout << "extraTravelTime [ns]: " <<  (travelled-nominal)/100./lightSpeed*1e9 << std::endl;
-  return  (travelled-nominal)/100./lightSpeed*1e9;
-
-}
-
-
-float extraTravelTime(int sc_num, int vtx_num, EcalTimeTreeContent & treeVars_) { // extra travel time with respect to an arbitrary vertex
-  if(vtx_num<0 || vtx_num>=treeVars_.nVertices){
-    std::cout<< "Usnig invalid vtx_num "<<vtx_num<<" within extraTravelTime(int sc_num, int vtx_num, EcalTimeTreeContent & treeVars_). Stopping the program." << std::endl;
-    assert(0);
-  }
-  
-  float travelled = sqrt (	  pow( (treeVars_.superClusterX[sc_num]-treeVars_.vtxX[vtx_num]), 2) +
-				  pow( (treeVars_.superClusterY[sc_num]-treeVars_.vtxY[vtx_num]), 2) +   
-				  pow( (treeVars_.superClusterZ[sc_num]-treeVars_.vtxZ[vtx_num]), 2)
-				  );
-  float nominal = sqrt (	  pow( (treeVars_.superClusterX[sc_num]), 2) +
-				  pow( (treeVars_.superClusterY[sc_num]), 2) +   
-				  pow( (treeVars_.superClusterZ[sc_num]), 2)
-				  );
-
-  return  (travelled-nominal)/100./lightSpeed*1e9;
-
 }
 
 
