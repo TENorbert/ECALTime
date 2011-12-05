@@ -859,7 +859,8 @@ int main (int argc, char** argv)
   std::vector<edm::ParameterSet> psets;
   edm::ParameterSet pSet;
   pSet.addParameter("@service_type",std::string("TFileService"));
-  pSet.addParameter("fileName",std::string("TimePerf-plots.root")); // this is the file TFileService will write into
+  //pSet.addParameter("fileName",std::string("TimePerf-plots.root")); // this is the file TFileService will write into
+  pSet.addParameter("fileName",outputRootName_); // this is the file TFileService will write into
   psets.push_back(pSet);
   static edm::ServiceToken services(edm::ServiceRegistry::createSet(psets));
   static edm::ServiceRegistry::Operate operate(services);
@@ -872,6 +873,19 @@ int main (int argc, char** argv)
   TFileDirectory subDirEBEB=fs->mkdir("EBEB");  
   HistSet plotsEBEB;
   plotsEBEB.book(subDirEBEB,std::string("EBEB"));
+
+  // separate folders for different number of reconstructed vertices
+  TFileDirectory subDirEBEBlowPU=fs->mkdir("EBEBlowPU");  
+  HistSet plotsEBEBlowPU;   plotsEBEBlowPU.book(subDirEBEBlowPU,std::string("EBEBlowPU"));
+  
+  TFileDirectory subDirEBEBmidPU=fs->mkdir("EBEBmidPU");  
+  HistSet plotsEBEBmidPU;   plotsEBEBmidPU.book(subDirEBEBmidPU,std::string("EBEBmidPU"));
+  
+  TFileDirectory subDirEBEBhighPU=fs->mkdir("EBEBhighPU");  
+  HistSet plotsEBEBhighPU;   plotsEBEBhighPU.book(subDirEBEBhighPU,std::string("EBEBhighPU"));
+  
+  TFileDirectory subDirEBEBsuperPU=fs->mkdir("EBEBsuperPU");  
+  HistSet plotsEBEBsuperPU;   plotsEBEBsuperPU.book(subDirEBEBsuperPU,std::string("EBEBsuperPU"));
   
   TFileDirectory subDirEEEE=fs->mkdir("EEEE");  
   HistSet plotsEEEE;
@@ -1039,6 +1053,12 @@ int main (int argc, char** argv)
 	plotsECALECAL.fill(sc1,sc2, bc1,bc2);
 	if      ( fabs(treeVars_.clusterEta[bc1])<1.4    &&  fabs(treeVars_.clusterEta[bc2])<1.4 ){
  	  plotsEBEB.fill(sc1,sc2, bc1,bc2);
+
+	  // fill different according to different pile up (selected on number of reco vertices)
+	  if      (treeVars_.nVertices<6)  plotsEBEBlowPU  .fill(sc1,sc2, bc1,bc2);
+	  else if (treeVars_.nVertices<11) plotsEBEBmidPU  .fill(sc1,sc2, bc1,bc2);
+	  else if (treeVars_.nVertices<16) plotsEBEBhighPU .fill(sc1,sc2, bc1,bc2);
+	  else                             plotsEBEBsuperPU.fill(sc1,sc2, bc1,bc2);
 
 	  float energyRatio1 = treeVars_.xtalInBCEnergy[bc1][bcTime1.seed];
 	  if(bcTime1.second>-1) {energyRatio1 /= treeVars_.xtalInBCEnergy[bc1][bcTime1.second]; }
