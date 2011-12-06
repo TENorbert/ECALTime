@@ -431,6 +431,8 @@ struct HistSet{
   TH1F* seedTimeDiffHistTOF_;
   TH1F* secondTimeDiffHist_;
   TH1F* secondTimeDiffHistTOF_;
+  TH1F* seed2secondTimeDiffHist_;
+  TH1F* seed2secondTimeDiffHistTOF_;
   TH1F* clusTimeDiffHist_;
   TH1F* clusTimeDiffHistTOF_, *clusTimeDiffHistTOFwrongVertex_;
   TH1F* numCryBC1, *numCryBC2;
@@ -632,6 +634,11 @@ void HistSet::book(TFileDirectory subDir, const std::string& post) {
   secondTimeDiffHist_  =(TH1F*) subDir.make<TH1F>("time difference of seconds","second time difference; t_{second1} - t_{second2} [ns]; num. seed pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);//GF new
   secondTimeDiffHistTOF_ =(TH1F*) subDir.make<TH1F>("TOF-corr time difference of seconds","TOF-corr seconds time difference;  (t_{second1} - t_{second2}) TOF-corrected [ns]; num. sec pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
 
+
+ seed2secondTimeDiffHist_ =(TH1F*) subDir.make<TH1F>("time difference of seed2second","seed2second time difference; t_{seed} - t_{second} [ns]; num. seed-second pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
+  seed2secondTimeDiffHistTOF_ =(TH1F*) subDir.make<TH1F>("TOF-corr time difference of seeds2second","TOF-corr seed2second time difference;  (t_{seed} - t_{second}) TOF-corrected [ns]; num. seed-second pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
+
+
   clusTimeDiffHist_    =(TH1F*) subDir.make<TH1F>("cluster time difference","cluster time difference;  t_{clus1} - t_{clus2} [ns]; num. cluster pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
   clusTimeDiffHistTOF_ =(TH1F*) subDir.make<TH1F>("TOF-corr cluster time difference","TOF-corr cluster time difference; (t_{clus1} - t_{clus2}) TOF-corrected [ns]; num. cluster pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
 
@@ -738,10 +745,14 @@ void HistSet::fill(int sc1, int sc2, int bc1, int bc2 ){
   else                  secondAmpli_->Fill(0);  
   if(bcTime2.second>-1) secondAmpli_->Fill(treeVars_.xtalInBCEnergy[bc2][bcTime2.second]);
   else                  secondAmpli_->Fill(0);  
-  if(bcTime1.second>-1 && bcTime2.second>-1){
+  if(bcTime1.second>-1 && bcTime2.second>-1){  // check that there's crystals beyond seed
     secondTime_            -> Fill( bcTime1.secondtime);  secondTime_->Fill(bcTime2.secondtime); 
     secondTimeDiffHist_    -> Fill( bcTime1.secondtime - bcTime2.secondtime );
     secondTimeDiffHistTOF_ -> Fill( (bcTime1.secondtime-extraTravelTime(sc1,treeVars_))  - (bcTime2.secondtime-extraTravelTime(sc2,treeVars_))  );
+    seed2secondTimeDiffHist_        -> Fill( bcTime1.seedtime - bcTime2.secondtime );
+    seed2secondTimeDiffHist_        -> Fill( bcTime2.seedtime - bcTime1.secondtime );
+    seed2secondTimeDiffHistTOF_     -> Fill( (bcTime1.seedtime-extraTravelTime(sc1,treeVars_))  - (bcTime2.secondtime-extraTravelTime(sc2,treeVars_))  );
+    seed2secondTimeDiffHistTOF_     -> Fill( (bcTime2.seedtime-extraTravelTime(sc2,treeVars_))  - (bcTime1.secondtime-extraTravelTime(sc1,treeVars_))  );
   }
   
   
