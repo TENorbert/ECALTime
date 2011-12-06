@@ -413,6 +413,10 @@ struct HistSet{
   
   // fill all histos of the set with the two electron candidates
   void fill(int sc1, int sc2, int cl1, int cl2);
+  // fill all histos of the set with the two electron candidates; using the last two arguments to implements some specific selections
+  // "type" allows to have different usages for 'cut'
+  // "cut"  is what you really cut on 
+  void fill(int sc1, int sc2, int cl1, int cl2, int type, float cut);
   
   TH1 * nVertices_;
   TH1F* mass_;
@@ -665,7 +669,13 @@ void HistSet::book(TFileDirectory subDir, const std::string& post) {
 }
   
 void HistSet::fill(int sc1, int sc2, int bc1, int bc2 ){
+  // if launched with no argument, call the generalized 'file' with type=0 and cut=0, which means cuts are ignored 
+  fill(sc1, sc2, bc1, bc2, 0, 0.);
+}
 
+void HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut){
+  
+  
   float et1 = treeVars_.superClusterRawEnergy[sc1]/cosh( treeVars_.superClusterEta[sc1] );
   math::PtEtaPhiELorentzVectorD  el1(et1  ,
 				     treeVars_.superClusterEta[sc1],
@@ -692,6 +702,39 @@ void HistSet::fill(int sc1, int sc2, int bc1, int bc2 ){
   ClusterTime bcTime1 = timeAndUncertSingleCluster(bc1);
   ClusterTime bcTime2 = timeAndUncertSingleCluster(bc2);
   
+
+
+  if (type==0){ // no cuts are being used
+    ;
+  }
+  
+  else if (type==1){ // cut on the agreement between .seedtime and .secondtime within either cluster
+    if(  fabs( bcTime1.seedtime - bcTime1.secondtime ) > cut 
+	 ||
+	 fabs( bcTime2.seedtime - bcTime2.secondtime ) > cut ) 
+      return;   }
+  
+  else if (type==2){ // cut on the agreement between .seedtime and .otherstime within either cluster
+    if(  fabs( bcTime1.seedtime - bcTime1.otherstime ) > cut 
+	 ||
+	 fabs( bcTime2.seedtime - bcTime2.otherstime ) > cut ) 
+      return;   }
+  
+  else if (type==3){ // cut on chi2 of either cluster
+    if(  fabs( bcTime1.chi2 ) > cut 
+	 ||
+	 fabs( bcTime2.chi2 ) > cut ) 
+      return;   }
+
+  else{
+    std::cout << "+++ You're using HistSet with a cut type: " << type << " which is not implemented; bailing out" << std::endl;
+    assert(-1);
+  }
+  
+
+
+
+
   TOFcorrections_           -> Fill(extraTravelTime(sc2,treeVars_) - extraTravelTime(sc1,treeVars_) );
   TOFcorrectionsVSdeltaEta_ -> Fill(  fabs(treeVars_.superClusterEta[sc2]-treeVars_.superClusterEta[sc1]) , extraTravelTime(sc2,treeVars_) - extraTravelTime(sc1,treeVars_)  );
 
