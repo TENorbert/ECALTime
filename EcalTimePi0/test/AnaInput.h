@@ -26,14 +26,12 @@
 
 using namespace std;
 
+
 class AnaInput : public TObject {
-
-private:
-
 
 public:
 
-   AnaInput();     
+   AnaInput( string datacardInput = "DataCard.txt" );     
    ~AnaInput();     
 
    void GetForest( string DataSet, TString treeName );
@@ -42,14 +40,18 @@ public:
 
    TTree* GetTree( string fName, TString treeName, TFile* file = NULL );
 
-   double NormalizeComponents( string theChhannel, string cfgFile = "DataCard.txt" );
+   double NormalizeComponents( string theChhannel, string cfgFile = "" );
    
-   void GetParameters( string paraName, int* thePara, string cfgFile ="DataCard.txt" );
-   void GetParameters( string paraName, double* thePara, string cfgFile ="DataCard.txt" );
-   void GetParameters( string paraName, string* thePara, string cfgFile ="DataCard.txt" );
-   void GetParameters( string paraName, vector<double>* thePara, string cfgFile ="DataCard.txt" );
-   void GetParameters( string paraName, vector<string>* thePara, string cfgFile ="DataCard.txt" );
-   void GetParameters( string paraName, vector<int>* thePara, string cfgFile ="DataCard.txt" );
+   void GetParameters( string paraName, int* thePara, string cfgFile = "" );
+   void GetParameters( string paraName, double* thePara, string cfgFile ="" );
+   void GetParameters( string paraName, string* thePara, string cfgFile ="" );
+   void GetParameters( string paraName, vector<double>* thePara, string cfgFile = "" );
+   void GetParameters( string paraName, vector<string>* thePara, string cfgFile = "" );
+   void GetParameters( string paraName, vector<int>* thePara, string cfgFile = "" );
+
+private:
+
+   string datacardfile ;
 
    //ClassDef(AnaInput, 1);
 
@@ -57,5 +59,6 @@ public:
 
 //#if !defined(__CINT__)
 //    ClassImp(AnaInput);
+
 #endif
 
