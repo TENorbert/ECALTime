@@ -418,6 +418,9 @@ struct HistSet{
   // "type" allows to have different usages for 'cut'
   // "cut"  is what you really cut on 
   int fill(int sc1, int sc2, int cl1, int cl2, int type, float cut);
+
+  // fill specifically single-cluster related quantities
+  int fillSingle(int sc1, int cl1, ClusterTime bcTime1);
   
   TH1 * nVertices_;
   TH1F* mass_;
@@ -717,7 +720,7 @@ int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut){
   ClusterTime bcTime2 = timeAndUncertSingleCluster(bc2);
   
 
-
+  ///////////////////////////////////// cuts //////////////////////////////////////////////////////////////
   if (type==0){ // no cuts are being used
     ;
   }
@@ -749,11 +752,13 @@ int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut){
     std::cout << "+++ You're using HistSet with a cut type: " << type << " which is not implemented; bailing out" << std::endl;
     assert(-1);
   }
-  
+  ///////////////////////////////////// cuts are done////////////////////////////////////////////////////////  
 
 
-  TOFsingle_ -> Fill( extraTravelTime(sc2,treeVars_) ); //single
-  TOFsingle_ -> Fill( extraTravelTime(sc1,treeVars_) ); //single
+  // FIRST, tale care of all single-cluster histograms; do for each of the two clusters  
+  HistSet::fillSingle(sc1, bc1,  bcTime1);
+  HistSet::fillSingle(sc2, bc2,  bcTime2);
+
   TOFcorrections_           -> Fill(extraTravelTime(sc2,treeVars_) - extraTravelTime(sc1,treeVars_) ); // double
   TOFcorrectionsVSdeltaEta_ -> Fill(  fabs(treeVars_.superClusterEta[sc2]-treeVars_.superClusterEta[sc1]) , extraTravelTime(sc2,treeVars_) - extraTravelTime(sc1,treeVars_)  ); // double
 
@@ -795,28 +800,10 @@ int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut){
   } // if vertex matching succeeded
   //  else std::cout << "vertex was not found which matches electrons track... " << std::endl;
   
-  if(bcTime1.numCry>1){
-    chi2_   ->Fill(bcTime1.chi2);      chi2ndf_->Fill(bcTime1.chi2/bcTime1.numCry);   } //single
-  if(bcTime2.numCry>1){
-    chi2_    ->Fill(bcTime2.chi2);     chi2ndf_->Fill(bcTime2.chi2/bcTime2.numCry);   } //single
-
   // take care of the seeds
-  seedTime_            -> Fill(bcTime1.seedtime);  seedTime_->Fill(bcTime2.seedtime); //single
   seedTimeDiffHist_    -> Fill( bcTime1.seedtime - bcTime2.seedtime ); // double
   seedTimeDiffHistTOF_ -> Fill( (bcTime1.seedtime-extraTravelTime(sc1,treeVars_))  - (bcTime2.seedtime-extraTravelTime(sc2,treeVars_))  ); // double
   
-  // take care of the second-highest amplitude crystal
-  if(bcTime1.second>-1) {
-    secondAmpli_        -> Fill(treeVars_.xtalInBCEnergy[bc1][bcTime1.second]);  // check that there's crystals beyond seed // single
-    seed2secSingleClus_ -> Fill( bcTime1.seedtime - bcTime1.secondtime ); // single
-  }
-  else                  secondAmpli_->Fill(0);  
-
-  if(bcTime2.second>-1) {
-    secondAmpli_        ->Fill(treeVars_.xtalInBCEnergy[bc2][bcTime2.second]);  // check that there's crystals beyond seed // single
-    seed2secSingleClus_ -> Fill( bcTime2.seedtime - bcTime2.secondtime ); // single
-  }
-  else                  secondAmpli_->Fill(0);  
 
   if(bcTime1.second>-1 && bcTime2.second>-1){  // check that there's crystals beyond seed // ALL doubles 
     secondTime_                     -> Fill( bcTime1.secondtime);  secondTime_->Fill(bcTime2.secondtime); 
@@ -829,13 +816,39 @@ int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut){
   }
   
   
-  clusterTime_         -> Fill(bcTime1.time);              clusterTime_ ->Fill(bcTime2.time); // single
-  clusTimeDiffHist_    -> Fill(bcTime1.time - bcTime2.time );
+  clusTimeDiffHist_    -> Fill(bcTime1.time - bcTime2.time ); // double
   clusTimeDiffHistTOF_ -> Fill( (bcTime1.time - extraTravelTime(sc1,treeVars_) ) - (bcTime2.time -extraTravelTime(sc2,treeVars_)) );
 
+  timeVsEtaLead_ -> Fill( treeVars_.superClusterEta[sc1] , (bcTime1.time - extraTravelTime(sc1,treeVars_) ) ); // double 
+  timeVsEtaSub_  -> Fill( treeVars_.superClusterEta[sc2] , (bcTime2.time - extraTravelTime(sc2,treeVars_) ) ); // double
+
+  return 1;
+}
+// end HistSet::fill
+
+
+int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1){
+  TOFsingle_ -> Fill( extraTravelTime(sc1,treeVars_) ); //single
+
+  if(bcTime1.numCry>1){
+    chi2_   ->Fill(bcTime1.chi2);      chi2ndf_->Fill(bcTime1.chi2/bcTime1.numCry);   } //single
+
+  // take care of the seeds
+  seedTime_            -> Fill(bcTime1.seedtime); //single
+
+
+  // take care of the second-highest amplitude crystal
+  if(bcTime1.second>-1) {
+    secondAmpli_        -> Fill(treeVars_.xtalInBCEnergy[bc1][bcTime1.second]);  // check that there's crystals beyond seed // single
+    seed2secSingleClus_ -> Fill( bcTime1.seedtime - bcTime1.secondtime ); // single
+  }
+  else                  secondAmpli_->Fill(0);  
+
+  clusterTime_         -> Fill(bcTime1.time);
+
+
   seedAmpli_->Fill(treeVars_.xtalInBCEnergy[bc1][bcTime1.seed]); // single
-  seedAmpli_->Fill(treeVars_.xtalInBCEnergy[bc2][bcTime2.seed]); // single
-  
+
   // std::cout << "otherstime:  " << bcTime1.otherstime << "\t" << bcTime2.otherstime << std::endl;
   // std::cout << "seedtime:  " << bcTime1.seedtime << "\t" << bcTime2.seedtime << std::endl;
   if(bcTime1.otherstime>-999) // check that there's crystals beyond seed
@@ -851,36 +864,19 @@ int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut){
 						   )   // single
 					   ); 
     }
-  if(bcTime2.otherstime>-999) // check that there's crystals beyond seed // ALL single
-    {
-      diffSeedOther_           -> Fill(bcTime2.seedtime-bcTime2.otherstime);
-      diffSeedOtherOverErr_    ->Fill( (bcTime2.seedtime-bcTime2.otherstime) / sqrt( pow(treeVars_.xtalInBCTime[bc2][bcTime2.seed],2) -0.6*0.6+timingResParamConstEB*timingResParamConstEB + pow(bcTime2.otherstimeErr,2)) ); 
-      diffSeedSecond_          -> Fill(bcTime2.seedtime-treeVars_.xtalInBCTime[bc2][bcTime2.second]); 
-      diffSeedSecondOverErr_    -> Fill( (bcTime2.seedtime-treeVars_.xtalInBCTime[bc2][bcTime2.second]) 
-					   / sqrt( pow(treeVars_.xtalInBCTimeErr[bc2][bcTime2.seed],2) 
-						   +  pow(treeVars_.xtalInBCTimeErr[bc2][bcTime2.second],2)
-						   - 2* 0.6*0.6 + 2*timingResParamConstEB*timingResParamConstEB 
-						   )   
-					   ); 
-    }
-  
+
+
   numCryBC1->Fill(bcTime1.numCry); // single
-  numCryBC2->Fill(bcTime2.numCry); // single
+
+
+
   timeVsEta_ -> Fill( treeVars_.superClusterEta[sc1] , (bcTime1.time - extraTravelTime(sc1,treeVars_) ) ); // single
-  timeVsEtaLead_ -> Fill( treeVars_.superClusterEta[sc1] , (bcTime1.time - extraTravelTime(sc1,treeVars_) ) ); // single
-  timeVsEtaSub_  -> Fill( treeVars_.superClusterEta[sc2] , (bcTime2.time - extraTravelTime(sc2,treeVars_) ) ); // single
+
   // catch location of time outliers
   if ( fabs(    (bcTime1.seedtime - extraTravelTime(sc1,treeVars_))    )>1.5 )  outliersVsEtaPhi_ -> Fill( treeVars_.superClusterEta[sc1] , treeVars_.superClusterPhi[sc1]); // single
-  if ( fabs(    (bcTime2.seedtime - extraTravelTime(sc2,treeVars_))    )>1.5 )  outliersVsEtaPhi_ -> Fill( treeVars_.superClusterEta[sc2] , treeVars_.superClusterPhi[sc2]); // single
 
   return 1;
 }
-// end HistSet::fill
-
-
-//int HistSet::fillSingle(int sc1, int sc2, int bc1, int bc2, int type, float cut){
-//
-//}
 
 // ---------------------------------------------------------------------------------------
 // ------------------ Function to initialize the histograms ------------------------------
