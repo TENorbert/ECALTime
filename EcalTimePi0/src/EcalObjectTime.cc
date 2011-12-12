@@ -118,7 +118,7 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex, EcalTimeTreeContent tr
   if   (weightOtherSum>0) bestOtherTime= weightTOthersum/weightOtherSum;
   // else std::cout << "bestOtherTime not made" << std::endl;
     
-
+  // if there's no more that
   float chi2 = -999999;
   // loop on the cry components to get chi2
   // do this only if you have at least 2 crystals over threshold and not spiky
@@ -144,15 +144,23 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex, EcalTimeTreeContent tr
 	
 	// best is using time error as estimated from the ratio method itself; keep the old approach around
 	float doAnalytically=false;
+	// pull up the old definition of chi2, based on CRAFT-paper error parameterization
   	float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry];
   	float sigmaOfThis = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
+	// you can choose also to use the noise-type error directly from the ratio
 	if(!doAnalytically){
-	  sigmaOfThis = pow( treeVars_.xtalInBCTimeErr[bClusterIndex][thisCry], 2) - 0.6*0.6 + timingResParamConst*timingResParamConst ;
+	  // subtract in quadrature what was added by hand and add back what is more realistic...
+	  sigmaOfThis = sqrt(  pow( treeVars_.xtalInBCTimeErr[bClusterIndex][thisCry], 2) 
+			       - 0.6*0.6 
+			       + timingResParamConst*timingResParamConst  
+			       ) ;
 	}
   	// we're computing chi2 here; theResult.numCry is available if you want chi2/ndf 
   	chi2 += pow( (timeOfThis-bestTime)/sigmaOfThis, 2);
   	
       }// end loop on cry, including amplitude selection
+    // in case all crystals have been rejected, and chi2 not really computed
+    if (chi2==0) chi2 = -999999;
   }//end if
 
   
