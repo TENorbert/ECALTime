@@ -1,4 +1,6 @@
-#include "CalibCalorimetry/EcalTiming/interface/EcalTimeTreeContent.h"
+//#include "CalibCalorimetry/EcalTiming/interface/EcalTimeTreeContent.h"
+#include "ECALTime/EcalTimePi0/interface/EcalTimePhyTreeContent.h"
+
 #define lightSpeed 299792458
 
 // Consts
@@ -8,9 +10,8 @@ const float timingResParamNEB     = 28.51; // ns ; plots approved http://indico.
 const float timingResParamConstEB = 0.1;   // ns ; 
 const float timingResParamNEE     = 31.84; // ns ; Fig. 2 from CFT-09-006
 const float timingResParamConstEE = 0.3;   // ns ; rough, probably conservative estimate
-float minAmpliOverSigma_          = 30;    // dimensionless, and holds consistently for EB and EE
-float maxChi2NDF_ = 20;  //TODO: gf configurable
-
+const float minAmpliOverSigma_    = 30;    // dimensionless, and holds consistently for EB and EE
+const float maxChi2NDF_           = 20;  //TODO: gf configurable
 
 // container to hold time-relaed observables for clusters or objects
 struct ClusterTime {

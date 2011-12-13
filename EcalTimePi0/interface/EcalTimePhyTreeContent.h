@@ -18,6 +18,7 @@
 #define MAXPHO 10
 #define MAXOBJ 50
 
+
 struct EcalTimePhyTreeContent
 {
   // Flags
@@ -494,8 +495,7 @@ struct EcalTimePhyTreeContent
 
 
 
-
-
+typedef EcalTimePhyTreeContent EcalTimeTreeContent;
 
 
 // ------------------------------------------------------------------------
