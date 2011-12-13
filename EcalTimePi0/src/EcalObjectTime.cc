@@ -1,4 +1,5 @@
 #include "ECALTime/EcalTimePi0/interface/EcalObjectTime.h"
+
 #include <iostream>
 #include <math.h> 
 #include <assert.h>
@@ -144,6 +145,7 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex, EcalTimeTreeContent tr
 	
 	// best is using time error as estimated from the ratio method itself; keep the old approach around
 	float doAnalytically=false;
+	doAnalytically=true;
 	// pull up the old definition of chi2, based on CRAFT-paper error parameterization
   	float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry];
   	float sigmaOfThis = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
