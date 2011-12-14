@@ -537,6 +537,22 @@ int main (int argc, char** argv)
   HistSet plotsEBEEchi2;   plotsEBEEchi2.book(subDirEBEEchi2,std::string("EBEEchi2"));
   plotsEBEEchi2.setTree(&treeVars_);
   
+  TFileDirectory subDirEBEBchi2loose=fs->mkdir("EBEBchi2loose");  
+  HistSet plotsEBEBchi2loose;   plotsEBEBchi2loose.book(subDirEBEBchi2loose,std::string("EBEBchi2loose"));
+  plotsEBEBchi2loose.setTree(&treeVars_);
+
+  TFileDirectory subDirEBEEchi2loose=fs->mkdir("EBEEchi2loose");  
+  HistSet plotsEBEEchi2loose;   plotsEBEEchi2loose.book(subDirEBEEchi2loose,std::string("EBEEchi2loose"));
+  plotsEBEEchi2loose.setTree(&treeVars_);
+
+  TFileDirectory subDirEBEBchi2tight=fs->mkdir("EBEBchi2tight");  
+  HistSet plotsEBEBchi2tight;   plotsEBEBchi2tight.book(subDirEBEBchi2tight,std::string("EBEBchi2tight"));
+  plotsEBEBchi2tight.setTree(&treeVars_);
+
+  TFileDirectory subDirEBEEchi2tight=fs->mkdir("EBEEchi2tight");  
+  HistSet plotsEBEEchi2tight;   plotsEBEEchi2tight.book(subDirEBEEchi2tight,std::string("EBEEchi2tight"));
+  plotsEBEEchi2tight.setTree(&treeVars_);
+  
   TFileDirectory subDirEBEBseed2sec=fs->mkdir("EBEBseed2sec");  
   HistSet plotsEBEBseed2sec;   plotsEBEBseed2sec.book(subDirEBEBseed2sec,std::string("EBEBseed2sec"));
   plotsEBEBseed2sec.setTree(&treeVars_);
@@ -693,8 +709,12 @@ int main (int argc, char** argv)
 	if      ( fabs(treeVars_.clusterEta[bc1])<1.4    &&  fabs(treeVars_.clusterEta[bc2])<1.4 ){
  	  plotsEBEB    .fill(sc1,sc2, bc1,bc2);
 
-	  int type=3; float cut=2.5;
+	  int type=3; float cut=6;
+	  plotsEBEBchi2loose.fill(sc1,sc2, bc1,bc2, type, cut); // cutting on chi2/ndf of 2
+	  type=3; cut=4.;
 	  plotsEBEBchi2    .fill(sc1,sc2, bc1,bc2, type, cut); // cutting on chi2/ndf of 2.5
+	  type=3; cut=3.;
+	  plotsEBEBchi2tight.fill(sc1,sc2, bc1,bc2, type, cut); // cutting on chi2/ndf of 2
 	  type=1;  cut=1.5;
 	  plotsEBEBseed2sec.fill(sc1,sc2, bc1,bc2, type, cut); // cutting on agreement (<1.5ns) between seed and second, within a cluster
 
@@ -723,8 +743,12 @@ int main (int argc, char** argv)
 		  (fabs(treeVars_.clusterEta[bc1])>1.5 && fabs(treeVars_.clusterEta[bc2])<1.4)    ) {
 	  plotsEBEE.fill(sc1,sc2, bc1,bc2);
 	  
-	  int type=3; float cut=2.5; 
+	  int type=3; float cut=6.; 
+	  plotsEBEEchi2loose    .fill(sc1,sc2, bc1,bc2, type, cut); // cutting on chi2/ndf of 2.
+	  type=3; cut=4.;
 	  plotsEBEEchi2    .fill(sc1,sc2, bc1,bc2, type, cut); // cutting on chi2/ndf of 2.5
+	  type=3; cut=3.;
+	  plotsEBEEchi2tight    .fill(sc1,sc2, bc1,bc2, type, cut); // cutting on chi2/ndf of 3.
 	  type=1; cut=1.5;
 	  plotsEBEEseed2sec.fill(sc1,sc2, bc1,bc2, type, cut); // cutting on agreement (<1.5ns) between seed and second, within a cluster
 	}

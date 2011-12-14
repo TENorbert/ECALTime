@@ -460,9 +460,16 @@ int main (int argc, char** argv)
   HistSet plotsEBEBchi2;   plotsEBEBchi2.book(subDirEBEBchi2,std::string("EBEBchi2"));
   plotsEBEBchi2.setTree(&treeVars_);
 
-//  TFileDirectory subDirEEEE=fs->mkdir("EEEE");  
-//  HistSet plotsEEEE;   plotsEEEE.book(subDirEEEE,std::string("EEEE"));
-//  plotsEEEE.setTree(&treeVars_);    
+
+  TFileDirectory subDirEBEBchi2loose=fs->mkdir("EBEBchi2loose");  
+  HistSet plotsEBEBchi2loose;   plotsEBEBchi2loose.book(subDirEBEBchi2loose,std::string("EBEBchi2loose"));
+  plotsEBEBchi2loose.setTree(&treeVars_);
+
+
+  TFileDirectory subDirEBEBchi2tight=fs->mkdir("EBEBchi2tight");  
+  HistSet plotsEBEBchi2tight;   plotsEBEBchi2tight.book(subDirEBEBchi2tight,std::string("EBEBchi2tight"));
+  plotsEBEBchi2tight.setTree(&treeVars_);
+
 
   TFileDirectory subDirEBEE=fs->mkdir("EBEE");  
   HistSet plotsEBEE;   plotsEBEE.book(subDirEBEE,std::string("EBEE"));
@@ -528,65 +535,26 @@ int main (int argc, char** argv)
     if (speak_)  std::cout << "  found " << treeVars_.nSuperClusters << " superclusters" << std::endl ;
     if (speak_)  std::cout << "  found " << treeVars_.nClusters << " basic clusters" << std::endl ;
 
-
+    
+    // control region
+    if(treeVars_.nJets<1 || treeVars_.nJets>2) continue;
+    // look only at half of the events 
+    if ( (treeVars_.orbit % 2)==1 ) continue;
+    
+    nVertices_->Fill(treeVars_.nVertices);
+    
     ///////////////////////////////////////////////////////////////////////
     // outer loop on supercluster
     for (int sc1=0; sc1<treeVars_.nSuperClusters; sc1++){
 
       float et1 = treeVars_.superClusterRawEnergy[sc1]/cosh( treeVars_.superClusterEta[sc1] );
-      if (et1<20) continue;
+      if (et1<70) continue; // match choice of control region; this should be translated into cut on the photon, not SC
 
       // select only photons
-      if( fabs ( treeVars_.SCPIdx[sc1] - 22) > 2) continue;
+      if ( fabs ( treeVars_.SCPIdx[sc1] - 22) > 2) continue;
 
 
-      math::PtEtaPhiELorentzVectorD  el1(et1  ,
-					 treeVars_.superClusterEta[sc1],
-					 treeVars_.superClusterPhi[sc1],
-					 treeVars_.superClusterRawEnergy[sc1] );
-
-      
-      
-      ///////////////////////////////////////////////////////////////////////
-      // inner loop on supercluster
-      //      for (int sc2=(sc1+1); sc2<treeVars_.nSuperClusters; sc2++){
-      //	
-      //std::cout << "SCPIdx1: " << treeVars_.SCPIdx[sc1] << " SCPIdx2: " << treeVars_.SCPIdx[sc2] << std::endl;
-      // std::cout << "SCPIdx1: " << treeVars_.SCPIdx[sc1]  << std::endl;
-      
-	//	float et2 = treeVars_.superClusterRawEnergy[sc2]/cosh( treeVars_.superClusterEta[sc2] );
-	//	if (et2<20) continue;
-	
-	//	math::PtEtaPhiELorentzVectorD  el2(et2 ,
-	//					   treeVars_.superClusterEta[sc2],
-	//					   treeVars_.superClusterPhi[sc2],
-	//					   treeVars_.superClusterRawEnergy[sc2] );
-	//      
-	// there seems to be a problem with vertexing - since nearly none of the electrons have the same vertex... CHECK!
-	//	float dvertex = pow(treeVars_.superClusterVertexZ[sc1]-treeVars_.superClusterVertexZ[sc2],2);
-	//dvertex       += pow(treeVars_.superClusterVertexY[sc1]-treeVars_.superClusterVertexY[sc2],2);
-	//dvertex       += pow(treeVars_.superClusterVertexX[sc1]-treeVars_.superClusterVertexX[sc2],2);
-	//	dvertex       = sqrt(dvertex);
-	
-	//	math::PtEtaPhiELorentzVectorD diEle = el1;
-	//	diEle += el2;
-	
-	// ////////////////////////
-	//	mass_      ->Fill(diEle.M());
-	//	dZvertices_->Fill(dvertex);
-	//Zvertices_->Fill( (treeVars_.superClusterVertexZ[sc1]-treeVars_.superClusterVertexZ[sc2])/2 );
-	nVertices_->Fill(treeVars_.nVertices);
-
-	// require invariant mass
-	//	if( fabs( diEle.M() - 91 ) > 20 ) continue;
-	// require two electrons from the same vertex
-	//if ( dvertex > 0.01 )             continue;
-
-	//	if(0) std::cout << "di-electron system mass: " << diEle.M() << " vertex distance: " << dvertex << std::endl;
-
-	// at this stage I have a suitable di-electron system for time studies
-
-	float tmpEne=-9999;
+      float tmpEne=-9999;
 	// loop on BC and match to sc1  ===============
 	int bc1=-1;
 	for (int bc=0; bc<treeVars_.nClusters; bc++){
@@ -598,62 +566,31 @@ int main (int argc, char** argv)
 	}// end - loop over BC
 
 	
-	//	tmpEne=-9999;
-	//	// loop on BC and match to sc2 ==============
-	//	int bc2=-1;
-	//	for (int bc=0; bc<treeVars_.nClusters; bc++){
-	//	  if ( pow(treeVars_.superClusterEta[sc2]-treeVars_.clusterEta[bc],2)+ pow(treeVars_.superClusterPhi[sc2]-treeVars_.clusterPhi[bc],2) < 0.02 
-	//	       && treeVars_.clusterEnergy[bc]>tmpEne) {
-	//	    tmpEne=treeVars_.clusterEnergy[bc];
-	//	    bc2=bc;
-	//	  }// end - if good bc candidate
-	//	}// end - loop over BC
-	
 	// protect in case of no matching
 	if(bc1==-1) continue;
 	
 	ClusterTime bcTime1 = timeAndUncertSingleCluster(bc1,treeVars_);
-	//	ClusterTime bcTime2 = timeAndUncertSingleCluster(bc2,treeVars_);
-
-	//if(! (bcTime1.isvalid && bcTime2.isvalid) ) continue;
 	if(! (bcTime1.isvalid ) ) continue;
 
-
-	//plotsEBEB.fillSingle(sc1, bc1,  bcTime1);
-
-	// fill the structures which hold all the plots
-	//plotsECALECAL.fill(sc1,sc2, bc1,bc2);
-	//if      ( fabs(treeVars_.clusterEta[bc1])<1.4    &&  fabs(treeVars_.clusterEta[bc2])<1.4 ){
 	if      ( fabs(treeVars_.clusterEta[bc1])<1.4   ){
 	  plotsEBEB.fillSingle(sc1, bc1,  bcTime1);
+	  
+	  int type=3; float cut=6;
+	  plotsEBEBchi2loose.fillSingle(sc1, bc1,  bcTime1, type, cut);
 
-	  int type=3; float cut=2.5;
+	  type=3; cut=4;
 	  plotsEBEBchi2.fillSingle(sc1, bc1,  bcTime1, type, cut);
+
+	  type=3; cut=3;
+	  plotsEBEBchi2tight.fillSingle(sc1, bc1,  bcTime1, type, cut);
+
 	} 
 	else if( fabs(treeVars_.clusterEta[bc1])>1.5 && fabs(treeVars_.clusterEta[bc1])<2.5 ){
 	plotsEBEE.fillSingle(sc1, bc1,  bcTime1);
 	}
 
-	
-	// 	  //plotsEBEB.fill(sc1,sc2, bc1,bc2);
-	//
-	//	  float energyRatio1 = treeVars_.xtalInBCEnergy[bc1][bcTime1.seed];
-	//	  if(bcTime1.second>-1) {energyRatio1 /= treeVars_.xtalInBCEnergy[bc1][bcTime1.second]; }
-	//	  else { energyRatio1 /= 99999; }
-	//	  float energyRatio2 = treeVars_.xtalInBCEnergy[bc2][bcTime2.seed];
-	//	  if(bcTime2.second>-1) {energyRatio2 /= treeVars_.xtalInBCEnergy[bc2][bcTime2.second]; }
-	//	  else { energyRatio2 /= 99999; }
-	//
-	//	  
-	//	}// if EBEB, and subcases
-	//else if ( fabs(treeVars_.clusterEta[bc1])>1.5    &&  fabs(treeVars_.clusterEta[bc2])>1.5 ) 	  plotsEEEE.fill(sc1,sc2, bc1,bc2);
-	//	else if ( (fabs(treeVars_.clusterEta[bc1])<1.4 && fabs(treeVars_.clusterEta[bc2])>1.5) ||
-	//		  (fabs(treeVars_.clusterEta[bc1])>1.5 && fabs(treeVars_.clusterEta[bc2])<1.4)    ) 	  //plotsEBEE.fill(sc1,sc2, bc1,bc2);
-	//
-	// if I've found a pair of supercluster, bail out of loop to repeat using twice the same supercluster
 	break;	
 	
-	//}// end loop sc2
     }// end loop sc1
     
   }   // end of loop over entries
