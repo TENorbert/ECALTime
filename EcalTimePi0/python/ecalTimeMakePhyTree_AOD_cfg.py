@@ -48,7 +48,9 @@ process.ecalTimePhyTree.muonCollection = cms.InputTag("muons")
 # switch on or off Tambe's analysis level corrections
 process.ecalTimePhyTree.doTimeVSAmpliCorrection = cms.bool(True)
 process.ecalTimePhyTree.runNum = 999999
-
+#process.ecalTimePhyTree.triggerName      = cms.untracked.string('HLT_Photon90_CaloIdVL_IsoL_v4'),
+process.ecalTimePhyTree.triggerName     = cms.untracked.string('HLT_Photon75_CaloIdVL_IsoL_v8'),
+process.ecalTimePhyTree.trigSource      = cms.InputTag("TriggerResults","","HLT"),
 
 
 # Set up cuts for physics objects;
@@ -67,17 +69,16 @@ process.ecalTimePhyTree.runNum = 999999
 #process.ecalTimePhyTree.muonCuts      = cms.vdouble( 25, 2.1, 0.2, 0.3 )
 
 ##################### loose selection for studies ##########################
-# jet cuts                                           pt   |eta|  nJets
-process.ecalTimePhyTree.jetCuts       = cms.vdouble( 20. , 2.4, 1 )
-# met cuts                                           Et
-process.ecalTimePhyTree.metCuts       = cms.vdouble( 0.  )
-# photon cuts                                        pt |eta|  dR   nPhoton
-process.ecalTimePhyTree.photonCuts    = cms.vdouble( 70, 2.4, 0.3, 1 )
+# jet cuts                                           pt  |eta|  NJet  MaxNJet MET  
+process.ecalTimePhyTree.jetCuts       = cms.vdouble( 30, 2.4,    3,      99,  20 )
+# photon cuts                                        Pt  eta  hcal   dR  nPho sMinMin sMinMax                                 
+process.ecalTimePhyTree.photonCuts    = cms.vdouble( 70, 2.4,   6,  0.3,   1,    0.1,    0.53 )
+# photon Isolation                                  trk,  ecalEt, ecalR, hcalEt, hcalR
+process.ecalTimePhyTree.photonIso     = cms.vdouble( 0.2,    4.5,   0.1,    4.0,   0.1 )
 # electron cuts                                      pt |eta| relIso dR
 process.ecalTimePhyTree.electronCuts  = cms.vdouble( 25, 2.4, 0.15, 0.3 )
 # muon cuts                                          pt |eta| relIso dR
 process.ecalTimePhyTree.muonCuts      = cms.vdouble( 25, 2.1, 0.2, 0.3 )
-
 
 
 ###########  USE UNCLEANED SUPERCLUSTERS  ######################### MS

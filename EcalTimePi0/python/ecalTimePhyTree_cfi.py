@@ -18,15 +18,18 @@ ecalTimePhyTree = cms.EDAnalyzer("EcalTimePhyTreeMaker",
     METSource = cms.InputTag("pfMet"),
     MuonSource = cms.InputTag("muons"),
     ElectronSource = cms.InputTag("gsfElectrons"),
-    PhotonSource = cms.InputTag("photons"),
-    # jet cuts                      Pt  eta                                  
-    jetCuts          = cms.vdouble( 30, 2.4 ),
-    # MET cuts                      Et                                   
-    metCuts          = cms.vdouble( 20 ),
-    # photon cuts                   Pt  eta  dR(photon, jets)                                 
-    photonCuts       = cms.vdouble( 30, 2.4, 0.3 ),
+    PhotonSource   = cms.InputTag("photons"),
+    triggerName      = cms.untracked.string('HLT_Photon75_CaloIdVL_IsoL_v8'),
+    triggerSource    = cms.InputTag("TriggerResults","","HLT"),
+
+    # jet/MET cuts                  Pt  eta  NJet  MaxNJet, MET          
+    jetCuts          = cms.vdouble( 30, 2.4,    3,      99,  20 ),
+    # photon cuts                   Pt  eta  hcal   dR  nPho sMinMin sMinMax                                 
+    photonCuts       = cms.vdouble( 70, 2.4,    6, 0.3,   1,    0.1,    0.53 ),
+    # photon Isolation              trk,  ecalEt, ecalR, hcalEt, hcalR
+    photonIso        = cms.vdouble( 0.2,     4.5,   0.1,    4.0,   0.1 ),
     # electron cuts                 Pt  eta  iso   dR(photon, jets)                                 
-    electronCuts     = cms.vdouble( 25, 2.4, 0.15, 0.3 ),
+    electronCuts     = cms.vdouble( 25, 2.4, 0.15,    0.3 ),
     # muon cuts                     Pt  eta  iso  dR(photon, jets)                                 
     muonCuts         = cms.vdouble( 25, 2.1, 0.2, 0.3 ),
     vertexCollection  = cms.InputTag("offlinePrimaryVertices",""),

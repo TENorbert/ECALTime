@@ -1,4 +1,4 @@
-#include "ECALTime/EcalTimePi0/interface/EcalTimePhyTreeContent.h"
+#include "CalibCalorimetry/EcalTiming/interface/EcalTimePhyTreeContent.h"
 
 bool EcalTimePhyTreeContent::trgVariables = false;
 bool EcalTimePhyTreeContent::muonVariables = false;
@@ -7,7 +7,7 @@ bool EcalTimePhyTreeContent::ecalShapeVariables = false;
 bool EcalTimePhyTreeContent::hcalVariables = false;
 bool EcalTimePhyTreeContent::tkAssVariables = false;
 bool EcalTimePhyTreeContent::tpgVariables = false;
-bool EcalTimePhyTreeContent::l1Variables = true;
+bool EcalTimePhyTreeContent::l1Variables = false;
 
 
 
@@ -17,6 +17,7 @@ void setBranchAddresses(TTree* chain, EcalTimePhyTreeContent& treeVars)
   chain -> SetBranchAddress("lumiSection", &treeVars.lumiSection);
   chain -> SetBranchAddress("orbit",       &treeVars.orbit);
   chain -> SetBranchAddress("bx",          &treeVars.bx);
+  chain -> SetBranchAddress("trgCut",      &treeVars.trgCut);
 
   chain -> SetBranchAddress("eventId",       &treeVars.eventId);
   chain -> SetBranchAddress("eventNaiveId",  &treeVars.eventNaiveId);
@@ -37,21 +38,40 @@ void setBranchAddresses(TTree* chain, EcalTimePhyTreeContent& treeVars)
   chain -> SetBranchAddress("muPy",        treeVars.muPy       );
   chain -> SetBranchAddress("muPz",        treeVars.muPz       );
   chain -> SetBranchAddress("muE",         treeVars.muE        );
+  chain -> SetBranchAddress("muEcalIso",   treeVars.muEcalIso );
+  chain -> SetBranchAddress("muHcalIso",   treeVars.muHcalIso );
+  chain -> SetBranchAddress("muTrkIso",    treeVars.muTrkIso  );
   
   chain -> SetBranchAddress("elePx",        treeVars.elePx     );
   chain -> SetBranchAddress("elePy",        treeVars.elePy     );
   chain -> SetBranchAddress("elePz",        treeVars.elePz     );
   chain -> SetBranchAddress("eleE",         treeVars.eleE      );
+  chain -> SetBranchAddress("eleEcalIso",   treeVars.eleEcalIso );
+  chain -> SetBranchAddress("eleHcalIso",   treeVars.eleHcalIso );
+  chain -> SetBranchAddress("eleTrkIso",    treeVars.eleTrkIso  );
+  chain -> SetBranchAddress("eleNLostHits", treeVars.eleNLostHits );
   
   chain -> SetBranchAddress("jetPx",        treeVars.jetPx     );
   chain -> SetBranchAddress("jetPy",        treeVars.jetPy     );
   chain -> SetBranchAddress("jetPz",        treeVars.jetPz     );
   chain -> SetBranchAddress("jetE",         treeVars.jetE      );
+  chain -> SetBranchAddress("jetNDau",      treeVars.jetNDau   );
+  chain -> SetBranchAddress("jetCM",        treeVars.jetCM    );
+  chain -> SetBranchAddress("jetCEF",       treeVars.jetCEF   );
+  chain -> SetBranchAddress("jetNHF",       treeVars.jetNHF   );
+  chain -> SetBranchAddress("jetNEF",       treeVars.jetNEF   );
   
   chain -> SetBranchAddress("phoPx",        treeVars.phoPx     );
   chain -> SetBranchAddress("phoPy",        treeVars.phoPy     );
   chain -> SetBranchAddress("phoPz",        treeVars.phoPz     );
   chain -> SetBranchAddress("phoE",         treeVars.phoE      );
+  chain -> SetBranchAddress("phoEcalIso",   treeVars.phoEcalIso );
+  chain -> SetBranchAddress("phoHcalIso",   treeVars.phoHcalIso );
+  chain -> SetBranchAddress("phoTrkIso",    treeVars.phoTrkIso  );
+  chain -> SetBranchAddress("phoHovE",      treeVars.phoHovE );
+  chain -> SetBranchAddress("phoSmin",      treeVars.phoSmin );
+  chain -> SetBranchAddress("phoSmaj",      treeVars.phoSmaj );
+  chain -> SetBranchAddress("phoTime",      treeVars.phoTime );
 
   ///*  
   // TRG VARIABLES  
@@ -90,9 +110,11 @@ void setBranchAddresses(TTree* chain, EcalTimePhyTreeContent& treeVars)
     chain -> SetBranchAddress("superClusterX",         treeVars.superClusterX);
     chain -> SetBranchAddress("superClusterY",         treeVars.superClusterY);
     chain -> SetBranchAddress("superClusterZ",         treeVars.superClusterZ);
-    chain -> SetBranchAddress("superClusterVertexX",         treeVars.superClusterVertexX);
-    chain -> SetBranchAddress("superClusterVertexY",         treeVars.superClusterVertexY);
-    chain -> SetBranchAddress("superClusterVertexZ",         treeVars.superClusterVertexZ);
+    chain -> SetBranchAddress("superClusterVertexX",   treeVars.superClusterVertexX);
+    chain -> SetBranchAddress("superClusterVertexY",   treeVars.superClusterVertexY);
+    chain -> SetBranchAddress("superClusterVertexZ",   treeVars.superClusterVertexZ);
+    chain -> SetBranchAddress("sMin",                  treeVars.sMin);
+    chain -> SetBranchAddress("sMaj",                  treeVars.sMaj);
     chain -> SetBranchAddress("nClustersInSuperCluster",    treeVars.nClustersInSuperCluster);
     chain -> SetBranchAddress("SCPIdx"              ,  treeVars.SCPIdx);
   
@@ -506,6 +528,7 @@ void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
   chain -> Branch("eventNaiveId",  &treeVars.eventNaiveId,  "eventNaiveId/i");
   chain -> Branch("timeStampLow",  &treeVars.timeStampLow,  "timeStampLow/i");
   chain -> Branch("timeStampHigh", &treeVars.timeStampHigh, "timeStampHigh/i");
+  chain -> Branch("trgCut",        &treeVars.trgCut,              "trgCut/I");
   
   
   // RECO VARIABLES
@@ -522,21 +545,40 @@ void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
   chain -> Branch("muPy",        treeVars.muPy,                 "muPy[nMuons]/F");
   chain -> Branch("muPz",        treeVars.muPz,                 "muPz[nMuons]/F");
   chain -> Branch("muE",         treeVars.muE,                  "muE[nMuons]/F");
+  chain -> Branch("muEcalIso",   treeVars.muEcalIso,            "muEcalIso[nElectrons]/F");
+  chain -> Branch("muHcalIso",   treeVars.muHcalIso,            "muHcalIso[nElectrons]/F");
+  chain -> Branch("muTrkIso",    treeVars.muTrkIso,             "muTrkIso[nElectrons]/F");
   
   chain -> Branch("elePx",        treeVars.elePx,                 "elePx[nElectrons]/F");
   chain -> Branch("elePy",        treeVars.elePy,                 "elePy[nElectrons]/F");
   chain -> Branch("elePz",        treeVars.elePz,                 "elePz[nElectrons]/F");
   chain -> Branch("eleE",         treeVars.eleE,                  "eleE[nElectrons]/F");
+  chain -> Branch("eleEcalIso",   treeVars.eleEcalIso,            "eleEcalIso[nElectrons]/F");
+  chain -> Branch("eleHcalIso",   treeVars.eleHcalIso,            "eleHcalIso[nElectrons]/F");
+  chain -> Branch("eleTrkIso",    treeVars.eleTrkIso,             "eleTrkIso[nElectrons]/F");
+  chain -> Branch("eleNLostHits", treeVars.eleNLostHits,          "eleNLostHits[nElectrons]/I");
   
   chain -> Branch("jetPx",        treeVars.jetPx,                 "jetPx[nJets]/F");
   chain -> Branch("jetPy",        treeVars.jetPy,                 "jetPy[nJets]/F");
   chain -> Branch("jetPz",        treeVars.jetPz,                 "jetPz[nJets]/F");
   chain -> Branch("jetE",         treeVars.jetE,                  "jetE[nJets]/F");
+  chain -> Branch("jetNDau",      treeVars.jetNDau,               "jetNDau[nJets]/F");
+  chain -> Branch("jetCM",        treeVars.jetCM,                 "jetCM[nJets]/F");
+  chain -> Branch("jetCEF",       treeVars.jetCEF,                "jetCEF[nJets]/F");
+  chain -> Branch("jetNHF",       treeVars.jetNHF,                "jetNHF[nJets]/F");
+  chain -> Branch("jetNEF",       treeVars.jetNEF,                "jetNEF[nJets]/F");
   
   chain -> Branch("phoPx",        treeVars.phoPx,                 "phoPx[nPhotons]/F");
   chain -> Branch("phoPy",        treeVars.phoPy,                 "phoPy[nPhotons]/F");
   chain -> Branch("phoPz",        treeVars.phoPz,                 "phoPz[nPhotons]/F");
   chain -> Branch("phoE",         treeVars.phoE,                  "phoE[nPhotons]/F");
+  chain -> Branch("phoEcalIso",   treeVars.phoEcalIso,            "phoEcalIso[nPhotons]/F");
+  chain -> Branch("phoHcalIso",   treeVars.phoHcalIso,            "phoHcalIso[nPhotons]/F");
+  chain -> Branch("phoTrkIso",    treeVars.phoTrkIso,             "phoTrkIso[nPhotons]/F");
+  chain -> Branch("phoHovE",      treeVars.phoHovE,               "phoHovE[nPhotons]/F");
+  chain -> Branch("phoSmin",      treeVars.phoSmin,               "phoSmin[nPhotons]/F");
+  chain -> Branch("phoSmaj",      treeVars.phoSmaj,               "phoSmaj[nPhotons]/F");
+  chain -> Branch("phoTime",      treeVars.phoTime,               "phoTime[nPhotons]/F");
  
   ///*  
   // TRG VARIABLES  
@@ -578,6 +620,8 @@ void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
     chain -> Branch("superClusterVertexX",   treeVars.superClusterVertexX,           "superClusterVertexX[nSuperClusters]/F");
     chain -> Branch("superClusterVertexY",   treeVars.superClusterVertexY,           "superClusterVertexY[nSuperClusters]/F");
     chain -> Branch("superClusterVertexZ",   treeVars.superClusterVertexZ,           "superClusterVertexZ[nSuperClusters]/F");
+    chain -> Branch("sMin",                  treeVars.sMin,                          "sMin[nSuperClusters]/F");
+    chain -> Branch("sMaj",                  treeVars.sMaj,                          "sMaj[nSuperClusters]/F");
 
     chain -> Branch("nClustersInSuperCluster", treeVars.nClustersInSuperCluster,     "nClustersInSuperCluster[nSuperClusters]/I");
     chain -> Branch("SCPIdx",                treeVars.SCPIdx,                               "SCPIdx[nSuperClusters]/F");
@@ -986,15 +1030,16 @@ void initializeBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
   treeVars.lumiSection = 0;
   treeVars.orbit = 0;
   treeVars.bx = 0;
+  treeVars.trgCut = -99;
   treeVars.eventId = 0; 
   treeVars.eventNaiveId = 0; 
   treeVars.timeStampLow = 0;
   treeVars.timeStampHigh = 0;
   
-  treeVars.nJets = -1 ; 
-  treeVars.nElectrons = -1 ; 
-  treeVars.nMuons = -1 ; 
-  treeVars.nPhotons = -1 ; 
+  treeVars.nJets = 0 ; 
+  treeVars.nElectrons = 0 ; 
+  treeVars.nMuons = 0 ; 
+  treeVars.nPhotons = 0 ; 
 
   treeVars.metPx = 0 ;
   treeVars.metPy = 0 ;
@@ -1005,21 +1050,40 @@ void initializeBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
       treeVars.jetPy[i] = 0 ;
       treeVars.jetPz[i] = 0 ;
       treeVars.jetE[i] = 0 ;
+      treeVars.jetNDau[i] = 0 ;
+      treeVars.jetCM[i]  = -1 ;
+      treeVars.jetCEF[i] = -1 ;
+      treeVars.jetNHF[i] = -1 ;
+      treeVars.jetNEF[i] = -1 ;
 
       treeVars.elePx[i] = 0 ;
       treeVars.elePy[i] = 0 ;
       treeVars.elePz[i] = 0 ;
       treeVars.eleE[i] = 0 ;
+      treeVars.eleEcalIso[i] = -1 ;
+      treeVars.eleHcalIso[i] = -1 ;
+      treeVars.eleTrkIso[i]  = -1 ;
+      treeVars.eleNLostHits[i]  = -1 ;
 
       treeVars.phoPx[i] = 0 ;
       treeVars.phoPy[i] = 0 ;
       treeVars.phoPz[i] = 0 ;
       treeVars.phoE[i] = 0 ;
+      treeVars.phoEcalIso[i] = -1 ;
+      treeVars.phoHcalIso[i] = -1 ;
+      treeVars.phoTrkIso[i]  = -1 ;
+      treeVars.phoHovE[i]    = -1 ;
+      treeVars.phoSmin[i]    = -1 ;
+      treeVars.phoSmaj[i]    = -1 ;
+      treeVars.phoTime[i]    = -100 ;
 
       treeVars.muPx[i] = 0 ;
       treeVars.muPy[i] = 0 ;
       treeVars.muPz[i] = 0 ;
       treeVars.muE[i] = 0 ;
+      treeVars.muEcalIso[i] = -1 ;
+      treeVars.muHcalIso[i] = -1 ;
+      treeVars.muTrkIso[i]  = -1 ;
   }
 
   ///*  
@@ -1066,6 +1130,8 @@ void initializeBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
     treeVars.superClusterVertexX[i] = 0.;
     treeVars.superClusterVertexY[i] = 0.;
     treeVars.superClusterVertexZ[i] = 0.;
+    treeVars.sMin[i] = -1 ;
+    treeVars.sMaj[i] = -1 ;
     
     treeVars.nClustersInSuperCluster[i] = 0;
     treeVars.SCPIdx[i] = -1. ;

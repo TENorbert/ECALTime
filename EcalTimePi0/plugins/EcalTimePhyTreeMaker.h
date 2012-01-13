@@ -16,7 +16,7 @@ Implementation:
 //
 // Authors:                   Shih-Chuan Kao, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePhyTreeMaker.h,v 1.2 2011/11/01 22:29:24 franzoni Exp $
+// $Id: EcalTimePhyTreeMaker.h,v 1.5 2012/01/12 18:16:54 sckao Exp $
 //
 //
 
@@ -85,6 +85,9 @@ Implementation:
 #include "DataFormats/ParticleFlowReco/interface/PFBlockElement.h"
 #include "DataFormats/JetReco/interface/PFJetCollection.h"
 
+#include "FWCore/Common/interface/TriggerNames.h"
+#include "DataFormats/Common/interface/TriggerResults.h"
+
 #include "DataFormats/METReco/interface/PFMET.h"
 #include "DataFormats/METReco/interface/PFMETCollection.h"
 
@@ -97,6 +100,7 @@ Implementation:
 #include "DataFormats/GsfTrackReco/interface/GsfTrack.h"
 #include "DataFormats/EgammaCandidates/interface/ElectronFwd.h"
 #include "DataFormats/EgammaCandidates/interface/GsfElectronFwd.h"
+#include "RecoEcal/EgammaCoreTools/interface/EcalClusterTools.h"
 
 // containers for vertices
 #include <DataFormats/VertexReco/interface/VertexFwd.h>
@@ -104,8 +108,8 @@ Implementation:
 #include <TMath.h>
 #include <Math/VectorUtil.h>
 
-#include "ECALTime/EcalTimePi0/interface/EcalTimePhyTreeContent.h"
-#include "ECALTime/EcalTimePi0/interface/timeVsAmpliCorrector.h"
+#include "CalibCalorimetry/EcalTiming/interface/EcalTimePhyTreeContent.h"
+#include "CalibCalorimetry/EcalTiming/interface/timeVsAmpliCorrector.h"
 
 
 typedef std::pair<reco::SuperClusterRef, float> ParticleSC  ;
@@ -129,6 +133,8 @@ class EcalTimePhyTreeMaker : public edm::EDAnalyzer
       std::string intToString (int num) ;
       void initHists (int) ;
 
+      //bool HLTSelection( const edm::Event& iEvent ) ;
+      int  HLTSelection( const edm::Event& iEvent ) ;
 
       bool dumpEvtObjectInfo( const edm::Event& iEvent ) ;
 
@@ -205,6 +211,7 @@ class EcalTimePhyTreeMaker : public edm::EDAnalyzer
       edm::InputTag MuonSource_ ;
       edm::InputTag ElectronSource_ ;
       edm::InputTag PhotonSource_ ;
+      edm::InputTag triggerSource_ ;
       edm::InputTag vertexCollection_ ;
       edm::InputTag l1GMTReadoutRecTag_ ;
       edm::InputTag gtRecordCollectionTag_ ;
@@ -215,9 +222,11 @@ class EcalTimePhyTreeMaker : public edm::EDAnalyzer
       std::vector<double> jetCuts_ ;
       std::vector<double> metCuts_ ;
       std::vector<double> photonCuts_ ;
+      std::vector<double> photonIso_ ;
       std::vector<double> electronCuts_ ;
       std::vector<double> muonCuts_ ;
       std::string fileName_ ;
+      std::string triggerName_ ;
 
       EcalTimePhyTreeContent myTreeVariables_ ;
 

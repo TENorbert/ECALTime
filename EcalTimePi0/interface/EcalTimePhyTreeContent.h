@@ -41,6 +41,7 @@ struct EcalTimePhyTreeContent
   unsigned int eventNaiveId;
   unsigned int timeStampLow;
   unsigned int timeStampHigh;
+  int          trgCut ;
   
   
   //trigger variables
@@ -74,6 +75,8 @@ struct EcalTimePhyTreeContent
   float superClusterVertexX[MAXSC];
   float superClusterVertexY[MAXSC];
   float superClusterVertexZ[MAXSC];
+  float sMin[MAXSC];
+  float sMaj[MAXSC];
 
   int nClustersInSuperCluster[MAXSC];  
   int xtalIndexInSuperCluster[MAXSC];
@@ -166,11 +169,17 @@ struct EcalTimePhyTreeContent
   float caloTowerHadPhi[MAXCALOTOWERS];
   
   // reco variables
+
   int   nJets ;
   float jetPx[MAXJET];
   float jetPy[MAXJET];
   float jetPz[MAXJET];
   float jetE[MAXJET];
+  float jetNDau[MAXJET] ;
+  float jetCM[MAXJET] ;
+  float jetCEF[MAXJET] ;
+  float jetNHF[MAXJET] ;
+  float jetNEF[MAXJET] ;
   
   float metPx;
   float metPy;
@@ -181,18 +190,32 @@ struct EcalTimePhyTreeContent
   float elePy[MAXELE];
   float elePz[MAXELE];
   float eleE[MAXELE];
+  float eleEcalIso[MAXELE];
+  float eleHcalIso[MAXELE];
+  float eleTrkIso[MAXELE];
+  float eleNLostHits[MAXELE];
 
   int   nMuons ;
   float muPx[MAXMU];
   float muPy[MAXMU];
   float muPz[MAXMU];
   float muE[MAXMU];
+  float muEcalIso[MAXMU];
+  float muHcalIso[MAXMU];
+  float muTrkIso[MAXMU];
 
   int   nPhotons ;
   float phoPx[MAXPHO];
   float phoPy[MAXPHO];
   float phoPz[MAXPHO];
   float phoE[MAXPHO];
+  float phoEcalIso[MAXPHO];
+  float phoHcalIso[MAXPHO];
+  float phoTrkIso[MAXPHO];
+  float phoHovE[MAXPHO];
+  float phoSmin[MAXPHO];
+  float phoSmaj[MAXPHO];
+  float phoTime[MAXPHO];
 
   // muon variables
   int nRecoMuons;
@@ -494,8 +517,7 @@ struct EcalTimePhyTreeContent
 };
 
 
-
-typedef EcalTimePhyTreeContent EcalTimeTreeContent;
+//typedef EcalTimePhyTreeContent EcalTimeTreeContent;
 
 
 // ------------------------------------------------------------------------
