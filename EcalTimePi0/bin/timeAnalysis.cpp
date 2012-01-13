@@ -19,14 +19,26 @@
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "DataFormats/Math/interface/LorentzVector.h"
 
+//<<<<<<< timeAnalysis.cpp
+#include "ECALTime/EcalTimePi0/interface/EcalTimePhyTreeContent.h"
+// remove line below, when established
+//#include "CalibCalorimetry/EcalTiming/interface/EcalTimeTreeContent.h"
+
+//=======
 //included via EcalObjectTime.h  ->  analysisHisograms.h
 //#include "CalibCalorimetry/EcalTiming/interface/EcalTimeTreeContent.h"
+//>>>>>>> 1.3
 #include "ECALTime/EcalTimePi0/interface/timeVsAmpliCorrector.h"
+	//<<<<<<< timeAnalysis.cpp
+//#include "ECALTime/EcalTimePi0/interface/EcalObjectTime.h"
+#include "ECALTime/EcalTimePi0/interface/DPSelection.h"
+	//=======
 
 #include "ECALTime/EcalTimePi0/interface/analysisHistograms.h"
 // following is commented out because already included through analysisHisograms.h
 //#include "ECALTime/EcalTimePi0/interface/EcalObjectTime.h"
 
+//>>>>>>> 1.3
 
 #include "TChain.h"
 #include "TH1.h"
@@ -63,6 +75,8 @@ std::vector<std::string> listOfFiles_;
 bool speak_=false;
 char buffer_ [75];
 std::string bufferTitle_; 
+AnaInput    * Input_;    // imports values from a .txt datacard
+DPSelection * Selector_; // 
 // default settings
 std::string outputRootName_ = "outputHistos.root";
 int   numEvents_      = -1;
@@ -85,8 +99,8 @@ std::vector<std::vector<double> > trigIncludeVector;
 std::vector<std::vector<double> > trigExcludeVector;
 std::vector<std::vector<double> > ttrigIncludeVector;
 std::vector<std::vector<double> > ttrigExcludeVector;
-
-
+// expected standard path for datacard when running e.g. on pcminn03
+std::string   datacardfile_=std::string("/data/franzoni/cmssw/44x/CMSSW_4_4_2_forTimeHardware/src/ECALTime/EcalTimePi0/data/DataCard.txt");
 
 int  minEntriesForFit_ = 7;
 int  flagOneVertex_ = 0;
@@ -239,6 +253,7 @@ void parseArguments(int argc, char** argv)
   std::string vertex                 = "--vertex";
   std::string stringTriggers         = "--trig";
   std::string stringTechTriggers     = "--techTrig";
+  std::string stringDataCard         = "--datacard";
 
   // if no arguments are passed, suggest help
   if (argc < 2){
@@ -270,6 +285,7 @@ void parseArguments(int argc, char** argv)
       std::cout << " --vertex: require vertex@IP (1), veto it (2) or either (0, or unset)" << std::endl;
       std::cout << " --trig: L1 triggers to include (exclude with x)" << std::endl;
       std::cout << " --techTrig: L1 technical triggers to include (exclude with x)" << std::endl;
+      std::cout << " --datacard: data card holding Delayed Photon analysis selections" << std::endl;
       exit(1);      }
 
 
@@ -344,6 +360,10 @@ void parseArguments(int argc, char** argv)
     }
     else if (argv[v] == stringTechTriggers) { // set L1 technical triggers to include/exclude
       genIncludeExcludeVectors(std::string(argv[v+1]),ttrigIncludeVector,ttrigExcludeVector);
+      v++;
+    }
+    else if (argv[v] == stringDataCard) { // set datacard holding selections for DP analysis
+      datacardfile_ = std::string(argv[v+1]);
       v++;
     }
     // handle here the case of multiple arguments for input files
@@ -431,8 +451,31 @@ int main (int argc, char** argv)
   std::cout << "\tmaxRun: "         <<  maxRun_ << std::endl;
   std::cout << "\tminLS: "          <<  minLS_ << std::endl;
   std::cout << "\tmaxLS: "          <<  maxLS_ << std::endl;
-	
+  std::cout << "\tdatacard: "       <<  datacardfile_ << std::endl;
+  
+  // establish link between ttree variables and local variables
   setBranchAddresses (chain, treeVars_);
+
+  Input_    = new AnaInput( datacardfile_ );
+  Selector_ = new DPSelection( datacardfile_ ) ;
+  // link the variables for selection module
+  Selector_->Init( chain ) ;
+
+  string hfolder ;
+  string plotType ;
+  int ProcessEvents ;
+  string debugStr ;
+  int selectBackground ;
+  int split ;
+  int counter[10] ;
+  for (int i=0; i<10; i++)  counter[i] = 0 ;
+
+  Input_->GetParameters("PlotType",      &plotType ) ; 
+  Input_->GetParameters("Path",          &hfolder ) ; 
+  Input_->GetParameters("ProcessEvents", &ProcessEvents ) ; 
+
+  Input_->GetParameters( "SelectBackground",  &selectBackground );
+  Input_->GetParameters( "SplitEvent",        &split );
   
   // setting up the TFileService in the ServiceRegistry;
   edmplugin::PluginManager::Config config;
@@ -512,6 +555,47 @@ int main (int argc, char** argv)
     // do analysis if the LS is in the desired range  
     if( treeVars_.lumiSection<minLS_  || maxLS_<treeVars_.lumiSection) continue;
     
+
+    /////////////////// DP analysis events selection ////////////////////////
+    bool passEvent = true ;
+
+    // FIXME
+    if ( entry%2 == split ) continue ;    // FIXME
+    // FIXME
+    counter[0]++ ;   
+    Selector_->ResetCollection() ;
+    bool passPhoton = Selector_->PhotonFilter( false );
+    /* DEBUG */    //std::cout << "passPhoton Loose No Iso: " << passPhoton << std::endl; /* DEBUG */
+    passEvent = ( passPhoton && passEvent ) ? true : false ;
+    if ( passEvent ) counter[1]++ ;   
+
+    bool passVertex = Selector_->VertexFilter();
+    passEvent = ( passVertex && passEvent ) ? true : false ;
+    if ( passEvent ) counter[2]++ ;   
+
+    Selector_->ResetCuts( "PhotonCuts", 1, 1.4 ) ;
+    bool passIso = Selector_->PhotonFilter( true );
+    passEvent = ( passIso && passEvent ) ? true : false ;
+    if ( passEvent ) counter[3]++ ;   
+
+    bool isGJets = Selector_->GammaJetsBackground() ;
+    passEvent = ( !isGJets && passEvent ) ? true : false ;
+    if ( passEvent ) counter[4]++ ;   
+
+    Selector_->ResetCuts( "PhotonCuts", 0, 100. ) ;
+    bool passTight = Selector_->PhotonFilter( true );
+    passEvent = ( passTight && passEvent ) ? true : false ;
+    if ( passEvent ) counter[5]++ ;   
+
+    bool passJet    = Selector_->JetMETFilter();
+    passEvent = ( passJet && passEvent ) ? true : false ;
+    if ( passEvent ) counter[6]++ ;   
+
+    bool passHLT    = Selector_->HLTFilter();
+    passEvent = ( passHLT && passEvent ) ? true : false ;
+    if ( passEvent ) counter[7]++ ;   
+    /////////////////// DP analysis events selection ////////////////////////
+
     bool verticesAreOnlyNextToNominalIP;
     int  count=0;
     
@@ -595,7 +679,10 @@ int main (int argc, char** argv)
     
   }   // end of loop over entries
   
-
+  /////////////////// summary of DP analysis events selection ////////////////////////
+  cout<<"\\n \t all:"<< counter[0] <<" pho:"<<counter[1]<<" vtx:"<< counter[2]<<" Iso:"<<counter[3]<<" noGjets:"<<counter[4] ;
+  cout<<" tight:"<< counter[5] <<" jet:"<<counter[6]<<" hlt:"<<counter[7]<<endl; 
+  
   delete chain ;
   
   return 0 ;
