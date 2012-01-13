@@ -63,6 +63,8 @@ process.ecalTimePhyTree.trigSource      = cms.InputTag("TriggerResults","","HLT"
 #process.ecalTimePhyTree.metCuts       = cms.vdouble( 20  )
 ## photon cuts                                        pt |eta|  dR   nPhoton
 #process.ecalTimePhyTree.photonCuts    = cms.vdouble( 30, 2.4, 0.3, 1 )
+# photon Isolation                                  trk,  ecalEt, ecalR, hcalEt, hcalR
+#process.ecalTimePhyTree.photonIso     = cms.vdouble( 0.2,    4.5,   0.1,    4.0,   0.1 )
 ## electron cuts                                      pt |eta| relIso dR
 #process.ecalTimePhyTree.electronCuts  = cms.vdouble( 25, 2.4, 0.15, 0.3 )
 ## muon cuts                                          pt |eta| relIso dR
@@ -70,15 +72,15 @@ process.ecalTimePhyTree.trigSource      = cms.InputTag("TriggerResults","","HLT"
 
 ##################### loose selection for studies ##########################
 # jet cuts                                           pt  |eta|  NJet  MaxNJet MET  
-process.ecalTimePhyTree.jetCuts       = cms.vdouble( 30, 2.4,    3,      99,  20 )
+process.ecalTimePhyTree.jetCuts       = cms.vdouble( 25,  2.4,    0,      99,    0 )
 # photon cuts                                        Pt  eta  hcal   dR  nPho sMinMin sMinMax                                 
-process.ecalTimePhyTree.photonCuts    = cms.vdouble( 70, 2.4,   6,  0.3,   1,    0.1,    0.53 )
+process.ecalTimePhyTree.photonCuts    = cms.vdouble( 60, 9.9,   99,   0.,   1,    0.,    1.0 )
 # photon Isolation                                  trk,  ecalEt, ecalR, hcalEt, hcalR
-process.ecalTimePhyTree.photonIso     = cms.vdouble( 0.2,    4.5,   0.1,    4.0,   0.1 )
+process.ecalTimePhyTree.photonIso     = cms.vdouble( 0.5,    99.,   1.,    99.,     1. )
 # electron cuts                                      pt |eta| relIso dR
-process.ecalTimePhyTree.electronCuts  = cms.vdouble( 25, 2.4, 0.15, 0.3 )
+process.ecalTimePhyTree.electronCuts  = cms.vdouble( 25, 2.4, 0.5,  0.5 )
 # muon cuts                                          pt |eta| relIso dR
-process.ecalTimePhyTree.muonCuts      = cms.vdouble( 25, 2.1, 0.2, 0.3 )
+process.ecalTimePhyTree.muonCuts      = cms.vdouble( 25, 2.1, 0.5,  0.5 )
 
 
 ###########  USE UNCLEANED SUPERCLUSTERS  ######################### MS
