@@ -8,21 +8,12 @@
 #include <set>
 #include <boost/tokenizer.hpp>
 
-#include <iostream>
-#include <math.h> 
-#include <assert.h>
-
-#include "FWCore/PluginManager/interface/PluginManager.h"
-#include "FWCore/PluginManager/interface/standard.h"
-
-#include "FWCore/ServiceRegistry/interface/Service.h"
-#include "CommonTools/UtilAlgos/interface/TFileService.h"
-
-#include "DataFormats/Math/interface/LorentzVector.h"
-
 #include "CalibCalorimetry/EcalTiming/interface/EcalTimeTreeContent.h"
-#include "ECALTime/EcalTimePi0/interface/timeVsAmpliCorrector.h"
-#include "ECALTime/EcalTimePi0/interface/EcalObjectTime.h"
+#include "DataFormats/GeometryVector/interface/GlobalPoint.h"
+#include "DataFormats/DetId/interface/DetId.h"
+#include "DataFormats/EcalDetId/interface/EBDetId.h"
+#include "DataFormats/EcalDetId/interface/EEDetId.h"
+#include "DataFormats/Math/interface/LorentzVector.h"
 
 #include "TChain.h"
 #include "TH1.h"
@@ -30,6 +21,9 @@
 #include "TProfile.h"
 #include "TGraphErrors.h"
 #include "TF1.h"
+#include "TMath.h"
+#include "TFile.h"
+
 
 typedef std::set<std::pair<int,int> > SetOfIntPairs;
 
@@ -44,9 +38,15 @@ typedef std::set<std::pair<int,int> > SetOfIntPairs;
 #define numAeffBins     35
 #define numAoSigmaBins  25
 
-#define NSlices 54   // # of slices in log(A)
+#define NSlices 54 // # of slices in log(A)
 #define LogStep 0.05 // size of Slices log(A)
 
+struct ClusterTime {
+  int   numCry;
+  float time;
+  float timeErr;
+  float chi2;
+} ;
 
 
 // -------- Globals ----------------------------------------
@@ -56,6 +56,15 @@ std::vector<std::string> listOfFiles_;
 bool speak_=false;
 char buffer_ [75];
 std::string bufferTitle_; 
+// mass spectraVars
+float pi0MassEB_=0;
+float pi0WidthEB_=0;
+float pi0MassEE_=0;
+float pi0WidthEE_=0;
+float pi0MassEEP_=0;
+float pi0WidthEEP_=0;
+float pi0MassEEM_=0;
+float pi0WidthEEM_=0;
 // default settings
 std::string outputRootName_ = "outputHistos.root";
 int   numEvents_      = -1;
@@ -71,15 +80,15 @@ float s4s9GammaMinEE_ = 0.85;
 float eTPi0MinEE_     = 0.800;
 float swissCrossMaxEB_ = 0.95; // 1-E4/E1
 float swissCrossMaxEE_ = 0.95; // 1-E4/E1
-// based on range and bins, the bin width is 50 ps
-float rangeTDistro_ = 3; // 1-E4/E1
-int   binsTDistro_  = 120; // 1-E4/E1
 std::vector<std::vector<double> > trigIncludeVector;
 std::vector<std::vector<double> > trigExcludeVector;
 std::vector<std::vector<double> > ttrigIncludeVector;
 std::vector<std::vector<double> > ttrigExcludeVector;
 
 
+float minAmpliOverSigma_   = 10;    // dimensionless
+
+float maxChi2NDF_ = 20;  //TODO: gf configurable
 
 int  minEntriesForFit_ = 7;
 int  flagOneVertex_ = 0;
@@ -87,12 +96,61 @@ bool limitFit_(true);
 //std::string fitOption_(""); // default: use chi2 method
 std::string fitOption_("L"); // use likelihood method
 
+// Ao dependent timing corrections
+// By the definition of these corrections, the timing should be zero for the hits in Module 1 
+// or Low eta EE within the valid A/sigma ranges.  Earlier data will have positive time due 
+// to the graduate timing shifts in the positive direction.
+TF1* timeCorrectionEB_ = new TF1("timeCorrectionEB_","pol4(0)",0,1.2);
+TF1* timeCorrectionEE_ = new TF1("timeCorrectionEE_","pol4(0)",0,1.2);
+
+double AeffBins_[36] = {0,                          // set of fine bins for large stats
+ 			1 ,2 ,3 ,4 ,5 ,6 ,7 ,8 ,9 ,10,
+ 			11,12,13,14,15,16,17,18,19,20,
+ 			22,24,26,28,30,
+                        32,36,40,46,52,
+                        58,74,86,110,130};
+int    AeffNBins_    = 35;
+int    AeffMax_      = 120;
+
+// defining arrays large enough; number of actual bins to define TGraphErrors comes from AeffNBins_ 
+float  AeffBinCentersAny_[256]; float  AeffBinCentersErrAny_[256]; float  sigmaAeffAny_[256]; float  sigmaAeffErrAny_[256];
+float  AeffBinCentersEB_[256];  float  AeffBinCentersErrEB_[256];  float  sigmaAeffEB_[256];  float  sigmaAeffErrEB_[256];
+float  AeffBinCentersEE_[256];  float  AeffBinCentersErrEE_[256];  float  sigmaAeffEE_[256];  float  sigmaAeffErrEE_[256];
+
+// set of fine bins for AoSigmaBins, for t vs Ampli bias study 
+double AoSigmaBins_[33] = {0,  10,  18,  
+			   24, 28,  32,  36,  40,
+			   44, 52,  60,  72,  80,
+                           92, 102, 116, 144, 172,
+                           240,320, 400, 480, 560, 
+			   650, 800, 1000, 1200, 1500,
+                           1900, 2400, 3000, 3700, 4000}; //25 bins in total
+int    AoSigmaNBins_     = 32;    // (counting to be updated) 300 combinations between different bins; + 25 self-combinations =-> 325 in total
+                                  // check above that numAeffBins is set to a value equal or larger than this (==325)
+int    AoSigmaNPairs_    = (AoSigmaNBins_)*(AoSigmaNBins_-1)/2 + AoSigmaNBins_;
+int    AoSigmaMax_       = 4000;   //up to about 8 GeV
+
+float  AoSigmaBinCentersEB_[32][32];  float  AoSigmaBinCentersErrEB_[32][32];  float  sigmaAoSigmaEB_[32][32];  float  sigmaAoSigmaErrEB_[32][32];
+float  AoSigmaBinCentersEE_[32][32];  float  AoSigmaBinCentersErrEE_[32][32];  float  sigmaAoSigmaEE_[32][32];  float  sigmaAoSigmaErrEE_[32][32];
+
+int numDtBins_  = 75;
+int DtMax_      = 15; // useful to catch tails also at low Aeff (<10)
+
+// Consts
+//const float sigmaNoiseEB        = 0.75;  // ADC ; using high frequency noise
+//const float sigmaNoiseEE        = 1.58;  // ADC ; using high frequency noise
+const float sigmaNoiseEB          = 1.06;  // ADC ; using total single-sample noise
+const float sigmaNoiseEE          = 2.10;  // ADC ; using total single-sample noise
+// const float timingResParamN       = 35.1; // ns ; Fig. 2 from CFT-09-006
+// const float timingResParamConst   = 0.020; //ns ;   "
+const float timingResParamNEB     = 28.51;   // ns ; plots approved http://indico.cern.ch/conferenceDisplay.py?confId=92739
+const float timingResParamConstEB = 0.02565; //ns ;   "
+const float timingResParamNEE     = 31.84;   // ns ; Fig. 2 from CFT-09-006
+const float timingResParamConstEE = 0.01816;  //ns ;
 
 // -------- Histograms -------------------------------------
-TH1 * nVertices_;
-TH1F* mass_;
-TH1F* dZvertices_;
-TH1F* Zvertices_;
+// xtals
+TH1F* xtalEnergyHist_;
 
 
 // ---------------------------------------------------------------------------------------
@@ -102,7 +160,7 @@ bool includeEvent(int* triggers,
     std::vector<std::vector<double> > includeVector,
     std::vector<std::vector<double> > excludeVector)
 {
- bool keepEvent = false;
+  bool keepEvent = false;
   if(includeVector.size()==0) keepEvent = true;
   for (int ti = 0; ti < numTriggers; ++ti) {
     for(uint i=0; i!=includeVector.size();++i){
@@ -149,7 +207,7 @@ bool includeEvent(double eventParameter,
       keepEvent=false;
   }
 
-  return keepEvent; // if someone includes and excludes, exseedion will overrule
+  return keepEvent; // if someone includes and excludes, exclusion will overrule
 
 }
 
@@ -359,87 +417,125 @@ void parseArguments(int argc, char** argv)
 }
 
 // ---------------------------------------------------------------------------------------
-// -------------------- struct holding sed of  histograms  -------------------------------
-struct HistSet{
-  
-  //book histogram set w/ common suffix inside the provided TFileDirectory
-  //void book(edm::Service<TFileService>& td,const std::string&);
-  void book(TFileDirectory subDir,const std::string&);
-  
-  // fill all histos of the set with the two electron candidates
-  void fill(int sc1, int sc2, int cl1, int cl2);
-  
-  TH1 * nVertices_;
-  TH1F* seedTime_;
-  TH1F* secondTime_;
-  TH1F* clusterTime_;
-
-} theHists;
-
-
-void HistSet::book(TFileDirectory subDir, const std::string& post) {
-
-  nVertices_=subDir.make<TH1F>("num vertices","num vertices; num vertices",41,-0.5,40.5);
-  mass_         =(TH1F*) subDir.make<TH1F>("mass","mass; m(ele,ele) [GeV]",80,50,130);
-
-  seedTime_            =(TH1F*) subDir.make<TH1F>("seed time","seed time; t_{seed} [ns]; num. seeds/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
-  secondTime_          =(TH1F*) subDir.make<TH1F>("second time","second time; t_{second} [ns]; num. secs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
-  clusterTime_         =(TH1F*) subDir.make<TH1F>("cluster time","cluster time; t_{cluster} [ns]; num. clusters/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
-
-
-}
-  
-void HistSet::fill(int sc1, int sc2, int bc1, int bc2 ){
-
-  float et1 = treeVars_.superClusterRawEnergy[sc1]/cosh( treeVars_.superClusterEta[sc1] );
-  math::PtEtaPhiELorentzVectorD  el1(et1  ,
-				     treeVars_.superClusterEta[sc1],
-				     treeVars_.superClusterPhi[sc1],
-				     treeVars_.superClusterRawEnergy[sc1] );  
-  float et2 = treeVars_.superClusterRawEnergy[sc2]/cosh( treeVars_.superClusterEta[sc2] );
-  math::PtEtaPhiELorentzVectorD  el2(et2 ,
-				     treeVars_.superClusterEta[sc2],
-				     treeVars_.superClusterPhi[sc2],
-				     treeVars_.superClusterRawEnergy[sc2] );
-  math::PtEtaPhiELorentzVectorD diEle = el1;
-  diEle += el2;
-  
-  // ////////////////////////
-  mass_      ->Fill(diEle.M());
-  float dvertex = pow(treeVars_.superClusterVertexZ[sc1]-treeVars_.superClusterVertexZ[sc2],2);
-  dvertex       = sqrt(dvertex);
-
-  ClusterTime bcTime1 = timeAndUncertSingleCluster(bc1,treeVars_);
-  ClusterTime bcTime2 = timeAndUncertSingleCluster(bc2,treeVars_);
-
-
-  int vtxOfThisEle=-99;
-  // look for the vertex which electrons  are attached to: 
-  for(int u=0; u<treeVars_.nVertices; u++){
-    // matching done with 1mm tolerance
-    if( fabs(treeVars_.superClusterVertexZ[sc2]-treeVars_.vtxZ[u]) < 0.1) {       vtxOfThisEle=u;     }
-    //std::cout << u << "\t" << treeVars_.superClusterVertexZ[sc2] << "\t" << treeVars_.vtxZ[u] << std::endl;
-  }
-
-  // take care of the seeds
-  seedTime_            -> Fill(bcTime1.seedtime);  seedTime_->Fill(bcTime2.seedtime); 
-  clusterTime_         -> Fill(bcTime1.time);              clusterTime_ ->Fill(bcTime2.time);
-
-}
-// end HistSet::fill
-
-
-// ---------------------------------------------------------------------------------------
 // ------------------ Function to initialize the histograms ------------------------------
-void initializeHists(TFileDirectory subDir){
+void initializeHists(){
+//initializeHists
+  //int numChi2Bins = 150;
+  //int chi2Max = 150;
+  //int numChi2NDFBins = 100;
+  //int chi2NDFMax = 100;
 
-//  mass_         = subDir.make<TH1F>("mass global","mass (global); m(ele,ele) [GeV]",80,50,130);
-//  dZvertices_   = subDir.make<TH1F>("dZvertices global","dZvertices (global); #DeltaZ(ele_{1},ele_{2}) [cm]",250,0,25);
-//  Zvertices_    = subDir.make<TH1F>("Zvertices global","Zvertices (global); z vertex [cm]",250,-25,25);
-  nVertices_=subDir.make<TH1F>("num vertices global","num vertices (global); num vertices",41,-0.5,40.5);
+  saving_->cd();
+  // Initialize histograms -- xtals
+  xtalEnergyHist_ = new TH1F("XtalEnergy","Crystal energy;GeV",110,-1,10);
 
 }//end initializeHists
 
+// ---------------------------------------------------------------------------------------
+// ------------------ Function to compute time and error for a cluster -------------------
+//std::pair<float,float> timeAndUncertSingleCluster(int bClusterIndex)
+ClusterTime timeAndUncertSingleCluster(int bClusterIndex)
+{
+  float weightTsum  = 0;
+  float weightSum   = 0;
+  int   numCrystals = 0;
+  float timingResParamN    =0;
+  float timingResParamConst=0;
+  // loop on the cry components of a basic cluster; get timeBest and uncertainty 
+  for(int thisCry=0; thisCry<treeVars_.nXtalsInCluster[bClusterIndex]; thisCry++)
+  {
+    bool  thisIsInEB=false;
+    float sigmaNoiseOfThis=0;
+    if(treeVars_.xtalInBCIEta[bClusterIndex][thisCry]!=-999999)       {
+      sigmaNoiseOfThis   =sigmaNoiseEB;
+      timingResParamN    =timingResParamNEB;
+      timingResParamConst=timingResParamConstEB;
+      thisIsInEB=true;    }
+    else if(treeVars_.xtalInBCIy[bClusterIndex][thisCry]!=-999999)    {
+      sigmaNoiseOfThis=sigmaNoiseEE;
+      timingResParamN    =timingResParamNEE;
+      timingResParamConst=timingResParamConstEE;
+      thisIsInEB=false;    }
+    else    {  std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
+    float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] / sigmaNoiseOfThis; 
+    if( ampliOverSigOfThis < minAmpliOverSigma_) continue;
+    if( treeVars_.xtalInBCSwissCross[bClusterIndex][thisCry] > 0.95) continue;
+
+    numCrystals++;
+    float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry];
+    float sigmaOfThis = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
+
+    //std::cout << "GFdeb eampli: " << treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] //gfdebug
+    //          << " ampliOverSigOfThis: " << ampliOverSigOfThis
+    //          << " timeOfThis: " << timeOfThis
+    //          << " sigmaOfThis: " << sigmaOfThis
+    //          << std::endl;//gfdebug
+
+    weightTsum+=(timeOfThis/pow(sigmaOfThis,2));
+    weightSum+=1/pow(sigmaOfThis,2);
+  }
+  float bestTime = weightTsum/weightSum;
+
+  float chi2 = -999999;
+  // loop on the cry components to get chi2
+  // do this only if you have at least 2 crystals over threshold and not spiky
+  if(numCrystals>1){
+    chi2=0;
+    for(int thisCry=0; thisCry<treeVars_.nXtalsInCluster[bClusterIndex]; thisCry++)
+      {
+  	//bool  thisIsInEB=false;
+  	float sigmaNoiseOfThis=0;
+  	if(treeVars_.xtalInBCIEta[bClusterIndex][thisCry]!=-999999)       {
+  	  sigmaNoiseOfThis=sigmaNoiseEB;
+  	  //thisIsInEB=true;
+  	}
+  	else if(treeVars_.xtalInBCIy[bClusterIndex][thisCry]!=-999999)    {
+  	  sigmaNoiseOfThis=sigmaNoiseEE;
+  	  //thisIsInEB=false;    
+  	}
+  	else    {  std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
+  	
+  	float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] / sigmaNoiseOfThis; 
+  	if( ampliOverSigOfThis < minAmpliOverSigma_) continue;
+  	
+  	float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry];
+  	float sigmaOfThis = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
+  	
+  	chi2 += pow( (timeOfThis-bestTime)/sigmaOfThis, 2);
+  	
+      }// end loop on cry
+  }//end if
+
+
+  ClusterTime theResult; //initialize
+  theResult.numCry = -999999;   theResult.time   = -999999;
+  theResult.timeErr= -999999;   theResult.chi2   = -999999;
+  
+  if(weightSum <= 0) {
+    return theResult;}
+  else{
+    //std::cout << "-- GFdeb time: " << bestTime << " error: " << sqrt(1/weightSum) << std::endl;//gfdebug
+    theResult.numCry = numCrystals;
+    theResult.time   = bestTime;
+    theResult.timeErr= sqrt(1/weightSum);
+    theResult.chi2   = chi2;
+    return theResult;
+  }
+
+}// end timeAndUncertSingleCluster
+
+
+// ---------------------------------------------------------------------------------------
+// ------------------ Function to write hists --------------------------------------------
+void writeHists()
+{
+  saving_->cd();
+  // write out control histograms
+  TDirectory *controlPlots = saving_->mkdir("control");
+  controlPlots->cd();
+  xtalEnergyHist_->Write(); 
+
+}
 
 
 
@@ -488,40 +584,20 @@ int main (int argc, char** argv)
   std::cout << "\tmaxLS: "          <<  maxLS_ << std::endl;
 	
   setBranchAddresses (chain, treeVars_);
-  
-  // setting up the TFileService in the ServiceRegistry;
-  edmplugin::PluginManager::Config config;
-  edmplugin::PluginManager::configure(edmplugin::standard::config());
-  std::vector<edm::ParameterSet> psets;
-  edm::ParameterSet pSet;
-  pSet.addParameter("@service_type",std::string("TFileService"));
-  pSet.addParameter("fileName",std::string("TimePerf-plots.root")); // this is the file TFileService will write into
-  psets.push_back(pSet);
-  static edm::ServiceToken services(edm::ServiceRegistry::createSet(psets));
-  static edm::ServiceRegistry::Operate operate(services);
-  edm::Service<TFileService> fs;
 
-  TFileDirectory subDirEBEB=fs->mkdir("EBEB");  
-  HistSet plotsEBEB;
-  plotsEBEB.book(subDirEBEB,std::string("EBEB"));
-  
-  TFileDirectory subDirEEEE=fs->mkdir("EEEE");  
-  HistSet plotsEEEE;
-  plotsEEEE.book(subDirEEEE,std::string("EEEE"));
-  
-  timeCorrector theCorr;
-  std::cout << "\ncreated object theCorr to be used for timeVsAmpliCorrections" << std::endl;
-  std::cout << "\ninitializing theCorr" << std::endl;
-  theCorr.initEB( "EB" );
-  theCorr.initEE( "EE" );
-
-
-  //Initialize output root file
-  //saving_ = new TFile(outputRootName_.c_str (),"recreate");
+  // Initialize output root file
+  saving_ = new TFile(outputRootName_.c_str (),"recreate");
 
   // Initialize the histograms
-  TFileDirectory subDirGeneral=fs->mkdir("General");  
-  initializeHists(subDirGeneral);
+  initializeHists();
+
+  // FIXME
+  // fit to mass to be made robust
+  // re masses to a-priori values for now 
+  pi0MassEB_   = 0.111;
+  pi0WidthEB_  = 0.013; 
+  pi0MassEE_   = 0.126;
+  pi0WidthEE_  = 0.030;
 
   int eventCounter = 0;
   /////////////////////////////////////////////////////
@@ -566,100 +642,59 @@ int main (int argc, char** argv)
     if (speak_)  std::cout << "\n\n------> reading entry " << entry << "\tLS: " << treeVars_.lumiSection << " <------\n" ; 
     if (speak_)  std::cout << "  found " << treeVars_.nSuperClusters << " superclusters" << std::endl ;
     if (speak_)  std::cout << "  found " << treeVars_.nClusters << " basic clusters" << std::endl ;
+    if (speak_)  std::cout << "  found " << treeVars_.nXtals << " crystals\n" ;    
 
+    // Plot the control hists
+    // doControlHists();
 
-    ///////////////////////////////////////////////////////////////////////
-    // outer loop on supercluster
-    for (int sc1=0; sc1<treeVars_.nSuperClusters; sc1++){
+    // Make pairs of all BasicClusters
+    //SetOfIntPairs allBCPairs;
+    //for (int bCluster=0; bCluster < treeVars_.nClusters; bCluster++)
+    //{
+    //  for (int bClusterA=bCluster+1; bClusterA < treeVars_.nClusters; bClusterA++)
+    //  {
+    //    allBCPairs.insert(std::make_pair<int,int>(bCluster,bClusterA));
+    //  }
+    //}
+    //// Do singleCluster plots -- all BC pairs (no pi-zero selection)
+    //std::set<int> allMyBasicClusterIndicies = makeUniqueList1D(allBCPairs);
+    //doSingleClusterResolutionPlots(allMyBasicClusterIndicies,false);
+    //// Do doubleCluster plots -- all BC pairs (no pi-zero selection)
+    //doDoubleClusterResolutionPlots(allBCPairs,false);
+    //
+    //// ---------------- Select Pi-zeros
+    //SetOfIntPairs myPi0BasicClusterPairs = selectPi0Candidates();
+    //
+    //// Do double cluster plots
+    //doDoubleClusterResolutionPlots(myPi0BasicClusterPairs,true);
+    //
+    //// Make unique list of BasicClusters from the list of pairs
+    //std::set<int> myPi0BasicClusters = makeUniqueList1D(myPi0BasicClusterPairs);
+    //// Do the singleCluster again on the pi0 BasicClusters
+    //doSingleClusterResolutionPlots(myPi0BasicClusters,true);
+    //
+    //doTimingAndVertexPlots();
 
-      float et1 = treeVars_.superClusterRawEnergy[sc1]/cosh( treeVars_.superClusterEta[sc1] );
-      if (et1<20) continue;
-
-      math::PtEtaPhiELorentzVectorD  el1(et1  ,
-					 treeVars_.superClusterEta[sc1],
-					 treeVars_.superClusterPhi[sc1],
-					 treeVars_.superClusterRawEnergy[sc1] );
-
-      ///////////////////////////////////////////////////////////////////////
-      // inner loop on supercluster
-      for (int sc2=(sc1+1); sc2<treeVars_.nSuperClusters; sc2++){
-
-	float et2 = treeVars_.superClusterRawEnergy[sc2]/cosh( treeVars_.superClusterEta[sc2] );
-	if (et2<20) continue;
-	
-	math::PtEtaPhiELorentzVectorD  el2(et2 ,
-					   treeVars_.superClusterEta[sc2],
-					   treeVars_.superClusterPhi[sc2],
-					   treeVars_.superClusterRawEnergy[sc2] );
-
-	
-	math::PtEtaPhiELorentzVectorD diEle = el1;
-	diEle += el2;
-
-	// ////////////////////////
-	mass_      ->Fill(diEle.M());//GF
-	nVertices_->Fill(treeVars_.nVertices);
-
-	float tmpEne=-9999;
-	// loop on BC and match to sc1  ===============
-	int bc1=-1;
-	for (int bc=0; bc<treeVars_.nClusters; bc++){
-	  if ( (pow(treeVars_.superClusterEta[sc1]-treeVars_.clusterEta[bc],2)+ pow(treeVars_.superClusterPhi[sc1]-treeVars_.clusterPhi[bc],2) ) < 0.02 
-	       && treeVars_.clusterEnergy[bc]>tmpEne) {
-	    tmpEne=treeVars_.clusterEnergy[bc];
-	    bc1=bc;
-	  }// end - if good bc candidate
-	}// end - loop over BC
-
-	
-	tmpEne=-9999;
-	// loop on BC and match to sc2 ==============
-	int bc2=-1;
-	for (int bc=0; bc<treeVars_.nClusters; bc++){
-	  if ( pow(treeVars_.superClusterEta[sc2]-treeVars_.clusterEta[bc],2)+ pow(treeVars_.superClusterPhi[sc2]-treeVars_.clusterPhi[bc],2) < 0.02 
-	       && treeVars_.clusterEnergy[bc]>tmpEne) {
-	    tmpEne=treeVars_.clusterEnergy[bc];
-	    bc2=bc;
-	  }// end - if good bc candidate
-	}// end - loop over BC
-	
-	// protect in case of no matching
-	if(bc1==-1 || bc2==-1) continue;
-	if(0) {
-	std::cout << "\n\nsc1 : " << treeVars_.superClusterEta[sc1] << " " << treeVars_.superClusterPhi[sc1] << " " << treeVars_.superClusterRawEnergy[sc1] << std::endl;
-	std::cout << "bc1 : " << treeVars_.clusterEta[bc1] << " " << treeVars_.clusterPhi[bc1] << " " << treeVars_.clusterEnergy[bc1] << "\n"<< std::endl;
-	std::cout << "sc2 : " << treeVars_.superClusterEta[sc2] << " " << treeVars_.superClusterPhi[sc2] << " " << treeVars_.superClusterRawEnergy[sc2] << std::endl;
-	std::cout << "bc2 : " << treeVars_.clusterEta[bc2] << " " << treeVars_.clusterPhi[bc2] << " " << treeVars_.clusterEnergy[bc2] << std::endl;
-	}
-	
-	ClusterTime bcTime1 = timeAndUncertSingleCluster(bc1,treeVars_);
-	ClusterTime bcTime2 = timeAndUncertSingleCluster(bc2,treeVars_);
-
-	if(! (bcTime1.isvalid && bcTime2.isvalid) ) continue;
-
-	// fill the structures which hold all the plots
-	if      ( fabs(treeVars_.clusterEta[bc1])<1.4    &&  fabs(treeVars_.clusterEta[bc2])<1.4 ){
- 	  plotsEBEB.fill(sc1,sc2, bc1,bc2);
-
-	  float energyRatio1 = treeVars_.xtalInBCEnergy[bc1][bcTime1.seed];
-	  if(bcTime1.second>-1) {energyRatio1 /= treeVars_.xtalInBCEnergy[bc1][bcTime1.second]; }
-	  else { energyRatio1 /= 99999; }
-	  float energyRatio2 = treeVars_.xtalInBCEnergy[bc2][bcTime2.seed];
-	  if(bcTime2.second>-1) {energyRatio2 /= treeVars_.xtalInBCEnergy[bc2][bcTime2.second]; }
-	  else { energyRatio2 /= 99999; }
-
-	  
-	}// if EBEB, and subcases
-	else if ( fabs(treeVars_.clusterEta[bc1])>1.5    &&  fabs(treeVars_.clusterEta[bc2])>1.5 ) 	  plotsEEEE.fill(sc1,sc2, bc1,bc2);
-
-	// if I've found a pair of supercluster, bail out of loop to repeat using twice the same supercluster
-	break;	
-	
-      }// end loop sc2
-    }// end loop sc1
-    
   }   // end of loop over entries
-  
+  // now you have di-mass plots filled => get masses
+
+
+  // Fit the invariant mass spectra
+  //fitMassSpectra();
+  // FIXME
+  // fit to mass to be made robust
+  // re-set masses to a-priori values for now 
+  pi0MassEB_  = 0.111;
+  pi0WidthEB_ = 0.013; 
+  pi0MassEE_  = 0.126;
+  pi0WidthEE_  = 0.030;
+
+  // Do plots that need histograms to be filled with events
+  //doFinalPlots();
+
+  // now save the plots
+  writeHists();
+  saving_->Close();
 
   delete chain ;
   

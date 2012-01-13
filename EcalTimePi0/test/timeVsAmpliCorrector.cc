@@ -1,44 +1,15 @@
-#include <assert.h>
-#include <stdio.h>
-
-#include <iostream>
-#include<string>
-#include<vector>
-
-
-#include <math.h>
-
-////////////////////////////////////////////////////////////////////////////////////////////
-// holds A-dependent corrections and provides interface
-class timeCorrector {
-  private:
-    std::vector <float> theCorrectionsEB; 
-    std::vector <float> theBinsEB;   
-
-    std::vector <float> theCorrectionsEE; 
-    std::vector <float> theBinsEE; 
-
-
-  public:
-    float getCorrection(float,float);
-    float getCorrectionEB(float);
-    float getCorrectionEE(float);
-    void initEB(std::string);
-    void initEE(std::string);
-  };
-
-
+#include "timeVsAmpliCorrector.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // implementation of the class methods
 
 float timeCorrector::getCorrectionEB(float A){
-  return timeCorrector::getCorrection(A, 1.);
+  return getCorrection(A, 1.);
 }
 
 
 float timeCorrector::getCorrectionEE(float A){
-  return timeCorrector::getCorrection(A, 2.);
+  return getCorrection(A, 2.);
 }
 
 
@@ -75,12 +46,12 @@ float timeCorrector::getCorrection(float A, float eta){
   
   if (myBin == -1)
     {
-      // if A below the covered range, return time correction for the lowest A bin
+      // if A below the covered range, return time correction for the lowest A bin; sign will be flipped at the end, since correction = -1*effect 
       theCorrection = theCorrections.at(0);
     }    
   else if  ( myBin == ((int)(theBins.size()-1))   ) 
     {
-      // if A above the covered range, return time correction for the highest A bin
+      // if A above the covered range, return time correction for the highest A bin sign; will be flipped at the end, since correction = -1*effect 
       theCorrection = theCorrections.at( myBin );      
     }    
   else if  ( -1 < myBin   &&   myBin <  ((int)theBins.size()-1) )
@@ -99,8 +70,9 @@ float timeCorrector::getCorrection(float A, float eta){
   // debug
   // std::cout << "\nA: " << A << " eta: " << eta<< " nmyBin is: " << myBin << " and my corr is: " << theCorrection << "\n"<< std::endl; //GF 
 
+  // flip the sing since: correction = -1*effect
   // return correction in ns
-  return theCorrection;
+  return -1 * theCorrection;
 
 }
   
@@ -110,7 +82,7 @@ void timeCorrector::initEE(std::string version){
    std::cout << "\ninitializing corrections for EE" << std::endl;
    theCorrectionsEE.clear();          theBinsEE.clear();
  
-   // these corrections are in nanosecond
+   // this is binned measured bias in nanosecond; correction needs be the opposited. 
    if(version==std::string("EElow")){
 
     //theCorrectionsEE.push_back(0);   theBinsEE.push_back(18.9123);
@@ -177,68 +149,67 @@ void timeCorrector::initEE(std::string version){
 
    } else if (version==std::string("EE")){
 
-    theCorrectionsEE.push_back(0);   theBinsEE.push_back(30.5506);
-    theCorrectionsEE.push_back(0);   theBinsEE.push_back(34.2752);
-    theCorrectionsEE.push_back(0);   theBinsEE.push_back(38.4542);
-    theCorrectionsEE.push_back(-0.167688);   theBinsEE.push_back(43.1432);
-    theCorrectionsEE.push_back(-0.136405);   theBinsEE.push_back(48.4044);
-    theCorrectionsEE.push_back(-0.10191);   theBinsEE.push_back(54.3075);
-    theCorrectionsEE.push_back(-0.0818226);   theBinsEE.push_back(60.9309);
-    theCorrectionsEE.push_back(-0.0596632);   theBinsEE.push_back(68.3624);
-    theCorrectionsEE.push_back(-0.0452422);   theBinsEE.push_back(76.7008);
-    theCorrectionsEE.push_back(-0.0204676);   theBinsEE.push_back(86.0566);
-    theCorrectionsEE.push_back(-0.00708579);   theBinsEE.push_back(96.5539);
-    theCorrectionsEE.push_back(-0.00502538);   theBinsEE.push_back(108.332);
-    theCorrectionsEE.push_back(-0.00289768);   theBinsEE.push_back(121.548);
-    theCorrectionsEE.push_back(-0.00188651);   theBinsEE.push_back(136.375);
-    theCorrectionsEE.push_back(0.00172187);   theBinsEE.push_back(153.013);
-    theCorrectionsEE.push_back(0.00422572);   theBinsEE.push_back(171.68);
-    theCorrectionsEE.push_back(0.00352601);   theBinsEE.push_back(192.625);
-    theCorrectionsEE.push_back(0.000234735);   theBinsEE.push_back(216.126);
-    theCorrectionsEE.push_back(-0.00497225);   theBinsEE.push_back(242.494);
-    theCorrectionsEE.push_back(-0.00255359);   theBinsEE.push_back(272.079);
-    theCorrectionsEE.push_back(0.000276509);   theBinsEE.push_back(305.275);
-    theCorrectionsEE.push_back(-0.000676717);   theBinsEE.push_back(342.521);
-    theCorrectionsEE.push_back(0.00375508);   theBinsEE.push_back(384.312);
-    theCorrectionsEE.push_back(0.00800281);   theBinsEE.push_back(431.202);
-    theCorrectionsEE.push_back(0.00939014);   theBinsEE.push_back(483.813);
-    theCorrectionsEE.push_back(0.00933337);   theBinsEE.push_back(542.844);
-    theCorrectionsEE.push_back(0.0127813);   theBinsEE.push_back(609.078);
-    theCorrectionsEE.push_back(0.0149195);   theBinsEE.push_back(683.394);
-    theCorrectionsEE.push_back(0.0169709);   theBinsEE.push_back(766.777);
-    theCorrectionsEE.push_back(0.0198988);   theBinsEE.push_back(860.335);
-    theCorrectionsEE.push_back(0.0265556);   theBinsEE.push_back(965.308);
-    theCorrectionsEE.push_back(0.0266586);   theBinsEE.push_back(1083.09);
-    theCorrectionsEE.push_back(0.0308715);   theBinsEE.push_back(1215.24);
-    theCorrectionsEE.push_back(0.0147255);   theBinsEE.push_back(1363.52);
-    theCorrectionsEE.push_back(0.0155513);   theBinsEE.push_back(1529.9);
-    theCorrectionsEE.push_back(0.0234095);   theBinsEE.push_back(1716.57);
-    theCorrectionsEE.push_back(0.0319073);   theBinsEE.push_back(1926.02);
-    theCorrectionsEE.push_back(0.0440146);   theBinsEE.push_back(2161.02);
-    theCorrectionsEE.push_back(0.0401477);   theBinsEE.push_back(2424.71);
-    theCorrectionsEE.push_back(0.0538419);   theBinsEE.push_back(2720.56);
-    theCorrectionsEE.push_back(0.06414);   theBinsEE.push_back(3052.52);
-    theCorrectionsEE.push_back(0.0769302);   theBinsEE.push_back(3424.98);
-    theCorrectionsEE.push_back(0.0733546);   theBinsEE.push_back(3842.89);
-    theCorrectionsEE.push_back(0.0753102);   theBinsEE.push_back(4311.79);
-    theCorrectionsEE.push_back(0.0786608);   theBinsEE.push_back(4837.9);
-    theCorrectionsEE.push_back(0.0960978);   theBinsEE.push_back(5428.21);
-    theCorrectionsEE.push_back(0.111197);   theBinsEE.push_back(6090.55);
-    theCorrectionsEE.push_back(0.108132);   theBinsEE.push_back(6833.7);
-    theCorrectionsEE.push_back(0.12744);   theBinsEE.push_back(7667.54);
-    theCorrectionsEE.push_back(0.177114);   theBinsEE.push_back(8603.12);
-    theCorrectionsEE.push_back(0.168588);   theBinsEE.push_back(9652.85);
-    theCorrectionsEE.push_back(0.178248);   theBinsEE.push_back(10830.7);
-    theCorrectionsEE.push_back(0.286695);   theBinsEE.push_back(12152.2);
-    theCorrectionsEE.push_back(0.649502);   theBinsEE.push_back(13635);
-    theCorrectionsEE.push_back(0.561537);   theBinsEE.push_back(15298.7);
-    theCorrectionsEE.push_back(0.315861);   theBinsEE.push_back(17165.5);
-    theCorrectionsEE.push_back(-0.260055);   theBinsEE.push_back(19259.9);
-    theCorrectionsEE.push_back(-0.485963);   theBinsEE.push_back(21610);
-    theCorrectionsEE.push_back(-0.526979);   theBinsEE.push_back(24246.8);
-    theCorrectionsEE.push_back(-0.320099);   theBinsEE.push_back(27205.4);
-    theCorrectionsEE.push_back(0);   theBinsEE.push_back(0.000463988);
-
+     //theCorrectionsEE.push_back(0);   theBinsEE.push_back(18.9123);
+     //theCorrectionsEE.push_back(0);   theBinsEE.push_back(21.218);
+     //theCorrectionsEE.push_back(0);   theBinsEE.push_back(23.805);
+     theCorrectionsEE.push_back(-0.167688);   theBinsEE.push_back(26.7077);
+     theCorrectionsEE.push_back(-0.136405);   theBinsEE.push_back(29.9646);
+     theCorrectionsEE.push_back(-0.10191);   theBinsEE.push_back(33.6189);
+     theCorrectionsEE.push_back(-0.0818226);   theBinsEE.push_back(37.7191);
+     theCorrectionsEE.push_back(-0.0596632);   theBinsEE.push_back(42.3196);
+     theCorrectionsEE.push_back(-0.0452422);   theBinsEE.push_back(47.4814);
+     theCorrectionsEE.push_back(-0.0204676);   theBinsEE.push_back(53.2731);
+     theCorrectionsEE.push_back(-0.00708579);   theBinsEE.push_back(59.7715);
+     theCorrectionsEE.push_back(-0.00502538);   theBinsEE.push_back(67.0628);
+     theCorrectionsEE.push_back(-0.00289768);   theBinsEE.push_back(75.2437);
+     theCorrectionsEE.push_back(-0.00188651);   theBinsEE.push_back(84.4229);
+     theCorrectionsEE.push_back(0.00172187);   theBinsEE.push_back(94.7221);
+     theCorrectionsEE.push_back(0.00422572);   theBinsEE.push_back(106.278);
+     theCorrectionsEE.push_back(0.00352601);   theBinsEE.push_back(119.244);
+     theCorrectionsEE.push_back(0.000234735);   theBinsEE.push_back(133.792);
+     theCorrectionsEE.push_back(-0.00497225);   theBinsEE.push_back(150.115);
+     theCorrectionsEE.push_back(-0.00255359);   theBinsEE.push_back(168.43);
+     theCorrectionsEE.push_back(0.000276509);   theBinsEE.push_back(188.98);
+     theCorrectionsEE.push_back(-0.000676717);   theBinsEE.push_back(212.037);
+     theCorrectionsEE.push_back(0.00375508);   theBinsEE.push_back(237.907);
+     theCorrectionsEE.push_back(0.00800281);   theBinsEE.push_back(266.934);
+     theCorrectionsEE.push_back(0.00939014);   theBinsEE.push_back(299.503);
+     theCorrectionsEE.push_back(0.00933337);   theBinsEE.push_back(336.046);
+     theCorrectionsEE.push_back(0.0127813);   theBinsEE.push_back(377.048);
+     theCorrectionsEE.push_back(0.0149195);   theBinsEE.push_back(423.053);
+     theCorrectionsEE.push_back(0.0169709);   theBinsEE.push_back(474.671);
+     theCorrectionsEE.push_back(0.0198988);   theBinsEE.push_back(532.588);
+     theCorrectionsEE.push_back(0.0265556);   theBinsEE.push_back(597.572);
+     theCorrectionsEE.push_back(0.0266586);   theBinsEE.push_back(670.485);
+     theCorrectionsEE.push_back(0.0308715);   theBinsEE.push_back(752.294);
+     theCorrectionsEE.push_back(0.0147255);   theBinsEE.push_back(844.086);
+     theCorrectionsEE.push_back(0.0155513);   theBinsEE.push_back(947.078);
+     theCorrectionsEE.push_back(0.0234095);   theBinsEE.push_back(1062.64);
+     theCorrectionsEE.push_back(0.0319073);   theBinsEE.push_back(1192.3);
+     theCorrectionsEE.push_back(0.0440146);   theBinsEE.push_back(1337.78);
+     theCorrectionsEE.push_back(0.0401477);   theBinsEE.push_back(1501.01);
+     theCorrectionsEE.push_back(0.0538419);   theBinsEE.push_back(1684.16);
+     theCorrectionsEE.push_back(0.06414);   theBinsEE.push_back(1889.65);
+     theCorrectionsEE.push_back(0.0769302);   theBinsEE.push_back(2120.22);
+     theCorrectionsEE.push_back(0.0733546);   theBinsEE.push_back(2378.93);
+     theCorrectionsEE.push_back(0.0753102);   theBinsEE.push_back(2669.2);
+     theCorrectionsEE.push_back(0.0786608);   theBinsEE.push_back(2994.89);
+     theCorrectionsEE.push_back(0.0960978);   theBinsEE.push_back(3360.32);
+     theCorrectionsEE.push_back(0.111197);   theBinsEE.push_back(3770.34);
+     theCorrectionsEE.push_back(0.108132);   theBinsEE.push_back(4230.39);
+     theCorrectionsEE.push_back(0.12744);   theBinsEE.push_back(4746.57);
+     theCorrectionsEE.push_back(0.177114);   theBinsEE.push_back(5325.74);
+     theCorrectionsEE.push_back(0.168588);   theBinsEE.push_back(5975.58);
+     theCorrectionsEE.push_back(0.178248);   theBinsEE.push_back(6704.7);
+     theCorrectionsEE.push_back(0.286695);   theBinsEE.push_back(7522.8);
+     theCorrectionsEE.push_back(0.649502);   theBinsEE.push_back(8440.72);
+     theCorrectionsEE.push_back(0.561537);   theBinsEE.push_back(9470.64);
+     theCorrectionsEE.push_back(0.315861);   theBinsEE.push_back(10626.2);
+     theCorrectionsEE.push_back(-0.260055);   theBinsEE.push_back(11922.8);
+     theCorrectionsEE.push_back(-0.485963);   theBinsEE.push_back(13377.6);
+     theCorrectionsEE.push_back(-0.526979);   theBinsEE.push_back(15009.9);
+     theCorrectionsEE.push_back(-0.320099);   theBinsEE.push_back(16841.4);
+    
    }
    else {
    std::cout << "you've selected a correction type (" << version << ") for EE which does not exist" << std::endl;
@@ -261,7 +232,7 @@ void timeCorrector::initEB(std::string version){
 
    theCorrectionsEB.clear();          theBinsEB.clear();
 
-   // these corrections are in nanosecond
+   // this is binned measured bias in nanosecond; correction needs be the opposited. 
    if(version==std::string("EBmod4")){
 
    theCorrectionsEB.push_back(0.0427097);   theBinsEB.push_back(30.5506);

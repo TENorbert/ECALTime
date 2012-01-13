@@ -35,12 +35,12 @@ void setBranchAddresses(TTree* chain, EcalTimePhyTreeContent& treeVars)
 
   chain -> SetBranchAddress("muPx",        treeVars.muPx       );
   chain -> SetBranchAddress("muPy",        treeVars.muPy       );
-  chain -> SetBranchAddress("muPz",        treeVars.muPz       );
+  chain -> SetBranchAddress("muPa",        treeVars.muPz       );
   chain -> SetBranchAddress("muE",         treeVars.muE        );
   
   chain -> SetBranchAddress("elePx",        treeVars.elePx     );
   chain -> SetBranchAddress("elePy",        treeVars.elePy     );
-  chain -> SetBranchAddress("elePz",        treeVars.elePz     );
+  chain -> SetBranchAddress("elePa",        treeVars.elePz     );
   chain -> SetBranchAddress("eleE",         treeVars.eleE      );
   
   chain -> SetBranchAddress("jetPx",        treeVars.jetPx     );
@@ -50,7 +50,7 @@ void setBranchAddresses(TTree* chain, EcalTimePhyTreeContent& treeVars)
   
   chain -> SetBranchAddress("phoPx",        treeVars.phoPx     );
   chain -> SetBranchAddress("phoPy",        treeVars.phoPy     );
-  chain -> SetBranchAddress("phoPz",        treeVars.phoPz     );
+  chain -> SetBranchAddress("phoPa",        treeVars.phoPz     );
   chain -> SetBranchAddress("phoE",         treeVars.phoE      );
 
   ///*  
@@ -508,7 +508,7 @@ void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
   chain -> Branch("timeStampHigh", &treeVars.timeStampHigh, "timeStampHigh/i");
   
   
-  // RECO VARIABLES
+  // PAT VARIABLES
   chain -> Branch("nMuons",      &treeVars.nMuons,               "nMuons/I");
   chain -> Branch("nElectrons",  &treeVars.nElectrons,           "nElectrons/I");
   chain -> Branch("nJets",       &treeVars.nJets,                "nJets/I");
@@ -520,12 +520,12 @@ void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
 
   chain -> Branch("muPx",        treeVars.muPx,                 "muPx[nMuons]/F");
   chain -> Branch("muPy",        treeVars.muPy,                 "muPy[nMuons]/F");
-  chain -> Branch("muPz",        treeVars.muPz,                 "muPz[nMuons]/F");
+  chain -> Branch("muPa",        treeVars.muPz,                 "muPz[nMuons]/F");
   chain -> Branch("muE",         treeVars.muE,                  "muE[nMuons]/F");
   
   chain -> Branch("elePx",        treeVars.elePx,                 "elePx[nElectrons]/F");
   chain -> Branch("elePy",        treeVars.elePy,                 "elePy[nElectrons]/F");
-  chain -> Branch("elePz",        treeVars.elePz,                 "elePz[nElectrons]/F");
+  chain -> Branch("elePa",        treeVars.elePz,                 "elePz[nElectrons]/F");
   chain -> Branch("eleE",         treeVars.eleE,                  "eleE[nElectrons]/F");
   
   chain -> Branch("jetPx",        treeVars.jetPx,                 "jetPx[nJets]/F");
@@ -535,7 +535,7 @@ void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
   
   chain -> Branch("phoPx",        treeVars.phoPx,                 "phoPx[nPhotons]/F");
   chain -> Branch("phoPy",        treeVars.phoPy,                 "phoPy[nPhotons]/F");
-  chain -> Branch("phoPz",        treeVars.phoPz,                 "phoPz[nPhotons]/F");
+  chain -> Branch("phoPa",        treeVars.phoPz,                 "phoPz[nPhotons]/F");
   chain -> Branch("phoE",         treeVars.phoE,                  "phoE[nPhotons]/F");
  
   ///*  

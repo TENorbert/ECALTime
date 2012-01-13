@@ -164,7 +164,7 @@ struct EcalTimePhyTreeContent
   float caloTowerHadEta[MAXCALOTOWERS];
   float caloTowerHadPhi[MAXCALOTOWERS];
   
-  // reco variables
+  // pat variables
   int   nJets ;
   float jetPx[MAXJET];
   float jetPy[MAXJET];
