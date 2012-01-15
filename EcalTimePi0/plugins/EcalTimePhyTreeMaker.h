@@ -16,7 +16,7 @@ Implementation:
 //
 // Authors:                   Shih-Chuan Kao, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePhyTreeMaker.h,v 1.5 2012/01/12 18:16:54 sckao Exp $
+// $Id: EcalTimePhyTreeMaker.h,v 1.4 2012/01/13 19:50:33 sckao Exp $
 //
 //
 
@@ -108,8 +108,8 @@ Implementation:
 #include <TMath.h>
 #include <Math/VectorUtil.h>
 
-#include "CalibCalorimetry/EcalTiming/interface/EcalTimePhyTreeContent.h"
-#include "CalibCalorimetry/EcalTiming/interface/timeVsAmpliCorrector.h"
+#include "ECALTime/EcalTimePi0/interface/EcalTimePhyTreeContent.h"
+#include "ECALTime/EcalTimePi0/interface/timeVsAmpliCorrector.h"
 
 
 typedef std::pair<reco::SuperClusterRef, float> ParticleSC  ;

@@ -13,12 +13,12 @@ Implementation:
 //
 // Authors:                   Shih-Chuan Kao, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePhyTreeMaker.cc,v 1.7 2012/01/13 19:50:33 sckao Exp $
+// $Id: EcalTimePhyTreeMaker.cc,v 1.8 2012/01/13 20:46:23 sckao Exp $
 //
 //
 
  
-#include "CalibCalorimetry/EcalTiming/plugins/EcalTimePhyTreeMaker.h"
+#include "ECALTime/EcalTimePi0/plugins/EcalTimePhyTreeMaker.h"
 
 #include "DataFormats/DetId/interface/DetId.h"
 #include "Geometry/CaloTopology/interface/CaloTopology.h"
@@ -74,8 +74,8 @@ EcalTimePhyTreeMaker::EcalTimePhyTreeMaker (const edm::ParameterSet& iConfig) :
   PhotonSource_                         (iConfig.getParameter<edm::InputTag> ("PhotonSource")),
   triggerSource_                        (iConfig.getParameter<edm::InputTag> ("triggerSource")),
   vertexCollection_                     (iConfig.getParameter<edm::InputTag> ("vertexCollection")),
-  l1GMTReadoutRecTag_   (iConfig.getUntrackedParameter<std::string> ("L1GlobalReadoutRecord","gtDigis")),
-  gtRecordCollectionTag_ (iConfig.getUntrackedParameter<std::string> ("GTRecordCollection","")),
+  l1GMTReadoutRecTag_   (iConfig.getParameter<std::string> ("L1GlobalReadoutRecord")),
+  gtRecordCollectionTag_ (iConfig.getParameter<std::string> ("GTRecordCollection")),
   runNum_               (iConfig.getParameter<int> ("runNum")),
   minEtEB_              (iConfig.getParameter<double> ("minEtEB")),
   minEtEE_              (iConfig.getParameter<double> ("minEtEE")),
@@ -84,8 +84,8 @@ EcalTimePhyTreeMaker::EcalTimePhyTreeMaker (const edm::ParameterSet& iConfig) :
   photonIso_            (iConfig.getParameter<std::vector<double> >("photonIso")),
   electronCuts_         (iConfig.getParameter<std::vector<double> >("electronCuts")),
   muonCuts_             (iConfig.getParameter<std::vector<double> >("muonCuts")),
-  fileName_             (iConfig.getUntrackedParameter<std::string> ("fileName", std::string ("EcalTimePhyTreeMaker"))),
-  triggerName_          (iConfig.getUntrackedParameter<std::string> ("triggerName")),
+  fileName_             (iConfig.getParameter<std::string> ("fileName")),
+  triggerName_          (iConfig.getParameter<std::string> ("triggerName")),
   doTimeVSAmpliCorrection_(iConfig.getParameter<bool> ("doTimeVSAmpliCorrection")),
   naiveId_ (0)              
 {
