@@ -69,7 +69,7 @@ typedef std::set<std::pair<int,int> > SetOfIntPairs;
 
 
 // -------- Globals ----------------------------------------
-EcalTimeTreeContent treeVars_; 
+EcalTimePhyTreeContent treeVars_; 
 TFile* saving_;
 std::vector<std::string> listOfFiles_;
 bool speak_=false;

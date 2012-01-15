@@ -1,6 +1,6 @@
 #include "ECALTime/EcalTimePi0/interface/analysisHistograms.h"
 
-void HistSet::setTree(EcalTimeTreeContent * treeVars){
+void HistSet::setTree(EcalTimePhyTreeContent * treeVars){
   treeVars_ = treeVars;
 }
 

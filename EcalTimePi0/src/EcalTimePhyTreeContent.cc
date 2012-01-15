@@ -1,4 +1,4 @@
-#include "CalibCalorimetry/EcalTiming/interface/EcalTimePhyTreeContent.h"
+#include "ECALTime/EcalTimePi0/interface/EcalTimePhyTreeContent.h"
 
 bool EcalTimePhyTreeContent::trgVariables = false;
 bool EcalTimePhyTreeContent::muonVariables = false;

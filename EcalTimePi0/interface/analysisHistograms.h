@@ -24,7 +24,7 @@ int   binsTDistro_  = 120; // 1-E4/E1
 struct HistSet{
 
   // set pointer to the tree which is used to get data from
-  void setTree(EcalTimeTreeContent * treeVars_);
+  void setTree(EcalTimePhyTreeContent * treeVars_);
   
   //book histogram set w/ common suffix inside the provided TFileDirectory
   //void book(edm::Service<TFileService>& td,const std::string&);
@@ -74,7 +74,7 @@ struct HistSet{
   TH1F* diffSeedSecond_, *diffSeedSecondOverErr_;
   TH2F* seedVSSecond_;  
 
-  EcalTimeTreeContent * treeVars_;
+  EcalTimePhyTreeContent * treeVars_;
 
 } theHists;
 // ---------------------------------------------------------------------------------------

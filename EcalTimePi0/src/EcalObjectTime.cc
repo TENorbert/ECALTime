@@ -8,12 +8,12 @@
 // ---------------------------------------------------------------------------------------
 // --------------- Function to compute time and error for a physics object ---------------
 
-ClusterTime timeAndUncertyPhoton(int bClusterIndex, EcalTimeTreeContent treeVars_)
+ClusterTime timeAndUncertyPhoton(int bClusterIndex, EcalTimePhyTreeContent treeVars_)
 {
   return timeAndUncertSingleCluster( bClusterIndex, treeVars_);
 }
 
-ClusterTime timeAndUncertyJet(int bClusterIndex, EcalTimeTreeContent treeVars_)
+ClusterTime timeAndUncertyJet(int bClusterIndex, EcalTimePhyTreeContent treeVars_)
 {
   return timeAndUncertSingleCluster( bClusterIndex, treeVars_);
 }
@@ -23,7 +23,7 @@ ClusterTime timeAndUncertyJet(int bClusterIndex, EcalTimeTreeContent treeVars_)
 // ---------------------------------------------------------------------------------------
 // ------------------ Function to compute time and error for a cluster -------------------
 
-ClusterTime timeAndUncertSingleCluster(int bClusterIndex, EcalTimeTreeContent treeVars_)
+ClusterTime timeAndUncertSingleCluster(int bClusterIndex, EcalTimePhyTreeContent treeVars_)
 {
   ClusterTime theResult; //initialize
   theResult.isvalid = false;
@@ -194,7 +194,7 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex, EcalTimeTreeContent tr
 // ---------------------------------------------------------------------------------------
 // ----------------  Functios to handle time of flight of supercluster -------------------
 
-float travelDistance(int sc_num, EcalTimeTreeContent treeVars_) {
+float travelDistance(int sc_num, EcalTimePhyTreeContent treeVars_) {
   return
     sqrt (	  pow( (treeVars_.superClusterVertexX[sc_num]-treeVars_.superClusterX[sc_num]), 2) +
 		  pow( (treeVars_.superClusterVertexY[sc_num]-treeVars_.superClusterY[sc_num]), 2) +   
@@ -203,7 +203,7 @@ float travelDistance(int sc_num, EcalTimeTreeContent treeVars_) {
 }
 
 
-float extraTravelTime(int sc_num, EcalTimeTreeContent & treeVars_) { // extra travel time with respect to collision at IP, in ns
+float extraTravelTime(int sc_num, EcalTimePhyTreeContent & treeVars_) { // extra travel time with respect to collision at IP, in ns
   
   float travelled = sqrt (	  pow( (treeVars_.superClusterX[sc_num]-treeVars_.superClusterVertexX[sc_num]), 2) +
 				  pow( (treeVars_.superClusterY[sc_num]-treeVars_.superClusterVertexY[sc_num]), 2) +   
@@ -220,9 +220,9 @@ float extraTravelTime(int sc_num, EcalTimeTreeContent & treeVars_) { // extra tr
 }
 
 
-float extraTravelTime(int sc_num, int vtx_num, EcalTimeTreeContent & treeVars_) { // extra travel time with respect to an arbitrary vertex
+float extraTravelTime(int sc_num, int vtx_num, EcalTimePhyTreeContent & treeVars_) { // extra travel time with respect to an arbitrary vertex
   if(vtx_num<0 || vtx_num>=treeVars_.nVertices){
-    std::cout<< "Usnig invalid vtx_num "<<vtx_num<<" within extraTravelTime(int sc_num, int vtx_num, EcalTimeTreeContent & treeVars_). Stopping the program." << std::endl;
+    std::cout<< "Usnig invalid vtx_num "<<vtx_num<<" within extraTravelTime(int sc_num, int vtx_num, EcalTimePhyTreeContent & treeVars_). Stopping the program." << std::endl;
     assert(0);
   }
   

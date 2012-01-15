@@ -28,11 +28,11 @@ struct ClusterTime {
   float chi2;
 } ;
 
-ClusterTime timeAndUncertSingleCluster (int bClusterIndex, EcalTimeTreeContent treeVars_);
-ClusterTime timeAndUncertyPhoton       (int bClusterIndex, EcalTimeTreeContent treeVars_);
-ClusterTime timeAndUncertyJet          (int bClusterIndex, EcalTimeTreeContent treeVars_);
+ClusterTime timeAndUncertSingleCluster (int bClusterIndex, EcalTimePhyTreeContent treeVars_);
+ClusterTime timeAndUncertyPhoton       (int bClusterIndex, EcalTimePhyTreeContent treeVars_);
+ClusterTime timeAndUncertyJet          (int bClusterIndex, EcalTimePhyTreeContent treeVars_);
 
 
-float travelDistance(int sc_num, EcalTimeTreeContent treeVars_);
-float extraTravelTime(int sc_num, EcalTimeTreeContent & treeVars_);
-float extraTravelTime(int sc_num, int vtx_num, EcalTimeTreeContent & treeVars_);
+float travelDistance(int sc_num, EcalTimePhyTreeContent treeVars_);
+float extraTravelTime(int sc_num, EcalTimePhyTreeContent & treeVars_);
+float extraTravelTime(int sc_num, int vtx_num, EcalTimePhyTreeContent & treeVars_);
