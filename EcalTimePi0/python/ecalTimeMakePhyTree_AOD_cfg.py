@@ -17,7 +17,10 @@ process.load("Geometry.MuonNumbering.muonNumberingInitialization_cfi") # gfwork:
 # Global Tag
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 #process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_noesprefer_cff")
-process.GlobalTag.globaltag = 'GR_P_V22::All'
+# global tag for 42x
+#process.GlobalTag.globaltag = 'GR_P_V22::All'
+# global tag for 44x
+process.GlobalTag.globaltag = 'GR_R_44_V13::All'
 
 
 # Trigger
@@ -48,10 +51,10 @@ process.ecalTimePhyTree.muonCollection = cms.InputTag("muons")
 # switch on or off Tambe's analysis level corrections
 process.ecalTimePhyTree.doTimeVSAmpliCorrection = cms.bool(True)
 process.ecalTimePhyTree.runNum = 999999
-#process.ecalTimePhyTree.triggerName      = cms.untracked.string('HLT_Photon90_CaloIdVL_IsoL_v4'),
-process.ecalTimePhyTree.triggerName     = cms.untracked.string('HLT_Photon75_CaloIdVL_IsoL_v8'),
-process.ecalTimePhyTree.trigSource      = cms.InputTag("TriggerResults","","HLT"),
-
+#process.ecalTimePhyTree.triggerName      = cms.string("HLT_Photon90_CaloIdVL_IsoL_v4"),
+process.ecalTimePhyTree.triggerName     = cms.string("HLT_Photon75_CaloIdVL_IsoL_v8")
+process.ecalTimePhyTree.trigSource      = cms.InputTag("TriggerResults","","HLT")
+process.ecalTimePhyTree.L1GlobalReadoutRecord = cms.string('gtDigis')
 
 # Set up cuts for physics objects;
 # nJets and nPhoton constitute event-based selections 
