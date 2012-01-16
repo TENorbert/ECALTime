@@ -428,13 +428,17 @@ int main (int argc, char** argv)
 
   // Tree construction
   // FIX should turn this string into a configurable 
-  TChain * chain = new TChain ("EcalTimeAnalysis") ;  // ntuple producer in CMSSW CVS
-  //TChain * chain = new TChain ("EcalTimePi0Analysis") ;  // ntuple producer in UserCode/UMN space
+  TChain * chain            = new TChain ("EcalTimeAnalysis") ;        // ntuple producer in CMSSW CVS
+  //TChain * chainForSelector = new TChain ("EcalTimeAnalysisForSel") ;  // ntuple producer in CMSSW CVS
   std::vector<std::string>::const_iterator file_itr;
   for(file_itr=listOfFiles_.begin(); file_itr!=listOfFiles_.end(); file_itr++){
-    chain->Add( (*file_itr).c_str() );
+    chain           ->Add( (*file_itr).c_str() );
+    //chainForSelector->Add( (*file_itr).c_str() );
   }
+  // a separate instane for SC's DP selector
+  TChain * chainForSelector = (TChain *) chain->Clone();
   int nEntries = chain->GetEntries () ;
+
   if (numEvents_==-1) numEvents_ = nEntries;
   std::cout << "\n\tFOUND "         <<  listOfFiles_.size() << " input files" << std::endl ;    
   std::cout << "\n\tFOUND "         <<  nEntries << " events" << std::endl ;    
@@ -458,8 +462,11 @@ int main (int argc, char** argv)
 
   Input_    = new AnaInput( datacardfile_ );
   Selector_ = new DPSelection( datacardfile_ ) ;
+  int nEntriesSelector = chainForSelector->GetEntries () ;
+  std::cout << "nEntriesSelector: " << nEntriesSelector << " nEntries: " << nEntries << std::endl;
+
   // link the variables for selection module
-  Selector_->Init( chain ) ;
+  Selector_->Init( chainForSelector ) ;
 
   string hfolder ;
   string plotType ;
@@ -489,29 +496,28 @@ int main (int argc, char** argv)
   static edm::ServiceRegistry::Operate operate(services);
   edm::Service<TFileService> fs;
 
-  //std::cout << "treeVars_.runId: " << treeVars_.runId << std::endl;
   TFileDirectory subDirECALECAL=fs->mkdir("ECALECAL");  
   HistSet plotsECALECAL;   plotsECALECAL.book(subDirECALECAL,std::string("ECALECAL"));
   plotsECALECAL.setTree(&treeVars_);
 
-  TFileDirectory subDirEBEB=fs->mkdir("EBEB");  
-  HistSet plotsEBEB;   plotsEBEB.book(subDirEBEB,std::string("EBEB"));
-  plotsEBEB.setTree(&treeVars_);
+  TFileDirectory subDirEB=fs->mkdir("EB");  
+  HistSet plotsEB;   plotsEB.book(subDirEB,std::string("EB"));
+  plotsEB.setTree(&treeVars_);
 
 
-  TFileDirectory subDirEBEBchi2=fs->mkdir("EBEBchi2");  
-  HistSet plotsEBEBchi2;   plotsEBEBchi2.book(subDirEBEBchi2,std::string("EBEBchi2"));
-  plotsEBEBchi2.setTree(&treeVars_);
+  TFileDirectory subDirEBchi2=fs->mkdir("EBchi2");  
+  HistSet plotsEBchi2;   plotsEBchi2.book(subDirEBchi2,std::string("EBchi2"));
+  plotsEBchi2.setTree(&treeVars_);
 
 
-  TFileDirectory subDirEBEBchi2loose=fs->mkdir("EBEBchi2loose");  
-  HistSet plotsEBEBchi2loose;   plotsEBEBchi2loose.book(subDirEBEBchi2loose,std::string("EBEBchi2loose"));
-  plotsEBEBchi2loose.setTree(&treeVars_);
+  TFileDirectory subDirEBchi2loose=fs->mkdir("EBchi2loose");  
+  HistSet plotsEBchi2loose;   plotsEBchi2loose.book(subDirEBchi2loose,std::string("EBchi2loose"));
+  plotsEBchi2loose.setTree(&treeVars_);
 
 
-  TFileDirectory subDirEBEBchi2tight=fs->mkdir("EBEBchi2tight");  
-  HistSet plotsEBEBchi2tight;   plotsEBEBchi2tight.book(subDirEBEBchi2tight,std::string("EBEBchi2tight"));
-  plotsEBEBchi2tight.setTree(&treeVars_);
+  TFileDirectory subDirEBchi2tight=fs->mkdir("EBchi2tight");  
+  HistSet plotsEBchi2tight;   plotsEBchi2tight.book(subDirEBchi2tight,std::string("EBchi2tight"));
+  plotsEBchi2tight.setTree(&treeVars_);
 
 
   TFileDirectory subDirEBEE=fs->mkdir("EBEE");  
@@ -534,12 +540,16 @@ int main (int argc, char** argv)
   TFileDirectory subDirGeneral=fs->mkdir("General");  
   initializeHists(subDirGeneral);
 
-  int eventCounter = 0;
-  /////////////////////////////////////////////////////
+  int eventCounter     = 0;
+  int eventPassCounter = 0;
+
+  /////////////////////////////////////////////////////  /////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////  /////////////////////////////////////////////////////
   // Main loop over entries
   for (int entry = 0 ; (entry < nEntries && eventCounter < numEvents_); ++entry)
   {
-    chain->GetEntry (entry) ;
+    chain            ->GetEntry (entry) ;
+    chainForSelector ->GetEntry (entry) ;
     // Keep the event?
     bool keepEvent = includeEvent(treeVars_.l1ActiveTriggers,
         treeVars_.l1NActiveTriggers,trigIncludeVector,trigExcludeVector)
@@ -555,6 +565,8 @@ int main (int argc, char** argv)
     // do analysis if the LS is in the desired range  
     if( treeVars_.lumiSection<minLS_  || maxLS_<treeVars_.lumiSection) continue;
     
+    // if evet being actually processed, increment counter of analyzed events
+    eventCounter++;
 
     /////////////////// DP analysis events selection ////////////////////////
     bool passEvent = true ;
@@ -596,6 +608,19 @@ int main (int argc, char** argv)
     if ( passEvent ) counter[7]++ ;   
     /////////////////// DP analysis events selection ////////////////////////
 
+   
+    // if selection according to datacard not passed, move on to next event 
+    if ( ! passEvent ) continue;
+    
+    // define samples here /////////////////////////////////// (to be updated/FIXED including SC's implementation )
+    // control region
+    // 1: gamma+jets background control sample - FIXME
+    if( selectBackground==1 && (treeVars_.nJets<1 || treeVars_.nJets>2) ) continue;
+    // 2: QCD background control sample - FIXME
+    if( selectBackground==2 && (treeVars_.nJets<1 || treeVars_.nJets>2) ) continue;
+    // look only at half of the events 
+    if ( (treeVars_.orbit % 2)==1 ) continue;
+
     bool verticesAreOnlyNextToNominalIP;
     int  count=0;
     
@@ -609,8 +634,7 @@ int main (int argc, char** argv)
     if (flagOneVertex_ ==1 && (!verticesAreOnlyNextToNominalIP) ) continue;
     if (flagOneVertex_ ==2 && (verticesAreOnlyNextToNominalIP) )  continue;
     
-    // if evet being actually processed, increment counter of analyzed events
-    eventCounter++;
+    eventPassCounter++;
     
     speak_=false;
     if (entry<10 || entry%10000==0) speak_=true;
@@ -619,12 +643,6 @@ int main (int argc, char** argv)
     if (speak_)  std::cout << "  found " << treeVars_.nSuperClusters << " superclusters" << std::endl ;
     if (speak_)  std::cout << "  found " << treeVars_.nClusters << " basic clusters" << std::endl ;
 
-    
-    // control region
-    if(treeVars_.nJets<1 || treeVars_.nJets>2) continue;
-    // look only at half of the events 
-    if ( (treeVars_.orbit % 2)==1 ) continue;
-    
     nVertices_->Fill(treeVars_.nVertices);
     
     ///////////////////////////////////////////////////////////////////////
@@ -657,16 +675,16 @@ int main (int argc, char** argv)
 	if(! (bcTime1.isvalid ) ) continue;
 
 	if      ( fabs(treeVars_.clusterEta[bc1])<1.4   ){
-	  plotsEBEB.fillSingle(sc1, bc1,  bcTime1);
+	  plotsEB.fillSingle(sc1, bc1,  bcTime1);
 	  
 	  int type=3; float cut=6;
-	  plotsEBEBchi2loose.fillSingle(sc1, bc1,  bcTime1, type, cut);
+	  plotsEBchi2loose.fillSingle(sc1, bc1,  bcTime1, type, cut);
 
 	  type=3; cut=4;
-	  plotsEBEBchi2.fillSingle(sc1, bc1,  bcTime1, type, cut);
+	  plotsEBchi2.fillSingle(sc1, bc1,  bcTime1, type, cut);
 
 	  type=3; cut=3;
-	  plotsEBEBchi2tight.fillSingle(sc1, bc1,  bcTime1, type, cut);
+	  plotsEBchi2tight.fillSingle(sc1, bc1,  bcTime1, type, cut);
 
 	} 
 	else if( fabs(treeVars_.clusterEta[bc1])>1.5 && fabs(treeVars_.clusterEta[bc1])<2.5 ){
@@ -680,8 +698,8 @@ int main (int argc, char** argv)
   }   // end of loop over entries
   
   /////////////////// summary of DP analysis events selection ////////////////////////
-  cout<<"\\n \t all:"<< counter[0] <<" pho:"<<counter[1]<<" vtx:"<< counter[2]<<" Iso:"<<counter[3]<<" noGjets:"<<counter[4] ;
-  cout<<" tight:"<< counter[5] <<" jet:"<<counter[6]<<" hlt:"<<counter[7]<<endl; 
+  std::cout<<"\n final event summary -  all:"<< counter[0] <<" pho:"<<counter[1]<<" vtx:"<< counter[2]<<" Iso:"<<counter[3]<<" noGjets:"<<counter[4] ;
+  std::cout<<" tight:"<< counter[5] <<" jet:"<<counter[6]<<" hlt:"<<counter[7]<< " - events that passed preselection;     inclusive plots: " << eventPassCounter << " (that have passed the Sample type you want: sig, control, control QCD )" <<std::endl; 
   
   delete chain ;
   
