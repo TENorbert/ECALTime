@@ -651,11 +651,14 @@ int main (int argc, char** argv)
     ///////////////////////////////////////////////////////////////////////
     // outer loop on supercluster
     for (int sc1=0; sc1<treeVars_.nSuperClusters; sc1++){
+
+      // require object FIRST, since for jets there may not BE superClusterRawEnergy or superClusterEta 
+      if ( fabs ( treeVars_.SCPIdx[sc1] - 22) > 2) continue;
+
       float et1 = treeVars_.superClusterRawEnergy[sc1]/cosh( treeVars_.superClusterEta[sc1] );
       //std::cout << "gf1 num SC n SC" << treeVars_.nSuperClusters << "\t et: " << et1 << "\t" << treeVars_.superClusterRawEnergy[sc1] << "\t" << treeVars_.superClusterEta[sc1] << "\t" << treeVars_.SCPIdx[sc1] << std::endl; 
       if (et1<70) continue; // match choice of control region; this should be translated into cut on the photon, not SC
       // select only photons
-      if ( fabs ( treeVars_.SCPIdx[sc1] - 22) > 2) continue;
 
       float tmpEne=-9999;
 	// loop on BC and match to sc1  ===============
