@@ -575,7 +575,10 @@ int main (int argc, char** argv)
     if ( entry%2 == split ) continue ;    // FIXME
     // FIXME
     counter[0]++ ;   
+    // put back the cuts to be the same as they are in the datacard
     Selector_->ResetCollection() ;
+    Selector_->ResetCuts() ;
+
     bool passPhoton = Selector_->PhotonFilter( false );
     /* DEBUG */    //std::cout << "passPhoton Loose No Iso: " << passPhoton << std::endl; /* DEBUG */
     passEvent = ( passPhoton && passEvent ) ? true : false ;
@@ -648,13 +651,11 @@ int main (int argc, char** argv)
     ///////////////////////////////////////////////////////////////////////
     // outer loop on supercluster
     for (int sc1=0; sc1<treeVars_.nSuperClusters; sc1++){
-
       float et1 = treeVars_.superClusterRawEnergy[sc1]/cosh( treeVars_.superClusterEta[sc1] );
+      //std::cout << "gf1 num SC n SC" << treeVars_.nSuperClusters << "\t et: " << et1 << "\t" << treeVars_.superClusterRawEnergy[sc1] << "\t" << treeVars_.superClusterEta[sc1] << "\t" << treeVars_.SCPIdx[sc1] << std::endl; 
       if (et1<70) continue; // match choice of control region; this should be translated into cut on the photon, not SC
-
       // select only photons
       if ( fabs ( treeVars_.SCPIdx[sc1] - 22) > 2) continue;
-
 
       float tmpEne=-9999;
 	// loop on BC and match to sc1  ===============
