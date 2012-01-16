@@ -24,7 +24,6 @@
 #include "TMath.h"
 #include "TFile.h"
 
-
 typedef std::set<std::pair<int,int> > SetOfIntPairs;
 
 // initial authors P. Govoni et al
@@ -38,9 +37,6 @@ typedef std::set<std::pair<int,int> > SetOfIntPairs;
 
 #define numAeffBins     35
 #define numAoSigmaBins  25
-
-#define NSlices 54 // # of slices in log(A)
-#define LogStep 0.05 // size of Slices log(A)
 
 struct ClusterTime {
   int   numCry;
@@ -71,8 +67,10 @@ std::string outputRootName_ = "outputHistos.root";
 int   numEvents_      = -1;
 unsigned int  minRun_ = 0;
 unsigned int  maxRun_ = 9999999;
-unsigned int  minLS_ = 0;
-unsigned int  maxLS_ = 9999999;
+unsigned int  minLS_       = 0;
+unsigned int  maxLS_       = 9999999;
+unsigned int  minUnixTime_ = 0;
+unsigned int  maxUnixTime_ = 9999999;
 float eTGammaMinEB_   = 0.2;
 float s4s9GammaMinEB_ = 0.85;
 float eTPi0MinEB_     = 0.65;
@@ -92,17 +90,13 @@ float minAmpliOverSigma_   = 10;    // dimensionless
 float maxChi2NDF_ = 20;  //TODO: gf configurable
 
 int  minEntriesForFit_ = 7;
+
 int  flagOneVertex_ = 0;
+
 bool limitFit_(true); 
 //std::string fitOption_(""); // default: use chi2 method
 std::string fitOption_("L"); // use likelihood method
 
-// Ao dependent timing corrections
-// By the definition of these corrections, the timing should be zero for the hits in Module 1 
-// or Low eta EE within the valid A/sigma ranges.  Earlier data will have positive time due 
-// to the graduate timing shifts in the positive direction.
-TF1* timeCorrectionEB_ = new TF1("timeCorrectionEB_","pol4(0)",0,1.2);
-TF1* timeCorrectionEE_ = new TF1("timeCorrectionEE_","pol4(0)",0,1.2);
 
 
 //parameters for histograms binning and ranges ///////////////////////////////////////////
@@ -140,17 +134,16 @@ float  AeffBinCentersEE_[256];  float  AeffBinCentersErrEE_[256];  float  sigmaA
 
 
 // set of fine bins for AoSigmaBins, for t vs Ampli bias study 
-double AoSigmaBins_[33] = {0,  10,  18,  
-			   24, 28,  32,  36,  40,
-			   44, 52,  60,  72,  80,
-                           92, 102, 116, 144, 172,
-                           240,320, 400, 480, 560, 
-			   650, 800, 1000, 1200, 1500,
-                           1900, 2400, 3000, 3700, 4000}; //25 bins in total
-int    AoSigmaNBins_     = 32;    // (counting to be updated) 300 combinations between different bins; + 25 self-combinations =-> 325 in total
+double AoSigmaBins_[26] = {0,  5,  7,  9,  10,
+			   12, 14, 16, 18, 20,
+			   22, 26, 30, 36, 40,
+                           46, 52, 58, 74, 86,
+                           120,160,200,240,280, 
+			   320}; //25 bins in total
+int    AoSigmaNBins_     = 25;    // 300 combinations between different bins; + 25 self-combinations =-> 325 in total
                                   // check above that numAeffBins is set to a value equal or larger than this (==325)
 int    AoSigmaNPairs_    = (AoSigmaNBins_)*(AoSigmaNBins_-1)/2 + AoSigmaNBins_;
-int    AoSigmaMax_       = 4000;   //up to about 8 GeV
+int    AoSigmaMax_       = 320;   //up to about 8 GeV
 
 float  AoSigmaBinCentersEB_[32][32];  float  AoSigmaBinCentersErrEB_[32][32];  float  sigmaAoSigmaEB_[32][32];  float  sigmaAoSigmaErrEB_[32][32];
 float  AoSigmaBinCentersEE_[32][32];  float  AoSigmaBinCentersErrEE_[32][32];  float  sigmaAoSigmaEE_[32][32];  float  sigmaAoSigmaErrEE_[32][32];
@@ -209,6 +202,15 @@ TH1F* BCTimeHistEE_;
 TH1F* BCTimeHistEEP_;
 TH1F* BCTimeHistEEM_;
 TH2F* BCTimeHistEBvsEE_;
+TH2F* BCTimeHistEBvsEEP_;
+TH2F* BCTimeHistEBvsEEM_;
+TH2F* BCTimeHistEBCentralvsEE_;
+TH2F* BCTimeHistEEPvsEEM_;
+TH2F* BCOccupancyEEPTimeLHist_;
+TH2F* BCOccupancyEEPTimeRHist_;
+TH2F* BCOccupancyEEMTimeLHist_;
+TH2F* BCOccupancyEEMTimeRHist_;
+TH2F* BCOccupancyEBTimeRHist_;
 // diphotons control plots
 TH1F* massDiGammaHist_;
 TH1F* massDiGammaEBHist_;
@@ -238,59 +240,6 @@ TH1F*   AeffSliceEB_[numAeffBins];
 TH2F*   dtVSAeffHistEE_;
 TH1F*   dtSliceVSAeffEE_[numAeffBins];
 TH1F*   AeffSliceEE_[numAeffBins];
-TH2F*   timeVsAoSigmaEB_; 
-TH2F*   timeVsAoSigmaEE_;
-TH2F*   timeVsAoSigmaMod1EB_; 
-TH2F*   timeVsAoSigmaMod2EB_; 
-TH2F*   timeVsAoSigmaMod3EB_; 
-TH2F*   timeVsAoSigmaMod4EB_; 
-TH2F*   timeVsAoSigmaMod1EBlog_; 
-TH2F*   timeVsAoSigmaMod2EBlog_; 
-TH2F*   timeVsAoSigmaMod3EBlog_; 
-TH2F*   timeVsAoSigmaMod4EBlog_; 
-TH2F*   timeVsAoSigmaLowEElog_; 
-TH2F*   timeVsAoSigmaHighEElog_; 
-//  changed "23" to NSlices = 36
-TH1F*   timeVsAoSigmaEBlargelogSlices_[NSlices]; 
-TH1F*   timeVsAoSigmaMod1EBSlices_[NSlices]; 
-TH1F*   timeVsAoSigmaMod2EBSlices_[NSlices]; 
-TH1F*   timeVsAoSigmaMod3EBSlices_[NSlices]; 
-TH1F*   timeVsAoSigmaMod4EBSlices_[NSlices]; 
-TH1F*   timeVsAoSigmaEElargelogSlices_[NSlices]; 
-TH1F*   timeVsAoSigmaLowEESlices_[NSlices]; 
-TH1F*   timeVsAoSigmaHighEESlices_[NSlices]; 
-TH2F*   timeVsAoSigmaLowEE_;
-TH2F*   timeVsAoSigmaHighEE_;
-TH2F*   timeVsAoSigmaEBlarge_;
-TH2F*   timeVsAoSigmaEElarge_;
-TH2F*   timeVsAoSigmaEBlargelog_;
-TH2F*   timeVsAoSigmaEElargelog_;
-TH1D*   fittedMeanVsAoSigmaMod1EB_, * chi2VsAoSigmaMod1EB_; 
-TH1D*   fittedMeanVsAoSigmaMod2EB_, * chi2VsAoSigmaMod2EB_; 
-TH1D*   fittedMeanVsAoSigmaMod3EB_, * chi2VsAoSigmaMod3EB_; 
-TH1D*   fittedMeanVsAoSigmaMod4EB_, * chi2VsAoSigmaMod4EB_; 
-TH1D*   fittedMeanVsAoSigmaLowEE_, * chi2VsAoSigmaLowEE_; 
-TH1D*   fittedMeanVsAoSigmaHighEE_, * chi2VsAoSigmaHighEE_; 
-TH1D*   fittedMeanVsAoSigmaEBlog_, * chi2VsAoSigmaEBlog_; 
-TH1D*   fittedMeanVsAoSigmaEElog_, * chi2VsAoSigmaEElog_;
-TH1D*   fittedRMSVsAoSigmaMod1EB_;
-TH1D*   fittedRMSVsAoSigmaMod2EB_;
-TH1D*   fittedRMSVsAoSigmaMod3EB_;
-TH1D*   fittedRMSVsAoSigmaMod4EB_;
-TH1D*   fittedRMSVsAoSigmaLowEE_;
-TH1D*   fittedRMSVsAoSigmaHighEE_;
-TH1D*   fittedRMSVsAoSigmaEBlog_;
-TH1D*   fittedRMSVsAoSigmaEElog_;
-TH1D*   fittedAreaVsAoSigmaMod1EB_;
-TH1D*   fittedAreaVsAoSigmaMod2EB_;
-TH1D*   fittedAreaVsAoSigmaMod3EB_;
-TH1D*   fittedAreaVsAoSigmaMod4EB_;
-TH1D*   fittedAreaVsAoSigmaLowEE_;
-TH1D*   fittedAreaVsAoSigmaHighEE_;
-TH1D*   fittedAreaVsAoSigmaEBlog_;
-TH1D*   fittedAreaVsAoSigmaEElog_;
-// TH1D*   fittedMeanVsAoSigmaEB_, * chi2VsAoSigmaEB_; 
-// TH1D*   fittedMeanVsAoSigmaEE_, * chi2VsAoSigmaEE_;
 TH1F*   dtSliceVSAoSigmaEB_[numAoSigmaBins][numAoSigmaBins][5];
 TH1F*   dtSliceVSAoSigmaEE_[numAoSigmaBins][numAoSigmaBins][5];
 TH1F*   ampliInAoSigmabinsEB_[numAoSigmaBins][numAoSigmaBins];
@@ -302,9 +251,9 @@ TH2F*   dtoSigmaSliceSAoSigmaVSAoSigmaEE_;
 TH2F*   occupancyAoSigmaVSAoSigmaEB_;
 TH2F*   occupancyAoSigmaVSAoSigmaEE_;
 
-//TProfile* dtVSAeffProfAny_;
-//TProfile* dtVSAeffProfEB_;
-//TProfile* dtVSAeffProfEE_;
+TProfile* dtVSAeffProfAny_;
+TProfile* dtVSAeffProfEB_;
+TProfile* dtVSAeffProfEE_;
 
 TH1F*  dtRMSVSAeffAny_; TH1F*  dtSigmaAeffAny_;
 TH1F*  dtRMSVSAeffEB_;  TH1F*  dtSigmaAeffEB_;
@@ -350,9 +299,9 @@ TH1F*     dtSliceVSAeffEEPeak_[numAeffBins];
 TH1F*     dtRMSVSAeffAnyPeak_; TH1F*    dtSigmaAeffAnyPeak_;
 TH1F*     dtRMSVSAeffEBPeak_;  TH1F*    dtSigmaAeffEBPeak_;
 TH1F*     dtRMSVSAeffEEPeak_;  TH1F*    dtSigmaAeffEEPeak_;
-//TProfile* dtVSAeffProfAnyPeak_;
-//TProfile* dtVSAeffProfEBPeak_;
-//TProfile* dtVSAeffProfEEPeak_;
+TProfile* dtVSAeffProfAnyPeak_;
+TProfile* dtVSAeffProfEBPeak_;
+TProfile* dtVSAeffProfEEPeak_;
 TH1F*  singleClusterChi2HistAnyPeak_;
 TH1F*  singleClusterChi2NDFHistAnyPeak_;
 TH1F*  singleClusterChi2HistEBPeak_;
@@ -540,6 +489,8 @@ void parseArguments(int argc, char** argv)
   std::string stringMaxRun           = "--maxRun";
   std::string stringMinLS            = "--minLS";
   std::string stringMaxLS            = "--maxLS";
+  std::string stringMinT             = "--minUnixT";
+  std::string stringMaxT             = "--maxUnixT";
   std::string vertex                 = "--vertex";
   std::string stringTriggers         = "--trig";
   std::string stringTechTriggers     = "--techTrig";
@@ -576,6 +527,8 @@ void parseArguments(int argc, char** argv)
       std::cout << " --maxRun: highest run number considered" << std::endl;
       std::cout << " --minLS: lowest lumi section number considered" << std::endl;
       std::cout << " --maxLS: highest lumi section number considered" << std::endl;
+      std::cout << " --minUnixT: earliest unix time considered" << std::endl;
+      std::cout << " --maxUnixT: latest unix time considered" << std::endl;
       std::cout << " --vertex: require vertex@IP (1), veto it (2) or either (0, or unset)" << std::endl;
       std::cout << " --trig: L1 triggers to include (exclude with x)" << std::endl;
       std::cout << " --techTrig: L1 technical triggers to include (exclude with x)" << std::endl;
@@ -595,6 +548,16 @@ void parseArguments(int argc, char** argv)
     else if (argv[v] == stringMinLS) { // set first LS of interval to be considered 
       std::cout << "min LS number" << std::endl;
       minLS_=atoi(argv[v+1]);
+      v++;
+    }
+    else if (argv[v] == stringMinT) { // set earliest Unix time to be considered 
+      std::cout << "min unix time: " << std::endl;
+      minUnixTime_=atoi(argv[v+1]);
+      v++;
+    }
+    else if (argv[v] == stringMaxT) { // set latest Unix time to be considered 
+      std::cout << "max unix time:" << std::endl;
+      maxUnixTime_=atoi(argv[v+1]);
       v++;
     }
     else if (argv[v] == stringMaxRun) { // set last run of interval to be considered 
@@ -641,11 +604,11 @@ void parseArguments(int argc, char** argv)
     }
     else if (argv[v] == vertex) { // collect requirement for one vertex only or not
       flagOneVertex_  = atof(argv[v+1]);
-       if (flagOneVertex_!=0 && flagOneVertex_!=1 && flagOneVertex_!=2){
-         std::cout << "Not a valid value for flagOneVertex_ (0,1,2). Returning." << std::endl;
-	 exit (1);}
-       v++;
-    } 
+      if (flagOneVertex_!=0 && flagOneVertex_!=1 && flagOneVertex_!=2){
+	std::cout << "Not a valid value for flagOneVertex_ (0,1,2). Returning." << std::endl;
+	exit (1);}
+      v++;
+    }
     else if (argv[v] == stringTriggers) { // set L1 triggers to include/exclude
       genIncludeExcludeVectors(std::string(argv[v+1]),trigIncludeVector,trigExcludeVector);
       v++;
@@ -711,9 +674,9 @@ void initializeHists(){
   BCEnergyHist_ = new TH1F("BCEnergy","Energy of BCs;GeV",100,0,25);
   BCEtHist_ = new TH1F("BCEt","E_{T} of BCs;GeV",100,0,25);
   BCOccupancyEBHist_  = new TH2F("BCOccupancyEB","BC occupancy;i#eta;i#phi",171,-85,86,361,1.,361.);
-  BCOccupancyEEHist_  = new TH2F("BCOccupancyEE","BC occupancy;ix;iy",101,1.,101.,101,1,101);
-  BCOccupancyEEPHist_  = new TH2F("BCOccupancyEEP","BC occupancy EE+;ix;iy",101,1.,101.,101,1,101);
-  BCOccupancyEEMHist_  = new TH2F("BCOccupancyEEM","BC occupancy EE-;ix;iy",101,1.,101.,101,1,101);
+  BCOccupancyEEHist_  = new TH2F("BCOccupancyEE","BC occupancy;ix;iy",100,1.,101.,100,1,101);
+  BCOccupancyEEPHist_  = new TH2F("BCOccupancyEEP","BC occupancy EE+;ix;iy",100,1.,101.,100,1,101);
+  BCOccupancyEEMHist_  = new TH2F("BCOccupancyEEM","BC occupancy EE-;ix;iy",100,1.,101.,100,1,101);
   BCOccupancyHistAny_ = new TH2F("BCOccupancyAny","BC occupancy;#eta;#phi",50,-3.5,3.5,50,-1*TMath::Pi(),TMath::Pi());
   BCEtaHist_ = new TH1F("Cluster #eta","#eta of cluster",171,-3.5,3.5);
   BCPhiHist_ = new TH1F("Cluster #phi","#phi of cluster",50,-1*TMath::Pi(),TMath::Pi());
@@ -721,14 +684,23 @@ void initializeHists(){
   BCClusterShapeEEPHist_ = new TH1F("EEP cluster shape","e2x2 / e3x3",65,-0.1,1.2);
   BCClusterShapeEEMHist_ = new TH1F("EEM cluster shape","e2x2 / e3x3",65,-0.1,1.2);
   BCClusterShapeEBHist_  = new TH1F("EB cluster shape","e2x2 / e3x3",65,-0.1,1.2);
-  BCTimeHist_ = new TH1F("BCTimeHist","Time of all BasicClusters",500,-25,25);
-  BCTimeHistEB_ = new TH1F("BCTimeHistEB","Time of all EB BasicClusters",500,-25,25);
-  BCTimeHistEBP_ = new TH1F("BCTimeHistEBP","Time of all EBP BasicClusters",500,-25,25);
-  BCTimeHistEBM_ = new TH1F("BCTimeHistEBM","Time of all EBM BasicClusters",500,-25,25);
-  BCTimeHistEE_ = new TH1F("BCTimeHistEE","Time of all EE BasicClusters",500,-25,25);
-  BCTimeHistEEP_ = new TH1F("BCTimeHistEEP","Time of all EEP BasicClusters",500,-25,25);
-  BCTimeHistEEM_ = new TH1F("BCTimeHistEEM","Time of all EEM BasicClusters",500,-25,25);
-  BCTimeHistEBvsEE_ = new TH2F("BCTimeHistEBvsEE","Time of EE vs. time of EB BasicClusters",500,-25,25,500,-25,25);
+  BCTimeHist_ = new TH1F("BCTimeHist","Time of all BasicClusters;ns",500,-25,25);
+  BCTimeHistEB_ = new TH1F("BCTimeHistEB","Time of all EB BasicClusters;ns",500,-25,25);
+  BCTimeHistEBP_ = new TH1F("BCTimeHistEBP","Time of all EBP BasicClusters;ns",500,-25,25);
+  BCTimeHistEBM_ = new TH1F("BCTimeHistEBM","Time of all EBM BasicClusters;ns",500,-25,25);
+  BCTimeHistEE_ = new TH1F("BCTimeHistEE","Time of all EE BasicClusters;ns",500,-25,25);
+  BCTimeHistEEP_ = new TH1F("BCTimeHistEEP","Time of all EEP BasicClusters;ns",500,-25,25);
+  BCTimeHistEEM_ = new TH1F("BCTimeHistEEM","Time of all EEM BasicClusters;ns",500,-25,25);
+  BCTimeHistEBvsEE_ = new TH2F("BCTimeHistEBvsEE","Time of EE vs. time of EB BasicClusters;EB [ns];EE [ns]",500,-25,25,500,-25,25);
+  BCTimeHistEBvsEEP_ = new TH2F("BCTimeHistEBvsEEP","Time of EEP vs. time of EB BasicClusters;EB [ns];EEP [ns]",500,-25,25,500,-25,25);
+  BCTimeHistEBvsEEM_ = new TH2F("BCTimeHistEBvsEEM","Time of EEM vs. time of EB BasicClusters;EB [ns];EEM [ns]",500,-25,25,500,-25,25);
+  BCTimeHistEBCentralvsEE_ = new TH2F("BCTimeHistEBCentralvsEE","Time of EE vs. time of central EB BasicClusters;ns;ns",500,-25,25,500,-25,25);
+  BCTimeHistEEPvsEEM_ = new TH2F("BCTimeHistEEPvsEEM","Time of EEP vs. time of EEM BasicClusters;ns;ns",500,-25,25,500,-25,25);
+  BCOccupancyEEPTimeLHist_  = new TH2F("BCOccupancyEEPTimeL","BC occupancy EEP t < -3.4 ns;ix;iy",100,1.,101.,100,1,101);
+  BCOccupancyEEPTimeRHist_  = new TH2F("BCOccupancyEEPTimeR","BC occupancy EEP t > 3.4 ns;ix;iy",100,1.,101.,100,1,101);
+  BCOccupancyEEMTimeLHist_  = new TH2F("BCOccupancyEEMTimeL","BC occupancy EEM t < -3.4 ns;ix;iy",100,1.,101.,100,1,101);
+  BCOccupancyEEMTimeRHist_  = new TH2F("BCOccupancyEEMTimeR","BC occupancy EEM t > 3.4 ns;ix;iy",100,1.,101.,100,1,101);
+  BCOccupancyEBTimeRHist_ = new TH2F("BCOccupancyEBTimeR","BC Occupancy EB, 5 < t < 7.5 ns;i#eta;i#phi",171,-85,86,360,1.,361.);
   // Initialize histograms -- diphotons control plots
   massDiGammaHist_      = new TH1F("massDiGamma","m(#gamma#gamma)",50,0,0.500);
   massDiGammaEBHist_    = new TH1F("massDiGamma EB","m(#gamma#gamma) EB",50,0,0.500);
@@ -752,7 +724,7 @@ void initializeHists(){
   dtVSAeffHistAny_ = new TH2F("#Delta(t) VS A_{eff}/#sigma_{N}","#Delta(t) VS A_{eff}/#sigma_{N}; A_{eff}/#sigma_{N}; #Delta(t) [ns]", AeffNBins_  ,AeffBins_,numDtBins_,-DtMax_,DtMax_);
   dtVSAeffHistEB_  = new TH2F("EB:  #Delta(t)  VS  A_{eff}/#sigma_{N}","EB:  #Delta(t)  VS  A_{eff}/#sigma_{N}; A_{eff}/#sigma_{N}; #Delta(t) [ns]", AeffNBins_  ,AeffBins_,numDtBins_,-DtMax_,DtMax_);
   dtVSAeffHistEE_  = new TH2F("EE:  #Delta(t)  VS  A_{eff}/#sigma_{N}","EE:  #Delta(t)  VS  A_{eff}/#sigma_{N}; A_{eff}/#sigma_{N}; #Delta(t) [ns]",AeffNBins_,AeffBins_,numDtBins_,-DtMax_,DtMax_);
-  //  dtVSAeffProfAny_ = new TProfile("#Delta(t)  VS  A_{eff}/#sigma_{N} prof","#Delta(t) VS A_{eff}/#sigma_{N} prof",AeffNBins_,0.,AeffMax_,-DtMax_,DtMax_);
+  dtVSAeffProfAny_ = new TProfile("#Delta(t)  VS  A_{eff}/#sigma_{N} prof","#Delta(t) VS A_{eff}/#sigma_{N} prof",AeffNBins_,0.,AeffMax_,-DtMax_,DtMax_);
   for (int v=0; v<AeffNBins_; v++){// build histograms for RMS and sigma of DeltaT for Any
     float binLeft=AeffBins_[v]; float binRight=AeffBins_[v+1];
     sprintf (buffer_, "Aeff bin %d, [%4.1f,%4.1f)", v+1, binLeft, binRight);
@@ -782,109 +754,8 @@ void initializeHists(){
     dtSliceVSAeffEE_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  
     AeffBinCentersEE_[v]=0; AeffBinCentersErrEE_[v]=0; sigmaAeffEE_[v]=0;  sigmaAeffErrEE_[v]=0;
     AeffSliceEE_[v] = new TH1F(bufferTitle_.c_str(),bufferTitle_.c_str(),20,binLeft,binRight);
-  }//end loopA
+  }//end loop
 
-  // EB and EE time vs A/sigma in modules
-  timeVsAoSigmaEB_ = new TH2F("timeVsAoSigmaEB","timeVsAoSigmaEB",100,0,4000,50,-2.5,2.5);
-  timeVsAoSigmaEE_ = new TH2F("timeVsAoSigmaEE","timeVsAoSigmaEE",100,0,4000,50,-2.5,2.5);
-  //EB modules time vs A/sigma
-  timeVsAoSigmaMod1EB_ = new TH2F("timeVsAoSigmaMod1EB","timeVsAoSigmaMod1EB",100,0,4000,50,-2.5,2.5);
-  timeVsAoSigmaMod2EB_ = new TH2F("timeVsAoSigmaMod2EB","timeVsAoSigmaMod2EB",100,0,4000,50,-2.5,2.5);
-  timeVsAoSigmaMod3EB_ = new TH2F("timeVsAoSigmaMod3EB","timeVsAoSigmaMod3EB",100,0,4000,50,-2.5,2.5);
-  timeVsAoSigmaMod4EB_ = new TH2F("timeVsAoSigmaMod4EB","timeVsAoSigmaMod4EB",100,0,4000,50,-2.5,2.5);
-  //log E version for EB
-  timeVsAoSigmaMod1EBlog_ = new TH2F("timeVsAoSigmaMod1EBlog","timeVsAoSigmaMod1EBlog",90,-0.5,4,200,-25,25);
-  timeVsAoSigmaMod2EBlog_ = new TH2F("timeVsAoSigmaMod2EBlog","timeVsAoSigmaMod2EBlog",90,-0.5,4,200,-25,25);
-  timeVsAoSigmaMod3EBlog_ = new TH2F("timeVsAoSigmaMod3EBlog","timeVsAoSigmaMod3EBlog",90,-0.5,4,200,-25,25);
-  timeVsAoSigmaMod4EBlog_ = new TH2F("timeVsAoSigmaMod4EBlog","timeVsAoSigmaMod4EBlog",90,-0.5,4,200,-25,25);
-  //EE time vs A/sigma
-  timeVsAoSigmaLowEE_ = new TH2F("timeVsAoSigmaLowEE","timeVsAoSigmaLowEE",100,0,4000,50,-2.5,2.5);
-  timeVsAoSigmaHighEE_ = new TH2F("timeVsAoSigmaHighEE","timeVsAoSigmaHighEE",100,0,4000,50,-2.5,2.5);
-  //EE time vs A/sigma in log
-  timeVsAoSigmaLowEElog_ = new TH2F("timeVsAoSigmaLowEElog","timeVsAoSigmaLowEElog",90,-0.5,4,200,-25,25);
-  timeVsAoSigmaHighEElog_ = new TH2F("timeVsAoSigmaHighEElog","timeVsAoSigmaHighEElog",90,-0.5,4,200,-25,25);
-  //over large time scales
-  timeVsAoSigmaEBlarge_ = new TH2F("timeVsAoSigmaEBlarge","timeVsAoSigmaEB",200,0,8000,150,-25,25);
-  timeVsAoSigmaEElarge_ = new TH2F("timeVsAoSigmaEElarge","timeVsAoSigmaEE",200,0,8000,150,-25,25);
-  timeVsAoSigmaEBlargelog_ = new TH2F("timeVsAoSigmaEBlargelog","timeVsAoSigmaEBlog",90,-0.5,4,150,-25,25);
-  timeVsAoSigmaEElargelog_ = new TH2F("timeVsAoSigmaEElargelog","timeVsAoSigmaEElog",90,-0.5,4,150,-25,25);
-  // slices to study single crystal time bias vs A/signa: 1d EB time histograms in slices of A/sigma
-  timeVsAoSigmaEBlargelogSlices_[0] = new TH1F("EB slice 1: 0-0.50 GeV","Slice 0-0.50",200,-25,25);
-  timeVsAoSigmaMod1EBSlices_[0] = new TH1F("Mod1EB slice 1: 0-0.50 GeV","Mod1Slice 0-0.50",200,-25,25);
-  timeVsAoSigmaMod2EBSlices_[0] = new TH1F("Mod2EB slice 1: 0-0.50 GeV","Mod2Slice 0-0.50",200,-25,25);
-  timeVsAoSigmaMod3EBSlices_[0] = new TH1F("Mod3EB slice 1: 0-0.50 GeV","Mod3Slice 0-0.50",200,-25,25);
-  timeVsAoSigmaMod4EBSlices_[0] = new TH1F("Mod4EB slice 1: 0-0.50 GeV","Mod4Slice 0-0.50",200,-25,25);
-  timeVsAoSigmaEElargelogSlices_[0] = new TH1F("EE slice 1: 0-0.50 GeV","EESlice 0-0.50",200,-25,25);
-  timeVsAoSigmaLowEESlices_[0]  = new TH1F("LowEE slice 1: 0-0.50 GeV","LowSlice 0-0.50",200,-25,25);
-  timeVsAoSigmaHighEESlices_[0] = new TH1F("HighEE slice 1: 0-0.50 GeV","HighSlice 0-0.50",200,-25,25);
-  float binAoSigmaLow; float binAoSigmaHigh;
-  binAoSigmaHigh = pow(10,-0.3);
-  for(int v=1; v<NSlices-1; v++){
-    binAoSigmaLow  = binAoSigmaHigh;
-    binAoSigmaHigh = binAoSigmaHigh*pow(10,LogStep);
-    sprintf (buffer_, "EB slice %d: [%5.1f,%5.1f) GeV", v+1, binAoSigmaLow, binAoSigmaHigh);
-    timeVsAoSigmaEBlargelogSlices_[v] = new  TH1F(buffer_,buffer_,200,-25,25); 
-    sprintf (buffer_, "Mod1EB slice %d: [%5.1f,%5.1f) GeV", v+1, binAoSigmaLow, binAoSigmaHigh);
-    timeVsAoSigmaMod1EBSlices_[v] = new  TH1F(buffer_,buffer_,200,-25,25); 
-    sprintf (buffer_, "Mod2EB slice %d: [%5.1f,%5.1f) GeV", v+1, binAoSigmaLow, binAoSigmaHigh);
-    timeVsAoSigmaMod2EBSlices_[v] = new  TH1F(buffer_,buffer_,200,-25,25); 
-    sprintf (buffer_, "Mod3EB slice %d: [%5.1f,%5.1f) GeV", v+1, binAoSigmaLow, binAoSigmaHigh);
-    timeVsAoSigmaMod3EBSlices_[v] = new  TH1F(buffer_,buffer_,200,-25,25); 
-    sprintf (buffer_, "Mod4EB slice %d: [%5.1f,%5.1f) GeV", v+1, binAoSigmaLow, binAoSigmaHigh);
-    timeVsAoSigmaMod4EBSlices_[v] = new  TH1F(buffer_,buffer_,200,-25,25); 
-    sprintf (buffer_, "EE slice %d: [%5.1f,%5.1f) GeV", v+1, binAoSigmaLow, binAoSigmaHigh);
-    timeVsAoSigmaEElargelogSlices_[v] = new  TH1F(buffer_,buffer_,200,-25,25); 
-    sprintf (buffer_, "LowEE slice %d: [%5.1f,%5.1f) GeV", v+1, binAoSigmaLow, binAoSigmaHigh);
-    timeVsAoSigmaLowEESlices_[v] = new  TH1F(buffer_,buffer_,200,-25,25); 
-    sprintf (buffer_, "HighEE slice %d: [%5.1f,%5.1f) GeV", v+1, binAoSigmaLow, binAoSigmaHigh);
-    timeVsAoSigmaHighEESlices_[v] = new  TH1F(buffer_,buffer_,200,-25,25); 
-  }
-    binAoSigmaLow  = binAoSigmaHigh;
-
-    sprintf (buffer_, "EB slice %2i: [%5.1f)", NSlices, binAoSigmaLow);
-    timeVsAoSigmaEBlargelogSlices_[NSlices-1] = new  TH1F(buffer_,buffer_,200,-25,25); 
-    sprintf (buffer_, "Mod1EB slice %2i: [%5.1f)", NSlices, binAoSigmaLow);
-    timeVsAoSigmaMod1EBSlices_[NSlices-1] = new  TH1F(buffer_,buffer_,200,-25,25); 
-    sprintf (buffer_, "Mod2EB slice %2i: [%5.1f)", NSlices, binAoSigmaLow);
-    timeVsAoSigmaMod2EBSlices_[NSlices-1] = new  TH1F(buffer_,buffer_,200,-25,25); 
-    sprintf (buffer_, "Mod3EB slice %2i: [%5.1f)", NSlices, binAoSigmaLow);
-    timeVsAoSigmaMod3EBSlices_[NSlices-1] = new  TH1F(buffer_,buffer_,200,-25,25); 
-    sprintf (buffer_, "Mod4EB slice %2i: [%5.1f)", NSlices, binAoSigmaLow);
-    timeVsAoSigmaMod4EBSlices_[NSlices-1] = new  TH1F(buffer_,buffer_,200,-25,25); 
-    sprintf (buffer_, "EE slice %2i: [%5.1f)", NSlices, binAoSigmaLow);
-    timeVsAoSigmaEElargelogSlices_[NSlices-1] = new  TH1F(buffer_,buffer_,200,-25,25); 
-    sprintf (buffer_, "LowEE slice %2i: [%5.1f)", NSlices, binAoSigmaLow);
-    timeVsAoSigmaLowEESlices_[NSlices-1] = new  TH1F(buffer_,buffer_,200,-25,25); 
-    sprintf (buffer_, "HighEE slice %2i: [%5.1f)", NSlices, binAoSigmaLow);
-    timeVsAoSigmaHighEESlices_[NSlices-1] = new  TH1F(buffer_,buffer_,200,-25,25); 
-
-    //coefficients obtained in the interval (0, 1.5) from Module 1 of run 144011 EB data
-    timeCorrectionEB_->SetParameters(0.0399144,-1.32993,2.00013,-1.51769,0.407406);
-    //coefficients obtained in the interval (-0.5, 2.0)
-    //timeCorrectionEB_->SetParameters(0.0544539,-1.51924,2.57379,-2.11848,0.606632)
-
-    //coefficients obtained in the interval (0, 1.5) from Low eta region < 2.2, run 144011
-    timeCorrectionEE_->SetParameters(-0.461192,0.0876435,-0.234752,0.143774,-0.051990);
-
-
-  //  timeVsAoSigmaMod4EBSlices_[0] = new TH1F("EB slice 1: 0-25","slice 0-25",400,-25,25);
-  //  float binAoSigmaLow; float binAoSigmaHigh;
-  //  for(int v=1; v<23; v++){
-  //    binAoSigmaLow  = 25*pow(1.25,v-1);
-  //   binAoSigmaHigh = 25*pow(1.25,v);
-  //    sprintf (buffer_, "EB slice %d: [%2.f,%2.f)", v+1, binAoSigmaLow, binAoSigmaHigh);
-  //    timeVsAoSigmaMod4EBSlices_[v] = new  TH1F(buffer_,buffer_,200,-25,25); 
-  //  }
-  //  // slices to study single crystal time bias vs A/signa: 1d EE time histograms in slices of A/sigma
-  //  timeVsAoSigmaHighEESlices_[0] = new TH1F("EE slice 1: 0-25","slice 0-25",400,-25,25);
-  //  for(int v=1; v<23; v++){
-  //    binAoSigmaLow  = 25*pow(1.25,v-1);
-  //    binAoSigmaHigh = 25*pow(1.25,v);
-  //    sprintf (buffer_, "EE slice %d: [%2.f,%2.f)", v+1, binAoSigmaLow, binAoSigmaHigh);
-  //    timeVsAoSigmaHighEESlices_[v] = new  TH1F(buffer_,buffer_,200,-25,25); 
-  //  }
-
-  
   for (int v=0; v<AoSigmaNBins_ ; v++){// build histograms time difference between channels with ampli in two different AoSigmaBins_ ; loop on first bin
     for (int u=0; u<=v ; u++){// second bin (which can also be the same as the first one)
       float binLeftV=AoSigmaBins_[v]; float binRightV=AoSigmaBins_[v+1];
@@ -962,8 +833,8 @@ void initializeHists(){
 
   dtRMSVSAeffEE_  = new TH1F("EE: RMS(#Delta(t)) VS   A_{eff}", "EE: RMS(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; RMS(#Delta(t)) [ns]",AeffNBins_,AeffBins_);  
   dtSigmaAeffEE_  = new TH1F("EE: #sigma(#Delta(t)) VS   A_{eff}", "EE: #sigma(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",AeffNBins_,AeffBins_);  
-  //  dtVSAeffProfEB_  = new TProfile("EB:  #Delta(t)   VS  A_{eff}/#sigma_{N} prof","EB:  #Delta(t)  VS  A_{eff}/#sigma_{N} prof",AeffNBins_,AeffBins_,-DtMax_,DtMax_);
-  //  dtVSAeffProfEE_  = new TProfile("EE:  #Delta(t)   VS  A_{eff}/#sigma_{N} prof","EE:  #Delta(t)  VS  A_{eff}/#sigma_{N} prof",AeffNBins_,AeffBins_,-DtMax_,DtMax_);
+  dtVSAeffProfEB_  = new TProfile("EB:  #Delta(t)   VS  A_{eff}/#sigma_{N} prof","EB:  #Delta(t)  VS  A_{eff}/#sigma_{N} prof",AeffNBins_,AeffBins_,-DtMax_,DtMax_);
+  dtVSAeffProfEE_  = new TProfile("EE:  #Delta(t)   VS  A_{eff}/#sigma_{N} prof","EE:  #Delta(t)  VS  A_{eff}/#sigma_{N} prof",AeffNBins_,AeffBins_,-DtMax_,DtMax_);
   singleClusterChi2HistAny_ = new TH1F("clusterChi2Any","#Chi^{2} of crystal times in a cluster (any); #Chi^{2}",numChi2Bins,0,chi2Max);
   singleClusterChi2NDFHistAny_ = new TH1F("clusterChi2NDFAny","#Chi^{2}/NDF of crystal times in a cluster (any); #Chi^{2}/NDF",numChi2NDFBins,0,chi2NDFMax);
   singleClusterChi2HistEB_ = new TH1F("clusterChi2EB","#Chi^{2} of crystal times in a cluster (EB); #Chi^{2}",numChi2Bins,0,chi2Max);
@@ -1026,9 +897,9 @@ void initializeHists(){
     dtSliceVSAeffEEPeak_[v] = new TH1F(buffer_,bufferTitle_.c_str(),numDtBins_,-DtMax_,DtMax_);  }
   dtRMSVSAeffEEPeak_  = new TH1F("EEPeak: RMS(#Delta(t)) VS   A_{eff}", "EE: RMS(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; RMS(#Delta(t)) [ns]",AeffNBins_,AeffBins_);  
   dtSigmaAeffEEPeak_  = new TH1F("EEPeak: #sigma(#Delta(t)) VS   A_{eff}", "EE: #sigma(#Delta(t)) VS   A_{eff}; A_{eff}/#sigma_{N}; #sigma(#Delta(t)) [ns]",AeffNBins_,AeffBins_);  
-  //  dtVSAeffProfAnyPeak_ = new TProfile("Peak: #Delta(t) VS A_{eff}/#sigma_{N} prof","Peak: #Delta(t) VS A_{eff}/#sigma_{N} prof",AeffNBins_,AeffBins_,-DtMax_,DtMax_);
-  //  dtVSAeffProfEBPeak_  = new TProfile("EBPeak: #Delta(t) VS A_{eff}/#sigma_{N} prof","EBPeak #Delta(t) VS A_{eff}/#sigma_{N} prof",AeffNBins_,AeffBins_,-DtMax_,DtMax_);
-  //  dtVSAeffProfEEPeak_  = new TProfile("EEPeak: #Delta(t) VS A_{eff}/#sigma_{N} prof","EEPeak: #Delta(t) VS A_{eff}/#sigma_{N} prof",AeffNBins_,AeffBins_,-DtMax_,DtMax_);
+  dtVSAeffProfAnyPeak_ = new TProfile("Peak: #Delta(t) VS A_{eff}/#sigma_{N} prof","Peak: #Delta(t) VS A_{eff}/#sigma_{N} prof",AeffNBins_,AeffBins_,-DtMax_,DtMax_);
+  dtVSAeffProfEBPeak_  = new TProfile("EBPeak: #Delta(t) VS A_{eff}/#sigma_{N} prof","EBPeak #Delta(t) VS A_{eff}/#sigma_{N} prof",AeffNBins_,AeffBins_,-DtMax_,DtMax_);
+  dtVSAeffProfEEPeak_  = new TProfile("EEPeak: #Delta(t) VS A_{eff}/#sigma_{N} prof","EEPeak: #Delta(t) VS A_{eff}/#sigma_{N} prof",AeffNBins_,AeffBins_,-DtMax_,DtMax_);
   singleClusterChi2HistAnyPeak_ = new TH1F("clusterChi2AnyPeak","#Chi^{2} of crystal times in a cluster (any peak); #Chi^{2}",numChi2Bins,0,chi2Max);
   singleClusterChi2NDFHistAnyPeak_ = new TH1F("clusterChi2NDFAnyPeak","#Chi^{2}/NDF of crystal times in a cluster (any peak); #Chi^{2}/NDF",numChi2NDFBins,0,chi2NDFMax);
   singleClusterChi2HistEBPeak_ = new TH1F("clusterChi2EBPeak","#Chi^{2} of crystal times in a cluster (EB peak); #Chi^{2}",numChi2Bins,0,chi2Max);
@@ -1301,7 +1172,7 @@ void doControlHists()
 
       // count number of crystals in a BC over threshold
       int numCryOverThreshold=0; 
-      int bClusterSeedIndex = -1;
+      int bClusterSeedIndex = 0;
       float seedCryEnergy = -1000;
       for(int thisCry=0; thisCry<treeVars_.nXtalsInCluster[bCluster]; thisCry++)
       {
@@ -1310,7 +1181,7 @@ void doControlHists()
           seedCryEnergy = treeVars_.xtalInBCEnergy[bCluster][thisCry];
           bClusterSeedIndex = thisCry;
         }
-
+      
         if (treeVars_.xtalInBCIEta[bCluster][thisCry]!=-999999)  xtalIEtaHist_ -> Fill (treeVars_.xtalInBCIEta[bCluster][thisCry]);
         if (treeVars_.xtalInBCIPhi[bCluster][thisCry]!=-999999)  xtalIPhiHist_ -> Fill (treeVars_.xtalInBCIPhi[bCluster][thisCry]);
         if (treeVars_.xtalInBCIx[bCluster][thisCry]  !=-999999)  xtalIXHist_   -> Fill (treeVars_.xtalInBCIx[bCluster][thisCry]);
@@ -1336,39 +1207,57 @@ void doControlHists()
 	BCNumCrysOverThrHist_  ->Fill(numCryOverThreshold);
 	BCNumCrysOverThrEEHist_->Fill(numCryOverThreshold);}
      
+
       ClusterTime myClusterTime = timeAndUncertSingleCluster(bCluster);
       // require at least 2 crys in cluster, non-spike and above threshold
       if(myClusterTime.numCry < 2) continue;
 
       BCTimeHist_->Fill(myClusterTime.time);
-      if(treeVars_.xtalInBCIEta[bCluster][0] != -999999)
+      if(treeVars_.xtalInBCIEta[bCluster][bClusterSeedIndex] != -999999 &&
+	 (seedCryEnergy > 1.5) )                                  // this is EB
       {
         BCTimeHistEB_->Fill(myClusterTime.time);
-        if(treeVars_.xtalInBCIEta[bCluster][0] > 0)
+        if(myClusterTime.time > 5 && myClusterTime.time < 7.5)
+          BCOccupancyEBTimeRHist_->Fill(treeVars_.xtalInBCIEta[bCluster][bClusterSeedIndex],
+              treeVars_.xtalInBCIPhi[bCluster][bClusterSeedIndex]);
+        if(treeVars_.xtalInBCIEta[bCluster][bClusterSeedIndex] > 0)
           BCTimeHistEBP_->Fill(myClusterTime.time);
         else
           BCTimeHistEBM_->Fill(myClusterTime.time);
       }
-      else if(treeVars_.xtalInBCIx[bCluster][0] != -999999)
+      else if(treeVars_.xtalInBCIx[bCluster][bClusterSeedIndex] != -999999 &&
+	      (seedCryEnergy > 4) ) // this is EE
       {
+        int ix = treeVars_.xtalInBCIx[bCluster][bClusterSeedIndex];
+        int iy = treeVars_.xtalInBCIy[bCluster][bClusterSeedIndex];
         BCTimeHistEE_->Fill(myClusterTime.time);
-        if(treeVars_.clusterEta[bCluster]>0)
+        if(treeVars_.clusterEta[bCluster]>0 && !(ix==41&&iy==38) && !(ix==42&&iy==41) && !(ix==45&&iy==35) && !(ix==33&&iy==61) && !(ix==64&&iy==62) && !(ix==42&&iy==34) && !(ix==68&&iy==49))
+        {
           BCTimeHistEEP_->Fill(myClusterTime.time);
-        else
+          if(myClusterTime.time < -3.4)
+            BCOccupancyEEPTimeLHist_->Fill(ix,iy);
+          else if(myClusterTime.time > 3.4)
+            BCOccupancyEEPTimeRHist_->Fill(ix,iy);
+        }
+        else if(!(ix==52&&iy==66) && !(ix==53&&iy==64) && !(ix==41&&iy==38) && !(ix==42&&iy==41) && !(ix==37&&iy==43)&& !(ix==45&&iy==35)&& !(ix==62&&iy==58) && !(ix==33&&iy==61))
+        {
           BCTimeHistEEM_->Fill(myClusterTime.time);
+          if(myClusterTime.time < -3.4)
+            BCOccupancyEEMTimeLHist_->Fill(ix,iy);
+          else if(myClusterTime.time > 3.4)
+            BCOccupancyEEMTimeRHist_->Fill(ix,iy);
+        }
       }
     
       // now take just the EB clusters
-      if(treeVars_.xtalInBCIEta[bCluster][0] == -999999) continue;
-      // limit eta range in EB
-      if(fabs(treeVars_.xtalInBCIEta[bCluster][0]) > 15) continue;
+      if(treeVars_.xtalInBCIEta[bCluster][bClusterSeedIndex] == -999999) continue;
       // cut on seedCryEnergy
-      if(seedCryEnergy < 2) continue;
+      if(seedCryEnergy < 1.5) continue;
 
       for (int bClusterEE=0; bClusterEE < treeVars_.nClusters; ++bClusterEE)
       {
         float seedCryEnergyB = -1000;
-        int bClusterSeedIndexB = -1;
+        int bClusterSeedIndexB = 0;
         for (int cryInBC=0; cryInBC < treeVars_.nXtalsInCluster[bClusterEE]; cryInBC++)
         {
           if(treeVars_.xtalInBCEnergy[bClusterEE][cryInBC] > seedCryEnergyB)
@@ -1378,17 +1267,78 @@ void doControlHists()
           }
         }
         // Cut clusterB seed energy
-        if(seedCryEnergyB < 6) continue;
+        if(seedCryEnergyB < 4) continue;
         // Now from here take just the valid EE clusters
-        if(treeVars_.xtalInBCIx[bClusterEE][0] == -999999) continue;
+        if(treeVars_.xtalInBCIx[bClusterEE][bClusterSeedIndexB] == -999999) continue;
         ClusterTime eeClusterTime = timeAndUncertSingleCluster(bClusterEE);
         // require at least 2 crys in cluster, non-spike and above threshold
         if(eeClusterTime.numCry < 2) continue;
+        int ix = treeVars_.xtalInBCIx[bClusterEE][bClusterSeedIndexB];
+        int iy = treeVars_.xtalInBCIy[bClusterEE][bClusterSeedIndexB];
+        if(treeVars_.clusterEta[bClusterEE]>0 && ((ix==68&&iy==49) || (ix==41&&iy==38) || (ix==42&&iy==41) || (ix==45&&iy==35) || (ix==33&&iy==61) || (ix==64&&iy==62)|| (ix==42&&iy==34)))
+          continue;
+        if(treeVars_.clusterEta[bClusterEE]<0 && ((ix==33&&iy==61) || (ix==52&&iy==66) || (ix==42&&iy==41) || (ix==53&&iy==64) || (ix==41&&iy==38) || (ix==37&&iy==43) || (ix==45&&iy==35) || (ix==62&&iy==58)))
+          continue;
         BCTimeHistEBvsEE_->Fill(myClusterTime.time,eeClusterTime.time);
+        if(treeVars_.clusterEta[bClusterEE]<0)
+          BCTimeHistEBvsEEM_->Fill(myClusterTime.time,eeClusterTime.time);
+        else if(treeVars_.clusterEta[bClusterEE]>0)
+          BCTimeHistEBvsEEP_->Fill(myClusterTime.time,eeClusterTime.time);
+        // limit eta range in EB
+        if(fabs(treeVars_.xtalInBCIEta[bCluster][bClusterSeedIndex]) <= 15)
+          BCTimeHistEBCentralvsEE_->Fill(myClusterTime.time,eeClusterTime.time);
       }
 
       
   }//end loop on basic clusters
+
+  // For EE to EE plot
+  for(int bClusterEE=0; bClusterEE < treeVars_.nClusters; ++bClusterEE)
+  {
+    float seedCryEnergy = -1000;
+    int bClusterSeedIndex = 0;
+    for (int cryInBC=0; cryInBC < treeVars_.nXtalsInCluster[bClusterEE]; cryInBC++)
+    {
+      if(treeVars_.xtalInBCEnergy[bClusterEE][cryInBC] > seedCryEnergy)
+      {
+        seedCryEnergy = treeVars_.xtalInBCEnergy[bClusterEE][cryInBC];
+        bClusterSeedIndex = cryInBC;
+      }
+    }
+    // Cut cluster seed energy
+    if(seedCryEnergy < 4) continue;
+    // Now from here take just the valid EE clusters
+    if(treeVars_.xtalInBCIx[bClusterEE][bClusterSeedIndex] == -999999) continue;
+    ClusterTime eeClusterTime = timeAndUncertSingleCluster(bClusterEE);
+    // require at least 2 crys in cluster, non-spike and above threshold
+    if(eeClusterTime.numCry < 2) continue;
+    if(treeVars_.clusterEta[bClusterEE]  < 0) continue; // take only EE+ clusters here
+
+    for(int bClusterEEb=0; bClusterEEb < treeVars_.nClusters; ++bClusterEEb)
+    {
+      float seedCryEnergyB = -1000;
+      int bClusterSeedIndexB = 0;
+      for (int cryInBCb=0; cryInBCb < treeVars_.nXtalsInCluster[bClusterEEb]; cryInBCb++)
+      {
+        if(treeVars_.xtalInBCEnergy[bClusterEEb][cryInBCb] > seedCryEnergyB)
+        {
+          seedCryEnergyB = treeVars_.xtalInBCEnergy[bClusterEEb][cryInBCb];
+          bClusterSeedIndexB = cryInBCb;
+        }
+      }
+      // Cut cluster seed energy
+      if(seedCryEnergyB < 4) continue;
+      // Now from here take just the valid EE clusters
+      if(treeVars_.xtalInBCIx[bClusterEEb][bClusterSeedIndexB] == -999999) continue;
+      ClusterTime eeClusterTimeB = timeAndUncertSingleCluster(bClusterEEb);
+      // require at least 2 crys in cluster, non-spike and above threshold
+      if(eeClusterTimeB.numCry < 2) continue;
+      if(treeVars_.clusterEta[bClusterEEb]  > 0) continue; // take only EE- clusters here
+
+      BCTimeHistEEPvsEEM_->Fill(eeClusterTimeB.time,eeClusterTime.time);
+    }
+  } // for EE to EE plot
+
 }// end doControlHistograms
 
 // ---------------------------------------------------------------------------------------
@@ -1425,6 +1375,15 @@ void writeHists()
   BCTimeHistEEP_->Write();
   BCTimeHistEEM_->Write();
   BCTimeHistEBvsEE_->Write();
+  BCTimeHistEBvsEEP_->Write();
+  BCTimeHistEBvsEEM_->Write();
+  BCTimeHistEBCentralvsEE_->Write();
+  BCTimeHistEEPvsEEM_->Write();
+  BCOccupancyEEPTimeLHist_->Write();
+  BCOccupancyEEPTimeRHist_->Write();
+  BCOccupancyEEMTimeLHist_->Write();
+  BCOccupancyEEMTimeRHist_->Write();
+  BCOccupancyEBTimeRHist_->Write();
 
   xtalEnergyHist_->Write(); 
   xtalTimeHist_->Write();
@@ -1452,9 +1411,9 @@ void writeHists()
   dtVSAeffHistAny_-> Write(); 
   dtVSAeffHistEB_ -> Write(); 
   dtVSAeffHistEE_ -> Write(); 
-  //  dtVSAeffProfAny_-> Write(); 
-  //dtVSAeffProfEB_ -> Write(); 
-  //dtVSAeffProfEE_ -> Write(); 
+  dtVSAeffProfAny_-> Write(); 
+  dtVSAeffProfEB_ -> Write(); 
+  dtVSAeffProfEE_ -> Write(); 
   
   dtUpToQuarterGeVEB_-> Write(); 
   dtUpToHalfGeVEB_   -> Write(); 
@@ -1530,67 +1489,6 @@ void writeHists()
   //directory to study bias of reco_time with Amplitude
   TDirectory *singleClusterBiasStudy = saving_->mkdir("single-bias");
   singleClusterBiasStudy->cd();
-
-  timeVsAoSigmaEB_ ->Write();
-  timeVsAoSigmaEE_ ->Write();
-  timeVsAoSigmaMod1EB_ ->Write();
-  timeVsAoSigmaMod2EB_ ->Write();
-  timeVsAoSigmaMod3EB_ ->Write();
-  timeVsAoSigmaMod4EB_ ->Write();
-  timeVsAoSigmaMod1EBlog_ ->Write();
-  timeVsAoSigmaMod2EBlog_ ->Write();
-  timeVsAoSigmaMod3EBlog_ ->Write();
-  timeVsAoSigmaMod4EBlog_ ->Write();
-  timeVsAoSigmaLowEE_ ->Write();
-  timeVsAoSigmaHighEE_ ->Write();
-  timeVsAoSigmaLowEElog_ ->Write();
-  timeVsAoSigmaHighEElog_ ->Write();
-  timeVsAoSigmaEBlarge_ ->Write();
-  timeVsAoSigmaEElarge_ ->Write();
-
-  timeVsAoSigmaEBlargelog_ ->Write();
-  timeVsAoSigmaEElargelog_ ->Write();
-
-  fittedMeanVsAoSigmaMod1EB_->Write();
-  chi2VsAoSigmaMod1EB_      ->Write();
-  fittedMeanVsAoSigmaMod2EB_->Write();
-  chi2VsAoSigmaMod2EB_      ->Write();
-  fittedMeanVsAoSigmaMod3EB_->Write();
-  chi2VsAoSigmaMod3EB_      ->Write();
-  fittedMeanVsAoSigmaMod4EB_->Write();
-  chi2VsAoSigmaMod4EB_      ->Write();
-  fittedMeanVsAoSigmaLowEE_->Write();
-  chi2VsAoSigmaLowEE_      ->Write();
-  fittedMeanVsAoSigmaHighEE_->Write();
-  chi2VsAoSigmaHighEE_      ->Write();
-
-  fittedRMSVsAoSigmaMod1EB_->Write();
-  fittedRMSVsAoSigmaMod2EB_->Write();
-  fittedRMSVsAoSigmaMod3EB_->Write();
-  fittedRMSVsAoSigmaMod4EB_->Write();
-  fittedRMSVsAoSigmaLowEE_->Write();
-  fittedRMSVsAoSigmaHighEE_->Write();
-
-  fittedAreaVsAoSigmaMod1EB_->Write();
-  fittedAreaVsAoSigmaMod2EB_->Write();
-  fittedAreaVsAoSigmaMod3EB_->Write();
-  fittedAreaVsAoSigmaMod4EB_->Write();
-  fittedAreaVsAoSigmaLowEE_->Write();
-  fittedAreaVsAoSigmaHighEE_->Write();
-  fittedAreaVsAoSigmaEBlog_->Write();
-  fittedAreaVsAoSigmaEElog_->Write();
-
-  fittedMeanVsAoSigmaEBlog_->Write();
-  fittedRMSVsAoSigmaEBlog_->Write();
-  chi2VsAoSigmaEBlog_      ->Write();
-  fittedMeanVsAoSigmaEElog_->Write();
-  fittedRMSVsAoSigmaEElog_->Write();
-  chi2VsAoSigmaEElog_      ->Write();
-  //   fittedMeanVsAoSigmaEB_->Write();
-  //   chi2VsAoSigmaEB_      ->Write();
-  //   fittedMeanVsAoSigmaEE_->Write();
-  //   chi2VsAoSigmaEE_      ->Write();
-
   for(int k=0; k<3; k++){
     dtSliceSAoSigmaVSAoSigmaEB_[k]       ->Write();
     dtSliceSAoSigmaVSAoSigmaEE_[k]       ->Write();
@@ -1599,26 +1497,6 @@ void writeHists()
   dtoSigmaSliceSAoSigmaVSAoSigmaEE_ ->Write();
   occupancyAoSigmaVSAoSigmaEB_      ->Write();
   occupancyAoSigmaVSAoSigmaEE_      ->Write();
-
-  //directory to study bias of reco_time in amplitude bins
-  TDirectory *singleClusterBiasSlicesEBStudy = singleClusterBiasStudy->mkdir("single-bias-EB-slices");
-  singleClusterBiasSlicesEBStudy->cd();
-  for(int v=0; v<NSlices; v++){
-    timeVsAoSigmaEBlargelogSlices_[v] ->Write();
-    timeVsAoSigmaMod1EBSlices_[v] ->Write();
-    timeVsAoSigmaMod2EBSlices_[v] ->Write();
-    timeVsAoSigmaMod3EBSlices_[v] ->Write();
-    timeVsAoSigmaMod4EBSlices_[v] ->Write();
-  }
-  //directory to study bias of reco_time in amplitude bins
-  TDirectory *singleClusterBiasSlicesEEStudy = singleClusterBiasStudy->mkdir("single-bias-EE-slices");
-  singleClusterBiasSlicesEEStudy->cd();
-  for(int v=0; v<NSlices; v++){
-    timeVsAoSigmaEElargelogSlices_[v] ->Write();
-    timeVsAoSigmaLowEESlices_[v] ->Write();
-    timeVsAoSigmaHighEESlices_[v] ->Write();
-  }
-
   // write out 1-d histos for DeltaT computed for amplitudes (A1,A2) fitting the pair of bins [Aleft1,Aright1] X [Aleft2,Aright2] (t VS ampli bias study)
   TDirectory *dtInDoubleAmplitudeBinsEB =  singleClusterBiasStudy->mkdir("dt-double-slices-EB");
   dtInDoubleAmplitudeBinsEB->cd();
@@ -1628,8 +1506,6 @@ void writeHists()
       dtSliceVSAoSigmaEB_[v][u][k] -> Write();        
       }}}
   
-
-
   // monitor amplitudes which actually fall in each bin, EB 
   TDirectory *ampliInAmplitudeBinsEB =  singleClusterBiasStudy->mkdir("ampli-double-slices-EB");
   ampliInAmplitudeBinsEB->cd();
@@ -1673,9 +1549,9 @@ void writeHists()
   dtVSAeffHistAnyPeak_ -> Write(); 
   dtVSAeffHistEBPeak_  -> Write(); 
   dtVSAeffHistEEPeak_  -> Write(); 
-  //  dtVSAeffProfAnyPeak_ -> Write(); 
-  //  dtVSAeffProfEBPeak_  -> Write(); 
-  //  dtVSAeffProfEEPeak_  -> Write(); 
+  dtVSAeffProfAnyPeak_ -> Write(); 
+  dtVSAeffProfEBPeak_  -> Write(); 
+  dtVSAeffProfEEPeak_  -> Write(); 
   
   dtRMSVSAeffAnyPeak_-> Write();
   dtSigmaAeffAnyPeak_-> Write();
@@ -1911,79 +1787,12 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
       float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry] / sigmaNoiseOfThis; 
       float ampliOfThis        = treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry]; 
       float sigmaOfThis        = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
-      //float swissCrossOfThis   = treeVars_.xtalInBCSwissCross[bCluster][thisCry];
+      float swissCrossOfThis   = treeVars_.xtalInBCSwissCross[bCluster][thisCry];
 
       // remove too low amplitudes and remove spikes as well 
       if( ampliOverSigOfThis < minAmpliOverSigma_) continue;
+      if( swissCrossOfThis   > 0.95)               continue;
       
-      if(thisIsInEB)   {
-	//Timing correction to take out the energy dependence if log10(ampliOverSigOfThis/25) is between 0 and 1.2 (about 1 and 13 GeV)
-	float timing = treeVars_.xtalInBCTime[bCluster][thisCry];
-	float Ao = ampliOverSigOfThis;
-	float AoLog = log10(Ao/25);
-	if(AoLog >0 && AoLog < 1.2){
-	  //	  timing = timing - timeCorrectionEB_->Eval(AoLog);
-	}
-	timeVsAoSigmaEB_->Fill(Ao,timing);
-	timeVsAoSigmaEBlarge_->Fill(Ao,timing);
-    	timeVsAoSigmaEBlargelog_->Fill(AoLog,timing);
-	int v = (int)(floor((AoLog+0.3)/LogStep+1));
-        if (v < 0)v = 0;
-	else if (v > NSlices-1) v = NSlices-1;
-	timeVsAoSigmaEBlargelogSlices_[v] -> Fill(timing);
-	//Barrel module 1
-	if( fabs(treeVars_.xtalInBCIEta[bCluster][thisCry]) <26){
-	timeVsAoSigmaMod1EB_->Fill(Ao,timing);
-	timeVsAoSigmaMod1EBlog_->Fill(AoLog,timing);
-	timeVsAoSigmaMod1EBSlices_[v] -> Fill(timing);
-	}
-	//Barrel module 2
-	else if( fabs(treeVars_.xtalInBCIEta[bCluster][thisCry]) <46){
-	  timeVsAoSigmaMod2EB_->Fill(Ao,timing);
-	  timeVsAoSigmaMod2EBlog_->Fill(AoLog,timing);
-	  timeVsAoSigmaMod2EBSlices_[v] -> Fill(timing);
-	}
-	//Barrel module 3
-	else if( fabs(treeVars_.xtalInBCIEta[bCluster][thisCry]) <66){
-	timeVsAoSigmaMod3EB_->Fill(Ao,timing);
-	timeVsAoSigmaMod3EBlog_->Fill(AoLog,timing);
-	  timeVsAoSigmaMod3EBSlices_[v] -> Fill(timing);
-	}
-	//Barrel module 4
-	else {
-	  timeVsAoSigmaMod4EB_->Fill(Ao,timing);
-	  timeVsAoSigmaMod4EBlog_->Fill(AoLog,timing);
-	  timeVsAoSigmaMod4EBSlices_[v] -> Fill(timing);
-	}
-      }
-      //endcap filling
-      else   {
-	//Timing correction to take out the energy dependence if log10(ampliOverSigOfThis/25) is between 0 and 1.2 (about 1.5 and 20 GeV)
-	float timing = treeVars_.xtalInBCTime[bCluster][thisCry];
-	float Ao = ampliOverSigOfThis;
-	float AoLog = log10(Ao/25);
-	if(AoLog >0 && AoLog < 1.2){
-	  //	  timing = timing - timeCorrectionEE_->Eval(AoLog);
-	}
-	timeVsAoSigmaEE_->Fill(Ao,timing);
-	timeVsAoSigmaEElarge_->Fill(Ao,timing);
-	timeVsAoSigmaEElargelog_->Fill(AoLog,timing);
-
-	int v = (int)(floor((AoLog+0.3)/LogStep+1));
-	  if (v < 0)v = 0;
-	  else if (v > NSlices-1) v = NSlices-1;
-	  timeVsAoSigmaEElargelogSlices_[v] -> Fill(timing);
-	if( fabs(treeVars_.clusterEta[bCluster]) <2.2){
-	timeVsAoSigmaLowEE_->Fill(Ao,timing);
-	timeVsAoSigmaLowEElog_->Fill(AoLog,timing);
-        timeVsAoSigmaLowEESlices_[v] -> Fill(timing);
-	}
-	else {
-	timeVsAoSigmaHighEE_->Fill(Ao,timing);
-	timeVsAoSigmaHighEElog_->Fill(AoLog,timing);
-	timeVsAoSigmaHighEESlices_[v] -> Fill(timing);
-	}
-      }
 
       // loop on the _other_ cryS among the components of a basic cluster
       for(int thatCry=thisCry+1; thatCry<treeVars_.nXtalsInCluster[bCluster]; thatCry++)
@@ -2035,10 +1844,10 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
             else                 dtUpOverTwoGeVEB_  ->Fill(dt);
 
             dtVSAeffHistEB_ -> Fill(Aeff/sigmaNoiseEB, dt); 
-	    //	    dtVSAeffProfEB_ -> Fill(Aeff/sigmaNoiseEB, dt); 
+            dtVSAeffProfEB_ -> Fill(Aeff/sigmaNoiseEB, dt); 
   	    
   	    dtVSAeffHistAny_  -> Fill(Aeff/sigmaNoiseEB, dt);
-	    //  	    dtVSAeffProfAny_  -> Fill(Aeff/sigmaNoiseEB, dt);
+  	    dtVSAeffProfAny_  -> Fill(Aeff/sigmaNoiseEB, dt);
 
   	    int bin = dtVSAeffHistAny_ -> FindBin(Aeff/sigmaNoiseEB,-DtMax_); // finding bin at the minumum Y
   	    //int binTMP=bin; 
@@ -2086,10 +1895,10 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
             else                 dtUpOverSixGeVEE_       ->Fill(dt);
 
             dtVSAeffHistEE_ -> Fill(Aeff/sigmaNoiseEE, dt); 
-	    //	    dtVSAeffProfEE_ -> Fill(Aeff/sigmaNoiseEE, dt);
+            dtVSAeffProfEE_ -> Fill(Aeff/sigmaNoiseEE, dt);
 
   	    dtVSAeffHistAny_  -> Fill(Aeff/sigmaNoiseEE, dt);
-	    //	    dtVSAeffProfAny_  -> Fill(Aeff/sigmaNoiseEE, dt);
+  	    dtVSAeffProfAny_  -> Fill(Aeff/sigmaNoiseEE, dt);
 
   	    int bin = dtVSAeffHistAny_ -> FindBin(Aeff/sigmaNoiseEE,-DtMax_); // finding bin at the minumum Y
   	    //int binTMP=bin; 
@@ -2132,7 +1941,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
         else // clusters matching the pi0 mass
         {
           dtVSAeffHistAnyPeak_  -> Fill(Aeff, dt); //FIXME: average of sigmaEB/EE?
-	  //	  dtVSAeffProfAnyPeak_  -> Fill(Aeff, dt); //FIXME: average of sigmaEB/EE?
+          dtVSAeffProfAnyPeak_  -> Fill(Aeff, dt); //FIXME: average of sigmaEB/EE?
           dtPullSingleClusterHistPi0Peak_->Fill(dt/errorDt);
           if (thisIsInEB) {
             if      (Aeff < 6)   dtUpToQuarterGeVEBPeak_->Fill(dt);
@@ -2142,7 +1951,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
             else                 dtUpOverTwoGeVEBPeak_  ->Fill(dt);
 
             dtVSAeffHistEBPeak_ -> Fill(Aeff/sigmaNoiseEB, dt); 
-	    //	    dtVSAeffProfEBPeak_ -> Fill(Aeff/sigmaNoiseEB, dt); 
+            dtVSAeffProfEBPeak_ -> Fill(Aeff/sigmaNoiseEB, dt); 
             dtPullSingleClusterHistPi0PeakEB_->Fill(dt/errorDt);
           }
           else      {
@@ -2153,7 +1962,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
             else                 dtUpOverSixGeVEEPeak_       ->Fill(dt);
 
             dtVSAeffHistEEPeak_ -> Fill(Aeff/sigmaNoiseEE, dt); 
-	    //	    dtVSAeffProfEEPeak_ -> Fill(Aeff/sigmaNoiseEE, dt);
+            dtVSAeffProfEEPeak_ -> Fill(Aeff/sigmaNoiseEE, dt);
             dtPullSingleClusterHistPi0PeakEE_->Fill(dt/errorDt);
           }
         } // else-if pi0 selection
@@ -2162,7 +1971,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
 
     }// loop on thisCry
   }// end loop on bc
-} // end doSingleClusterResolutionPlots
+}// end doSingleClusterResolutionPlots
 
 
 // ---------------------------------------------------------------------------------------
@@ -2874,154 +2683,7 @@ void doFinalPlots()
     }//end loop on u
   }//end loop on v
   
-  
-  // fitting recHits times in bins of A/sigma, for EB
-  TF1 *gaussEBlargelogSlicesFit = new TF1("timeVsAoSigmaEBlargelogSlicesFit","gaus",-7,7);
-  TF1 *gaussMod1EBSlicesFit = new TF1("timeVsAoSigmaMod1EBSlicesFit","gaus",-7,7);
-  TF1 *gaussMod2EBSlicesFit = new TF1("timeVsAoSigmaMod2EBSlicesFit","gaus",-7,7);
-  TF1 *gaussMod3EBSlicesFit = new TF1("timeVsAoSigmaMod3EBSlicesFit","gaus",-7,7);
-  TF1 *gaussMod4EBSlicesFit = new TF1("timeVsAoSigmaMod4EBSlicesFit","gaus",-7,7);
-  for(int v=0; v<NSlices; v++){
 
-    if( timeVsAoSigmaEBlargelogSlices_[v]->Integral()  >= minEntriesForFit_ ){// do fit for this bin in EB,  require min number entries
-      float RMS       = timeVsAoSigmaEBlargelogSlices_[v] -> GetRMS();
-      float mean      = timeVsAoSigmaEBlargelogSlices_[v] -> GetMean();
-      //      float area      = timeVsAoSigmaEBlargelogSlices_[v] -> GetEntries();
-      gaussEBlargelogSlicesFit        ->SetParLimits(1,-5,5);  // limit on gaussian central 
-      gaussEBlargelogSlicesFit        ->SetParameter(1,mean);  // initialize on central value
-      gaussEBlargelogSlicesFit        ->SetParameter(2,RMS);   // initialize on central value
-      timeVsAoSigmaEBlargelogSlices_[v] -> Fit("timeVsAoSigmaEBlargelogSlicesFit","","",-7,+7); // fit on [-7,+7] ns range to stay away from spikes
-      gaussEBlargelogSlicesFit        ->SetParameter(1,0);  // re-initialize on central value
-      gaussEBlargelogSlicesFit        ->SetParameter(2,1);   // re-initialize on central value
-      timeVsAoSigmaEBlargelog_  ->FitSlicesY(gaussEBlargelogSlicesFit,0,-1,0,"",0);  
-      fittedRMSVsAoSigmaEBlog_ = (TH1D*)gDirectory->Get("timeVsAoSigmaEBlargelog_2");
-      fittedMeanVsAoSigmaEBlog_ = (TH1D*)gDirectory->Get("timeVsAoSigmaEBlargelog_1");
-      fittedAreaVsAoSigmaEBlog_ = (TH1D*)gDirectory->Get("timeVsAoSigmaEBlargelog_0");
-      chi2VsAoSigmaEBlog_       = (TH1D*)gDirectory->Get("timeVsAoSigmaEBlargelog_chi2");
-    }
-
-    if( timeVsAoSigmaMod1EBSlices_[v]->Integral()  >= minEntriesForFit_ ){// do fit for this bin in EB,  require min number entries
-      float RMS       = timeVsAoSigmaMod1EBSlices_[v] -> GetRMS();
-      float mean      = timeVsAoSigmaMod1EBSlices_[v] -> GetMean();
-      //      float area      = timeVsAoSigmaMod1EBSlices_[v] -> GetEntries();
-      gaussMod1EBSlicesFit        ->SetParLimits(1,-5,5);  // limit on gaussian central 
-      gaussMod1EBSlicesFit        ->SetParameter(1,mean);  // initialize on central value
-      gaussMod1EBSlicesFit        ->SetParameter(2,RMS);   // initialize on central value
-      timeVsAoSigmaMod1EBSlices_[v] -> Fit("timeVsAoSigmaMod1EBSlicesFit","","",-7,+7); // fit on [-7,+7] ns range to stay away from spikes
-
-      gaussMod1EBSlicesFit        ->SetParameter(1,0);  // re-initialize on central value
-      gaussMod1EBSlicesFit        ->SetParameter(2,1);   // re-initialize on central value
-      timeVsAoSigmaMod1EBlog_  ->FitSlicesY(gaussMod1EBSlicesFit,0,-1,0,"",0);  
-      fittedRMSVsAoSigmaMod1EB_ = (TH1D*)gDirectory->Get("timeVsAoSigmaMod1EBlog_2");
-      fittedMeanVsAoSigmaMod1EB_ = (TH1D*)gDirectory->Get("timeVsAoSigmaMod1EBlog_1");
-      fittedAreaVsAoSigmaMod1EB_ = (TH1D*)gDirectory->Get("timeVsAoSigmaMod1EBlog_0");
-      chi2VsAoSigmaMod1EB_       = (TH1D*)gDirectory->Get("timeVsAoSigmaMod1EBlog_chi2");
-    }
-    if( timeVsAoSigmaMod2EBSlices_[v]->Integral()  >= minEntriesForFit_ ){// do fit for this bin in EB,  require min number entries
-      float RMS       = timeVsAoSigmaMod2EBSlices_[v] -> GetRMS();
-      float mean      = timeVsAoSigmaMod2EBSlices_[v] -> GetMean();
-      //      float area      = timeVsAoSigmaMod2EBSlices_[v] -> GetEntries();
-      gaussMod2EBSlicesFit        ->SetParLimits(1,-5,5);  // limit on gaussian central 
-      gaussMod2EBSlicesFit        ->SetParameter(1,mean);  // initialize on central value
-      gaussMod2EBSlicesFit        ->SetParameter(2,RMS);   // initialize on central value
-      timeVsAoSigmaMod2EBSlices_[v] -> Fit("timeVsAoSigmaMod2EBSlicesFit","","",-7,+7); // fit on [-7,+7] ns range to stay away from spikes
-      gaussMod2EBSlicesFit        ->SetParameter(1,0);  // re-initialize on central value
-      gaussMod2EBSlicesFit        ->SetParameter(2,1);   // re-initialize on central value
-      timeVsAoSigmaMod2EBlog_  ->FitSlicesY(gaussMod2EBSlicesFit,0,-1,0,"",0);  
-      fittedRMSVsAoSigmaMod2EB_ = (TH1D*)gDirectory->Get("timeVsAoSigmaMod2EBlog_2");
-      fittedMeanVsAoSigmaMod2EB_ = (TH1D*)gDirectory->Get("timeVsAoSigmaMod2EBlog_1");
-      fittedAreaVsAoSigmaMod2EB_ = (TH1D*)gDirectory->Get("timeVsAoSigmaMod2EBlog_0");
-      chi2VsAoSigmaMod2EB_       = (TH1D*)gDirectory->Get("timeVsAoSigmaMod2EBlog_chi2");
-    }
-    if( timeVsAoSigmaMod3EBSlices_[v]->Integral()  >= minEntriesForFit_ ){// do fit for this bin in EB,  require min number entries
-      float RMS       = timeVsAoSigmaMod3EBSlices_[v] -> GetRMS();
-      float mean      = timeVsAoSigmaMod3EBSlices_[v] -> GetMean();
-      //      float area      = timeVsAoSigmaMod3EBSlices_[v] -> GetEntries();
-      gaussMod3EBSlicesFit        ->SetParLimits(1,-5,5);  // limit on gaussian central 
-      gaussMod3EBSlicesFit        ->SetParameter(1,mean);  // initialize on central value
-      gaussMod3EBSlicesFit        ->SetParameter(2,RMS);   // initialize on central value
-      timeVsAoSigmaMod3EBSlices_[v] -> Fit("timeVsAoSigmaMod3EBSlicesFit","","",-7,+7); // fit on [-7,+7] ns range to stay away from spikes
-      gaussMod3EBSlicesFit        ->SetParameter(1,0);  // re-initialize on central value
-      gaussMod3EBSlicesFit        ->SetParameter(2,1);   // re-initialize on central value
-      timeVsAoSigmaMod3EBlog_  ->FitSlicesY(gaussMod3EBSlicesFit,0,-1,0,"",0);  
-      fittedRMSVsAoSigmaMod3EB_ = (TH1D*)gDirectory->Get("timeVsAoSigmaMod3EBlog_2");
-      fittedMeanVsAoSigmaMod3EB_ = (TH1D*)gDirectory->Get("timeVsAoSigmaMod3EBlog_1");
-      fittedAreaVsAoSigmaMod3EB_ = (TH1D*)gDirectory->Get("timeVsAoSigmaMod3EBlog_0");
-      chi2VsAoSigmaMod3EB_       = (TH1D*)gDirectory->Get("timeVsAoSigmaMod3EBlog_chi2");
-    }
-
-    if( timeVsAoSigmaMod4EBSlices_[v]->Integral()  >= minEntriesForFit_ ){// do fit for this bin in EB,  require min number entries
-      float RMS       = timeVsAoSigmaMod4EBSlices_[v] -> GetRMS();
-      float mean      = timeVsAoSigmaMod4EBSlices_[v] -> GetMean();
-      //      float area      = timeVsAoSigmaMod4EBSlices_[v] -> GetEntries();
-      gaussMod4EBSlicesFit        ->SetParLimits(1,-5,5);  // limit on gaussian central 
-      gaussMod4EBSlicesFit        ->SetParameter(1,mean);  // initialize on central value
-      gaussMod4EBSlicesFit        ->SetParameter(2,RMS);   // initialize on central value
-      timeVsAoSigmaMod4EBSlices_[v] -> Fit("timeVsAoSigmaMod4EBSlicesFit","","",-7,+7); // fit on [-7,+7] ns range to stay away from spikes
-      gaussMod4EBSlicesFit        ->SetParameter(1,0);  // re-initialize on central value
-      gaussMod4EBSlicesFit        ->SetParameter(2,1);   // re-initialize on central value
-      timeVsAoSigmaMod4EBlog_  ->FitSlicesY(gaussMod4EBSlicesFit,0,-1,0,"",0);  
-      fittedRMSVsAoSigmaMod4EB_ = (TH1D*)gDirectory->Get("timeVsAoSigmaMod4EBlog_2");
-      fittedMeanVsAoSigmaMod4EB_ = (TH1D*)gDirectory->Get("timeVsAoSigmaMod4EBlog_1");
-      fittedAreaVsAoSigmaMod4EB_ = (TH1D*)gDirectory->Get("timeVsAoSigmaMod4EBlog_0");
-      chi2VsAoSigmaMod4EB_       = (TH1D*)gDirectory->Get("timeVsAoSigmaMod4EBlog_chi2");
-    }
-  }
-
-  // fitting recHits times in bins of A/sigma, for EE
-  TF1 *gaussEElargelogSlicesFit = new TF1("timeVsAoSigmaEElargelogSlicesFit","gaus",-7,7);
-  TF1 *gaussLowEESlicesFit = new TF1("timeVsAoSigmaLowEESlicesFit","gaus",-7,7);
-  TF1 *gaussHighEESlicesFit = new TF1("timeVsAoSigmaHighEESlicesFit","gaus",-7,7);
-  for(int v=0; v<NSlices; v++){
-    if( timeVsAoSigmaEElargelogSlices_[v]->Integral()  >= minEntriesForFit_ ){// do fit for this bin in EE,  require min number entries
-      float RMS       = timeVsAoSigmaEElargelogSlices_[v] -> GetRMS();
-      float mean      = timeVsAoSigmaEElargelogSlices_[v] -> GetMean();
-      //      float area      = timeVsAoSigmaEElargelogSlices_[v] -> GetEntries();
-      gaussEElargelogSlicesFit        ->SetParLimits(1,-5,5);  // limit on gaussian central 
-      gaussEElargelogSlicesFit        ->SetParameter(1,mean);  // initialize on central value
-      gaussEElargelogSlicesFit        ->SetParameter(2,RMS);   // initialize on central value
-      timeVsAoSigmaEElargelogSlices_[v] -> Fit("timeVsAoSigmaEElargelogSlicesFit","","",-7,+7);  // fit on [-7,+7] ns range to stay away from spikes
-      gaussEElargelogSlicesFit        ->SetParameter(1,0);  // re-initialize on central value
-      gaussEElargelogSlicesFit        ->SetParameter(2,1);   // re-initialize on central value
-      timeVsAoSigmaEElargelog_  ->FitSlicesY(gaussEElargelogSlicesFit,0,-1,0,"",0);  
-      fittedRMSVsAoSigmaEElog_ = (TH1D*)gDirectory->Get("timeVsAoSigmaEElargelog_2");
-      fittedMeanVsAoSigmaEElog_ = (TH1D*)gDirectory->Get("timeVsAoSigmaEElargelog_1");
-      fittedAreaVsAoSigmaEElog_ = (TH1D*)gDirectory->Get("timeVsAoSigmaEElargelog_0");
-      chi2VsAoSigmaEElog_       = (TH1D*)gDirectory->Get("timeVsAoSigmaEElargelog_chi2");
-    }
-    if( timeVsAoSigmaLowEESlices_[v]->Integral()  >= minEntriesForFit_ ){// do fit for this bin in EE,  require min number entries
-      float RMS       = timeVsAoSigmaLowEESlices_[v] -> GetRMS();
-      float mean      = timeVsAoSigmaLowEESlices_[v] -> GetMean();
-      //      float area      = timeVsAoSigmaLowEESlices_[v] -> GetEntries();
-      gaussLowEESlicesFit        ->SetParLimits(1,-5,5);  // limit on gaussian central 
-      gaussLowEESlicesFit        ->SetParameter(1,mean);  // initialize on central value
-      gaussLowEESlicesFit        ->SetParameter(2,RMS);   // initialize on central value
-      timeVsAoSigmaLowEESlices_[v] -> Fit("timeVsAoSigmaLowEESlicesFit","","",-7,+7);  // fit on [-7,+7] ns range to stay away from spikes
-      gaussLowEESlicesFit        ->SetParameter(1,0);  // re-initialize on central value
-      gaussLowEESlicesFit        ->SetParameter(2,1);   // re-initialize on central value
-      timeVsAoSigmaLowEElog_  ->FitSlicesY(gaussLowEESlicesFit,0,-1,0,"",0);  
-      fittedRMSVsAoSigmaLowEE_ = (TH1D*)gDirectory->Get("timeVsAoSigmaLowEElog_2");
-      fittedMeanVsAoSigmaLowEE_ = (TH1D*)gDirectory->Get("timeVsAoSigmaLowEElog_1");
-      fittedAreaVsAoSigmaLowEE_ = (TH1D*)gDirectory->Get("timeVsAoSigmaLowEElog_0");
-      chi2VsAoSigmaLowEE_       = (TH1D*)gDirectory->Get("timeVsAoSigmaLowEElog_chi2");
-    }
-    if( timeVsAoSigmaHighEESlices_[v]->Integral()  >= minEntriesForFit_ ){// do fit for this bin in EE,  require min number entries
-      float RMS       = timeVsAoSigmaHighEESlices_[v] -> GetRMS();
-      float mean      = timeVsAoSigmaHighEESlices_[v] -> GetMean();
-      //      float area      = timeVsAoSigmaHighEESlices_[v] -> GetEntries();
-      gaussHighEESlicesFit        ->SetParLimits(1,-5,5);  // limit on gaussian central 
-      gaussHighEESlicesFit        ->SetParameter(1,mean);  // initialize on central value
-      gaussHighEESlicesFit        ->SetParameter(2,RMS);   // initialize on central value
-      timeVsAoSigmaHighEESlices_[v] -> Fit("timeVsAoSigmaHighEESlicesFit","","",-7,+7);  // fit on [-7,+7] ns range to stay away from spikes
-      gaussHighEESlicesFit        ->SetParameter(1,0);  // re-initialize on central value
-      gaussHighEESlicesFit        ->SetParameter(2,1);   // re-initialize on central value
-      timeVsAoSigmaHighEElog_  ->FitSlicesY(gaussHighEESlicesFit,0,-1,0,"",0);  
-      fittedRMSVsAoSigmaHighEE_ = (TH1D*)gDirectory->Get("timeVsAoSigmaHighEElog_2");
-      fittedMeanVsAoSigmaHighEE_ = (TH1D*)gDirectory->Get("timeVsAoSigmaHighEElog_1");
-      fittedAreaVsAoSigmaHighEE_ = (TH1D*)gDirectory->Get("timeVsAoSigmaHighEElog_0");
-      chi2VsAoSigmaHighEE_       = (TH1D*)gDirectory->Get("timeVsAoSigmaHighEElog_chi2");
-    }
-  }
 }// end doFinalPlots
 
 
@@ -3086,6 +2748,8 @@ int main (int argc, char** argv)
   std::cout << "\tmaxRun: "         <<  maxRun_ << std::endl;
   std::cout << "\tminLS: "          <<  minLS_ << std::endl;
   std::cout << "\tmaxLS: "          <<  maxLS_ << std::endl;
+  std::cout << "\tminUnixTime: "    <<  minUnixTime_ << std::endl;
+  std::cout << "\tmaxUnixTime: "    <<  maxUnixTime_ << std::endl;
 	
   setBranchAddresses (chain, treeVars_);
 
@@ -3124,22 +2788,53 @@ int main (int argc, char** argv)
     // do analysis if the LS is in the desired range  
     if( treeVars_.lumiSection<minLS_  || maxLS_<treeVars_.lumiSection) continue;
     
+    // do analysis if the unix time is in the desired range  
+    if( treeVars_.unixTime<minUnixTime_  || maxUnixTime_<treeVars_.unixTime) continue;
+
     bool verticesAreOnlyNextToNominalIP;
     int  count=0;
-    
+
     for(int v=0; v<treeVars_.nVertices; v++  )
-	{        if (fabs(treeVars_.vtxZ[0])<15) count++; }
-    
+      { 	if (fabs(treeVars_.vtxZ[0])<15) count++;       }
+
     if ( treeVars_.nVertices >0 && count==treeVars_.nVertices ) verticesAreOnlyNextToNominalIP = true;
     else                                                        verticesAreOnlyNextToNominalIP = false;
-    
+
     //    --vertex: require vertex@IP (1), veto it (2) or either (0, or unset)
     if (flagOneVertex_ ==1 && (!verticesAreOnlyNextToNominalIP) ) continue;
     if (flagOneVertex_ ==2 && (verticesAreOnlyNextToNominalIP) )  continue;
-    
+
+    //int currentLS = treeVars_.lumiSection;
+
+    // this is specific to fill 
+//    if( !(
+//
+//	  (2274 <=  currentLS && currentLS <= 2524 ) || // gio lumi interval starts here
+//	  (2528 <=  currentLS && currentLS <=  2713) ||
+//	  (2715 <=  currentLS && currentLS <=  3098) ||
+//	  (3100 <=  currentLS && currentLS <=  3102) ||
+//	  (3105 <=  currentLS && currentLS <=  3179) ||
+//	  (3182 <=  currentLS && currentLS <=  3303) ||
+//	  (3305 <=  currentLS && currentLS <=  3381) ||  // gio lumi interval ends here
+//	  (297 <=  currentLS && currentLS <=  337) ||    // seth lumi interval starts here
+//	  (339 <=  currentLS && currentLS <=  754) ||
+//	  (756 <=  currentLS && currentLS <=  932) ||
+//	  (934 <=  currentLS && currentLS <=  937) ||
+//	  (942 <=  currentLS && currentLS <=  993) ||
+//	  (995 <=  currentLS && currentLS <=  1031) ||
+//	  (1033 <=  currentLS && currentLS <=  1098) ||
+//	  (1102 <=  currentLS && currentLS <=  1808) ||
+//	  (1811 <=  currentLS && currentLS <=  2269)       // seth lumi interval starts here
+//  
+//	  )
+//	) continue;
+//
+
+
+
     // if evet being actually processed, increment counter of analyzed events
     eventCounter++;
-    
+
     speak_=false;
     if (entry<10 || entry%10000==0) speak_=true;
 
