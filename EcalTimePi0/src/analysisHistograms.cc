@@ -65,10 +65,10 @@ void HistSet::book(TFileDirectory subDir, const std::string& post) {
   seedAmpli_           =(TH1F*) subDir.make<TH1F>("E(seed)  ","E(seed) ; E [GeV]",130,0,130);
   secondAmpli_         =(TH1F*) subDir.make<TH1F>("E(second)  ","E(second) ; E [GeV]",130,0,130);
   diffSeedOther_       =(TH1F*) subDir.make<TH1F>("t_{seed}-t_{others}","t_{seed}-t_{others}; t_{seed}-t_{others} [ns]; num./0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
-  diffSeedOtherOverErr_ =(TH1F*) subDir.make<TH1F>("(t_{seed}-t_{others})/#sigma","(t_{seed}-t_{others})/#sigma; (t_{seed}-t_{others})/#sigma; num./0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
+  diffSeedOtherOverErr_ =(TH1F*) subDir.make<TH1F>("(t_{seed}-t_{others})/#sigma","(t_{seed}-t_{others})/#sigma; (t_{seed}-t_{others})/#sigma; num./0.05ns",binsTDistro_*5./3,-rangeTDistro_*5./3,rangeTDistro_*5./3);
 
   diffSeedSecond_      =(TH1F*) subDir.make<TH1F>("t_{seed}-t_{second}","t_{seed}-t_{second}; t_{seed}-t_{second} [ns]; num./0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
-  diffSeedSecondOverErr_ =(TH1F*) subDir.make<TH1F>("(t_{seed}-t_{second})/#sigma","(t_{seed}-t_{second})/#sigma; (t_{seed}-t_{second})/#sigma; num./0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
+  diffSeedSecondOverErr_ =(TH1F*) subDir.make<TH1F>("(t_{seed}-t_{second})/#sigma","(t_{seed}-t_{second})/#sigma; (t_{seed}-t_{second})/#sigma; num./0.05ns",binsTDistro_*5./3,-rangeTDistro_*5./3,rangeTDistro_*5./3);
   seedVSSecond_        =(TH2F*) subDir.make<TH2F>("t_{seed} VS t_{second}","t_{seed} VS t_{second}; t_{seed} [ns]; t_{second} [ns]",75,-1.5,1.5,75,-1.5,1.5);
 
 }
@@ -121,12 +121,14 @@ int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut){
   }
   
   else if (type==1){ // cut straight on the agreement between .seedtime and .secondtime within either cluster
+    if(bcTime1.second<0 || bcTime2.second<0) return 0;  // check that there's crystals beyond seed // ALL doubles 
     if(  fabs( bcTime1.seedtime - bcTime1.secondtime ) > cut 
 	 ||
 	 fabs( bcTime2.seedtime - bcTime2.secondtime ) > cut ) 
       return 0;   }
   
   else if (type==2){ // cut on the agreement between .seedtime and .otherstime within either cluster
+    if(bcTime1.second<0 || bcTime2.second<0) return 0;  // check that there's crystals beyond seed // ALL doubles 
     if(  fabs( bcTime1.seedtime - bcTime1.otherstime ) > cut 
 	 ||
 	 fabs( bcTime2.seedtime - bcTime2.otherstime ) > cut ) 
@@ -134,9 +136,9 @@ int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut){
 
   
   else if (type==3){ // cut on chi2 of either cluster
-
-    if(  (bcTime1.numCry<2)  	 ||  (bcTime2.numCry<2) )       return 0;
-
+    if(   bcTime1.second<0 || bcTime2.second<0)           return 0;  // check that there's crystals beyond seed // ALL doubles 
+    if(  (bcTime1.numCry<2)  	 ||  (bcTime2.numCry<2) ) return 0;
+    
     if(  fabs( bcTime1.chi2/bcTime1.numCry ) > cut 
 	 ||
 	 fabs( bcTime2.chi2/bcTime2.numCry ) > cut ) 
@@ -298,6 +300,11 @@ int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, int type, float c
     {
       diffSeedOther_ -> Fill(bcTime1.seedtime-bcTime1.otherstime); // single
       diffSeedOtherOverErr_->Fill( (bcTime1.seedtime-bcTime1.otherstime) / sqrt( pow(treeVars_->xtalInBCTimeErr[bc1][bcTime1.seed],2) -0.6*0.6+timingResParamConstEB*timingResParamConstEB + pow(bcTime1.otherstimeErr,2)) ); // single
+    }
+  if( bcTime1.second>-1 
+      && treeVars_->xtalInBCTimeErr[bc1][bcTime1.second]>-10 
+      && treeVars_->xtalInBCTimeErr[bc1][bcTime1.seed]>-1  )
+    {
       diffSeedSecond_ -> Fill(bcTime1.seedtime-treeVars_->xtalInBCTime[bc1][bcTime1.second]); // single
       seedVSSecond_ -> Fill(treeVars_->xtalInBCTime[bc1][bcTime1.second],bcTime1.seedtime);  // single
       diffSeedSecondOverErr_    -> Fill( (bcTime1.seedtime-treeVars_->xtalInBCTime[bc1][bcTime1.second]) 
@@ -306,7 +313,7 @@ int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, int type, float c
 						 - 2* 0.6*0.6 + 2*timingResParamConstEB*timingResParamConstEB 
 						 )   // single
 					 ); 
-    }
+  }
   
   
   numCryBC1->Fill(bcTime1.numCry); // single
