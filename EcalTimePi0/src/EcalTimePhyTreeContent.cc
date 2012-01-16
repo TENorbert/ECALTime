@@ -13,6 +13,7 @@ bool EcalTimePhyTreeContent::l1Variables = false;
 
 void setBranchAddresses(TTree* chain, EcalTimePhyTreeContent& treeVars)
 {
+
   chain -> SetBranchAddress("runId",       &treeVars.runId);
   chain -> SetBranchAddress("lumiSection", &treeVars.lumiSection);
   chain -> SetBranchAddress("orbit",       &treeVars.orbit);
@@ -1035,7 +1036,6 @@ void initializeBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
   treeVars.eventNaiveId = 0; 
   treeVars.timeStampLow = 0;
   treeVars.timeStampHigh = 0;
-  
   treeVars.nJets = 0 ; 
   treeVars.nElectrons = 0 ; 
   treeVars.nMuons = 0 ; 
