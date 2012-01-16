@@ -180,8 +180,8 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex, EcalTimePhyTreeContent
     if(second>-1) {
       theResult.secondtime = treeVars_.xtalInBCTime[bClusterIndex][second];}
     theResult.time       = bestTime;
-    theResult.timeErr    = sqrt(1/weightSum);
-    theResult.otherstime = bestOtherTime;
+    theResult.timeErr    = sqrt(1/weightSum);       // error from propagation of cluster time (as if single cry errors were uncorrelated)
+    theResult.otherstime = bestOtherTime;           // error from propagation of time of others (as if single cry errors were uncorrelated)
     theResult.otherstimeErr=sqrt(1/weightOtherSum);
     theResult.chi2       = chi2;
     return theResult;
