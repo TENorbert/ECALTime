@@ -13,7 +13,7 @@ Implementation:
 //
 // Authors:                   Shih-Chuan Kao, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePhyTreeMaker.cc,v 1.8 2012/01/13 20:46:23 sckao Exp $
+// $Id: EcalTimePhyTreeMaker.cc,v 1.9 2012/01/15 09:35:08 franzoni Exp $
 //
 //
 
@@ -237,6 +237,11 @@ void EcalTimePhyTreeMaker::analyze (const edm::Event& iEvent, const edm::EventSe
      // GFdoc initialize variables to 0/false
      initializeBranches(tree_, myTreeVariables_);
   
+     // Initialize Counter for SCluster and Cluster
+     numberOfSuperClusters = 0;
+     numberOfClusters = 0;
+     sclist.clear() ;
+
      bool passed = dumpEvtObjectInfo( iEvent ) ;
      if ( passed ) {
 
@@ -251,11 +256,6 @@ void EcalTimePhyTreeMaker::analyze (const edm::Event& iEvent, const edm::EventSe
 	myTreeVariables_.timeStampLow  = ( 0xFFFFFFFF & iEvent.time ().value () ) ;
 	myTreeVariables_.timeStampHigh = ( iEvent.time ().value () >> 32 ) ;
 	myTreeVariables_.trgCut        = HLTCut ;
-
-	// Initialize Counter for SCluster and Cluster
-	numberOfSuperClusters = 0;
-	numberOfClusters = 0;
-	sclist.clear() ;
 
         dump3Ginfo(iEvent, iSetup, myTreeVariables_) ;
   
