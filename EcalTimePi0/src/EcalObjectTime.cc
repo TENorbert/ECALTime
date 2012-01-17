@@ -30,8 +30,8 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex, EcalTimePhyTreeContent
   theResult.numCry = -999999;   theResult.time   = -999999;
   theResult.timeErr= -999999;   theResult.chi2   = -999999;
   theResult.seed   = -999999;   theResult.seedtime=-999999;
-  theResult.second = -999999;   theResult.otherstime=-999999;
-  theResult.otherstimeErr=-999999;
+  theResult.second = -999999;   theResult.secondtime= -999999;   
+  theResult.otherstime=-999999; theResult.otherstimeErr=-999999;
 
   float weightTsum  = 0;
   float weightSum   = 0;
@@ -108,7 +108,7 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex, EcalTimePhyTreeContent
     if(0) std::cout << "t: " << timeOfThis << " a/s: " << ampliOverSigOfThis << " sig: " << sigmaOfThis << "\t\t";
     weightTsum+=(timeOfThis/pow(sigmaOfThis,2));
     weightSum+=1/pow(sigmaOfThis,2);
-    if(thisCry!=seed) {
+    if(thisCry!=seed && fabs(sigmaOfThis)<10) {
       weightTOthersum+=(timeOfThis/pow(sigmaOfThis,2));
       weightOtherSum+=1/pow(sigmaOfThis,2);    }
     }
@@ -177,7 +177,7 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex, EcalTimePhyTreeContent
     theResult.seed       = seed;
     theResult.second     = second;
     theResult.seedtime   = treeVars_.xtalInBCTime[bClusterIndex][seed];
-    if(second>-1) {
+    if(second>-1 ) {
       theResult.secondtime = treeVars_.xtalInBCTime[bClusterIndex][second];}
     theResult.time       = bestTime;
     theResult.timeErr    = sqrt(1/weightSum);       // error from propagation of cluster time (as if single cry errors were uncorrelated)
