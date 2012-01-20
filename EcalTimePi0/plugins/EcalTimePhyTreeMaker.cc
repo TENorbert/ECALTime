@@ -13,7 +13,7 @@ Implementation:
 //
 // Authors:                   Shih-Chuan Kao, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePhyTreeMaker.cc,v 1.9 2012/01/15 09:35:08 franzoni Exp $
+// $Id: EcalTimePhyTreeMaker.cc,v 1.10 2012/01/17 05:18:09 sckao Exp $
 //
 //
 
@@ -230,9 +230,11 @@ void EcalTimePhyTreeMaker::analyze (const edm::Event& iEvent, const edm::EventSe
 
   // Trigger Selection
   //std::cout<<" fk1 "<< std::endl ;
-  int HLTCut = HLTSelection( iEvent ) ; 
+  //int HLTCut = HLTSelection( iEvent ) ; 
+    int HLTCut = HLTSelection( iEvent, 75, "HLT_Photon", "_CaloIdVL_IsoL" ) ;
 
-  if ( HLTCut > -99 ) {
+
+  if ( HLTCut >= 75 ) {
 
      // GFdoc initialize variables to 0/false
      initializeBranches(tree_, myTreeVariables_);
@@ -343,6 +345,37 @@ bool EcalTimePhyTreeMaker::HLTSelection( const edm::Event& iEvent ) {
    return pass ;
 }
 */
+int EcalTimePhyTreeMaker::HLTSelection( const edm::Event& iEvent, int cutVal, string str_head, string str_body ) {
+
+   Handle<edm::TriggerResults> triggers;
+   iEvent.getByLabel( triggerSource_, triggers );
+
+   //cout<<" ** Trigger size = "<< triggers->size() <<endl;
+   const edm::TriggerNames& trgNames = iEvent.triggerNames( *triggers );
+   
+   int cutSize = ( cutVal > 99 ) ? 3 : 2 ;
+   int trgWordSize = str_head.size() + str_body.size() + cutSize + 3 ; //  3 -> _vX
+
+   int trgResult = 0 ;
+   for ( size_t i =0 ; i < trgNames.size(); i++ ) {
+       string tName  = trgNames.triggerName( i );
+       if  ( (int) tName.size() < trgWordSize ) continue ;
+       string strhead = tName.substr(0, str_head.size() ) ;
+       string strPt   = tName.substr( str_head.size() , cutSize ) ;
+       int cutPt      =  atoi ( strPt.c_str() ) ;
+       string strbody = tName.substr( str_head.size() + cutSize , str_body.size() ) ;
+       //string strend = tName.substr( trgWordSize-3 ,3) ;
+       if ( strhead == str_head && strbody == str_body && cutPt >= cutVal) {
+          int trgIndex  = trgNames.triggerIndex(tName);
+          int accept    = triggers->accept(trgIndex);
+          if ( accept == 1 ) trgResult += cutPt ;
+          //if ( accept == 0 ) trgResult = 0 ;
+          //cout<<" -> "<< strhead << cutPt << strbody << strend <<" = "<< trgResult <<endl;
+       }
+   }
+   return trgResult ;
+
+}
 
 int EcalTimePhyTreeMaker::HLTSelection( const edm::Event& iEvent ) {
 
