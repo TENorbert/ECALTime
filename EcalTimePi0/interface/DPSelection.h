@@ -27,14 +27,21 @@
 
 #include "ECALTime/EcalTimePi0/interface/AnaInput.h"
 
-//#include "MathFunctions.h"
 
 #define MAXSC 50
 #define MAXC 200
 #define MAXXTALINC 25 
+// defined variables to follow are by default set up in ECALTime/EcalTimePi0/interface/EcalTimePhyTreeContent.h
+#ifndef MAXOBJ
 #define MAXOBJ 10
+#endif
+#ifndef MAXPHO
 #define MAXPHO 40
+#endif
+#ifndef MAXVTX
 #define MAXVTX 40
+#endif
+
 
 typedef pair<int, TLorentzVector> objID ;
 
