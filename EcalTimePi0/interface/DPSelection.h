@@ -59,7 +59,7 @@ public:
 
    bool HLTFilter();
    bool PhotonFilter( bool doIso = true );
-   bool JetMETFilter();
+   bool JetMETFilter( bool useJetID = false );
    bool VertexFilter();
    bool ElectronFilter();
    bool MuonFilter();

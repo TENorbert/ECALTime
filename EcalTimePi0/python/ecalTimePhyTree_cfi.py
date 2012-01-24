@@ -19,8 +19,9 @@ ecalTimePhyTree = cms.EDAnalyzer("EcalTimePhyTreeMaker",
     MuonSource = cms.InputTag("muons"),
     ElectronSource = cms.InputTag("gsfElectrons"),
     PhotonSource   = cms.InputTag("photons"),
-    triggerName      = cms.string("HLT_Photon75_CaloIdVL_IsoL_v8"),
     triggerSource    = cms.InputTag("TriggerResults","","HLT"),
+    triggerHeader  = cms.untracked.string('HLT_Photon'),
+    triggerBody    = cms.untracked.string('_CaloIdVL_IsoL'),
 
     # jet/MET cuts                  Pt  eta  NJet  MaxNJet, MET          
     jetCuts          = cms.vdouble( 30, 2.4,    3,      99,  20 ),

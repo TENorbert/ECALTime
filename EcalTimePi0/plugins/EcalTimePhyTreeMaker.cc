@@ -13,7 +13,7 @@ Implementation:
 //
 // Authors:                   Shih-Chuan Kao, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePhyTreeMaker.cc,v 1.10 2012/01/17 05:18:09 sckao Exp $
+// $Id: EcalTimePhyTreeMaker.cc,v 1.11 2012/01/20 05:16:00 sckao Exp $
 //
 //
 
@@ -85,7 +85,8 @@ EcalTimePhyTreeMaker::EcalTimePhyTreeMaker (const edm::ParameterSet& iConfig) :
   electronCuts_         (iConfig.getParameter<std::vector<double> >("electronCuts")),
   muonCuts_             (iConfig.getParameter<std::vector<double> >("muonCuts")),
   fileName_             (iConfig.getParameter<std::string> ("fileName")),
-  triggerName_          (iConfig.getParameter<std::string> ("triggerName")),
+  trgheader_            (iConfig.getUntrackedParameter<std::string>("triggerHeader")),
+  trgbody_              (iConfig.getUntrackedParameter<std::string> ("triggerBody")),
   doTimeVSAmpliCorrection_(iConfig.getParameter<bool> ("doTimeVSAmpliCorrection")),
   naiveId_ (0)              
 {
@@ -229,9 +230,8 @@ void EcalTimePhyTreeMaker::analyze (const edm::Event& iEvent, const edm::EventSe
   std::map<int,float> XtalMapCurved_low ;
 
   // Trigger Selection
-  //std::cout<<" fk1 "<< std::endl ;
-  //int HLTCut = HLTSelection( iEvent ) ; 
-    int HLTCut = HLTSelection( iEvent, 75, "HLT_Photon", "_CaloIdVL_IsoL" ) ;
+  //  int HLTCut = HLTSelection( iEvent, 75, "HLT_Photon", "_CaloIdVL_IsoL" ) ;
+  int HLTCut = HLTSelection( iEvent, 75, trgheader_, trgbody_ ) ;
 
 
   if ( HLTCut >= 75 ) {
@@ -325,26 +325,6 @@ std::string EcalTimePhyTreeMaker::intToString (int num)
 
 
 // -----------------------------------------------------------------------------------------
-/*
-bool EcalTimePhyTreeMaker::HLTSelection( const edm::Event& iEvent ) {
-
-   edm::Handle<edm::TriggerResults> triggers;
-   iEvent.getByLabel( triggerSource_, triggers );
-   
-   const edm::TriggerNames& trgNames = iEvent.triggerNames( *triggers );
-
-   int trgIndex  = trgNames.triggerIndex( triggerName_ );
-   int trgResult = 0;
-   if ( trgIndex == (int)(trgNames.size()) ) {
-          std::cout<<" NO Matched Trigger -- Change Trigger !! "<<std::endl;
-   } else {
-          trgResult = triggers->accept(trgIndex);
-   }
-
-   bool pass =  ( trgResult == 1 ) ? true : false ;
-   return pass ;
-}
-*/
 int EcalTimePhyTreeMaker::HLTSelection( const edm::Event& iEvent, int cutVal, string str_head, string str_body ) {
 
    Handle<edm::TriggerResults> triggers;
@@ -375,37 +355,6 @@ int EcalTimePhyTreeMaker::HLTSelection( const edm::Event& iEvent, int cutVal, st
    }
    return trgResult ;
 
-}
-
-int EcalTimePhyTreeMaker::HLTSelection( const edm::Event& iEvent ) {
-
-   edm::Handle<edm::TriggerResults> triggers;
-   iEvent.getByLabel( triggerSource_, triggers );
-   
-   const edm::TriggerNames& trgNames = iEvent.triggerNames( *triggers );
-
-   int TrgValue = -1 ;
-   int trgIndex1  = trgNames.triggerIndex( "HLT_Photon75_CaloIdVL_IsoL_v8" );
-   int trgIndex2  = trgNames.triggerIndex( "HLT_Photon90_CaloIdVL_IsoL_v4" );
-   int trgResult = 0;
-   if ( trgIndex1 < (int)(trgNames.size()) ) {
-          trgResult = triggers->accept(trgIndex1);
-          if ( trgResult == 1 ) TrgValue = 75 ;
-   }
-   if ( trgIndex2 < (int)(trgNames.size()) ) {
-          trgResult = triggers->accept(trgIndex2);
-          if ( trgResult == 1 ) TrgValue = 90 ;
-   } 
-   if ( trgIndex1 < (int)(trgNames.size()) && trgIndex2 < (int)(trgNames.size()) ) {
-          int trgResult1 = triggers->accept(trgIndex1);
-          int trgResult2 = triggers->accept(trgIndex2);
-          if ( trgResult1 == 1 && trgResult2 == 1 ) TrgValue =  0 ;
-   } 
-   if ( trgIndex1 == (int)(trgNames.size()) && trgIndex2 == (int)(trgNames.size()) ) {
-          TrgValue = -99 ;
-   }
-
-   return TrgValue ;
 }
 
 

@@ -16,7 +16,7 @@ Implementation:
 //
 // Authors:                   Shih-Chuan Kao, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePhyTreeMaker.h,v 1.5 2012/01/15 09:35:08 franzoni Exp $
+// $Id: EcalTimePhyTreeMaker.h,v 1.6 2012/01/20 05:16:00 sckao Exp $
 //
 //
 
@@ -133,10 +133,8 @@ class EcalTimePhyTreeMaker : public edm::EDAnalyzer
       std::string intToString (int num) ;
       void initHists (int) ;
 
-      //bool HLTSelection( const edm::Event& iEvent ) ;
       int  HLTSelection( const edm::Event& iEvent, int cutVal,  std::string str_head = "HLT_Photon", std::string str_body = "_CaloIdVL_IsoL" ) ;
  
-      int  HLTSelection( const edm::Event& iEvent ) ;
 
       bool dumpEvtObjectInfo( const edm::Event& iEvent ) ;
 
@@ -228,7 +226,8 @@ class EcalTimePhyTreeMaker : public edm::EDAnalyzer
       std::vector<double> electronCuts_ ;
       std::vector<double> muonCuts_ ;
       std::string fileName_ ;
-      std::string triggerName_ ;
+      std::string trgheader_ ;
+      std::string trgbody_ ;
 
       EcalTimePhyTreeContent myTreeVariables_ ;
 

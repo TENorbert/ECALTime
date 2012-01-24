@@ -51,9 +51,10 @@ process.ecalTimePhyTree.muonCollection = cms.InputTag("muons")
 # switch on or off Tambe's analysis level corrections
 process.ecalTimePhyTree.doTimeVSAmpliCorrection = cms.bool(True)
 process.ecalTimePhyTree.runNum = 999999
-#process.ecalTimePhyTree.triggerName      = cms.string("HLT_Photon90_CaloIdVL_IsoL_v4"),
-process.ecalTimePhyTree.triggerName     = cms.string("HLT_Photon75_CaloIdVL_IsoL_v8")
-process.ecalTimePhyTree.trigSource      = cms.InputTag("TriggerResults","","HLT")
+process.ecalTimePhyTree.triggerHeader  = cms.untracked.string('HLT_Photon')
+process.ecalTimePhyTree.triggerBody    = cms.untracked.string('EBOnly_CaloIdVL_IsoL_TriPFJet25')
+#process.ecalTimePhyTree.triggerBody    = cms.untracked.string('_CaloIdVL_IsoL')
+process.ecalTimePhyTree.trigSource     = cms.InputTag("TriggerResults","","HLT")
 process.ecalTimePhyTree.L1GlobalReadoutRecord = cms.string('gtDigis')
 
 # Set up cuts for physics objects;

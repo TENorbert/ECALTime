@@ -158,7 +158,7 @@ bool DPSelection::VertexFilter() {
      return pass ;
 }
 
-bool DPSelection::JetMETFilter() { 
+bool DPSelection::JetMETFilter( bool useJetID ) { 
 
      bool pass =  true ;
      // 1. jet selection
@@ -169,13 +169,13 @@ bool DPSelection::JetMETFilter() {
 	 if ( fabs(jp4.Eta()) > jetCuts[1] ) continue ;
            
          // Jet ID cuts
-         /*
-         if ( jetNDau[j] <    2 )  continue ;
-	 if ( jetCEM[j] >= 0.99 )  continue ;
-	 if ( jetNHF[j] >= 0.99 )  continue ;
-	 if ( jetNEF[j] >= 0.99 )  continue ;
-	 if ( fabs( jp4.eta() ) < 2.4 && jetCM[j]  <=0 ) continue ;
-         */
+         if ( useJetID ) {
+            if ( jetNDau[j] <    2 )  continue ;
+	    if ( jetCEM[j] >= 0.99 )  continue ;
+	    if ( jetNHF[j] >= 0.99 )  continue ;
+	    if ( jetNEF[j] >= 0.99 )  continue ;
+	    if ( fabs( jp4.eta() ) < 2.4 && jetCM[j]  <=0 ) continue ;
+         } 
 
 	 double dR_gj = 999. ;
 	 for ( size_t k=0; k< phoV.size() ; k++) {
@@ -286,6 +286,7 @@ bool DPSelection::GammaJetsControlSample( bool isTightPhoton ) {
        }
        bool passPho = PhotonFilter( true );
 
+       ResetCuts( "JetCuts",  2, 1 ) ;  // Max Num of Jets
        ResetCuts( "JetCuts",  3, 3 ) ;  // Max Num of Jets
        bool passJet = JetMETFilter();
 
