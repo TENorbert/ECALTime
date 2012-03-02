@@ -2110,8 +2110,9 @@ SetOfIntPairs selectPi0Candidates()
   	  
   	  
 
-        returnPairs.insert(std::make_pair<int,int>(bClusterA,bClusterB));
-
+	  //returnPairs.insert(std::make_pair<int,int>(bClusterA,bClusterB));
+	  returnPairs.insert(std::pair<int,int>(bClusterA,bClusterB));
+	
       }//loop on candidateB
 
     }//loop on candidateA - (FIRST) to build pi0 candidates and get the mass
@@ -2851,7 +2852,8 @@ int main (int argc, char** argv)
     {
       for (int bClusterA=bCluster+1; bClusterA < treeVars_.nClusters; bClusterA++)
       {
-        allBCPairs.insert(std::make_pair<int,int>(bCluster,bClusterA));
+        //allBCPairs.insert(std::make_pair<int,int>(bCluster,bClusterA));
+        allBCPairs.insert(std::pair<int,int>(bCluster,bClusterA));
       }
     }
     // Do singleCluster plots -- all BC pairs (no pi-zero selection)

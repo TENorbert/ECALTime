@@ -43,7 +43,7 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex, EcalTimePhyTreeContent
   
 
   
-  bool  thisIsInEB=false;
+  //bool  thisIsInEB=false;
   float sigmaNoiseOfThis=0;
   if(treeVars_.xtalInBCIEta[bClusterIndex][0]!=-999999)    sigmaNoiseOfThis   =sigmaNoiseEB;
   else                                                     sigmaNoiseOfThis   =sigmaNoiseEE;
@@ -77,12 +77,14 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex, EcalTimePhyTreeContent
       sigmaNoiseOfThis   =sigmaNoiseEB;
       timingResParamN    =timingResParamNEB;
       timingResParamConst=timingResParamConstEB;
-      thisIsInEB=true;    }
+      //thisIsInEB=true;
+    }
     else if(treeVars_.xtalInBCIy[bClusterIndex][thisCry]!=-999999)    {
       sigmaNoiseOfThis=sigmaNoiseEE;
       timingResParamN    =timingResParamNEE;
       timingResParamConst=timingResParamConstEE;
-      thisIsInEB=false;    }
+      //thisIsInEB=false;   
+    }
     else    {  std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
 
     // remove hits beyond gain switch

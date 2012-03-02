@@ -1171,18 +1171,20 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex)
   // loop on the cry components of a basic cluster; get timeBest and uncertainty 
   for(int thisCry=0; thisCry<treeVars_.nXtalsInCluster[bClusterIndex]; thisCry++)
   {
-    bool  thisIsInEB=false;
+    // bool  thisIsInEB=false;
     float sigmaNoiseOfThis=0;
     if(treeVars_.xtalInBCIEta[bClusterIndex][thisCry]!=-999999)       {
       sigmaNoiseOfThis   =sigmaNoiseEB;
       timingResParamN    =timingResParamNEB;
       timingResParamConst=timingResParamConstEB;
-      thisIsInEB=true;    }
+      //thisIsInEB=true;   
+    }
     else if(treeVars_.xtalInBCIy[bClusterIndex][thisCry]!=-999999)    {
       sigmaNoiseOfThis=sigmaNoiseEE;
       timingResParamN    =timingResParamNEE;
       timingResParamConst=timingResParamConstEE;
-      thisIsInEB=false;    }
+      //thisIsInEB=false;    
+    }
     else    {  std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
     float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] / sigmaNoiseOfThis; 
     if( ampliOverSigOfThis < minAmpliOverSigma_) continue;
@@ -1301,14 +1303,14 @@ void doControlHists()
 
       // count number of crystals in a BC over threshold
       int numCryOverThreshold=0; 
-      int bClusterSeedIndex = -1;
+      // int bClusterSeedIndex = -1;
       float seedCryEnergy = -1000;
       for(int thisCry=0; thisCry<treeVars_.nXtalsInCluster[bCluster]; thisCry++)
       {
         if(treeVars_.xtalInBCEnergy[bCluster][thisCry] > seedCryEnergy)
         {
           seedCryEnergy = treeVars_.xtalInBCEnergy[bCluster][thisCry];
-          bClusterSeedIndex = thisCry;
+          // bClusterSeedIndex = thisCry;
         }
 
         if (treeVars_.xtalInBCIEta[bCluster][thisCry]!=-999999)  xtalIEtaHist_ -> Fill (treeVars_.xtalInBCIEta[bCluster][thisCry]);
@@ -1368,13 +1370,13 @@ void doControlHists()
       for (int bClusterEE=0; bClusterEE < treeVars_.nClusters; ++bClusterEE)
       {
         float seedCryEnergyB = -1000;
-        int bClusterSeedIndexB = -1;
+        // int bClusterSeedIndexB = -1;
         for (int cryInBC=0; cryInBC < treeVars_.nXtalsInCluster[bClusterEE]; cryInBC++)
         {
           if(treeVars_.xtalInBCEnergy[bClusterEE][cryInBC] > seedCryEnergyB)
           {
             seedCryEnergyB = treeVars_.xtalInBCEnergy[bClusterEE][cryInBC];
-            bClusterSeedIndexB = cryInBC;
+            // bClusterSeedIndexB = cryInBC;
           }
         }
         // Cut clusterB seed energy
@@ -2174,7 +2176,7 @@ SetOfIntPairs selectPi0Candidates()
   float e22A, e33A,    e22B, e33B;
   float eTGammaMinA,   eTGammaMinB;
   float s4s9GammaMinA, s4s9GammaMinB;
-  bool  AisEB,         BisEB;
+  bool  /*AisEB,*/         BisEB;
   float eTPi0Min;
 
   // (FIRST) loop on basic cluster - to build pi0 candidates and get the mass
@@ -2187,12 +2189,12 @@ SetOfIntPairs selectPi0Candidates()
       
       // discriminate between EE and EB and set thresholds accordingly
       if ( fabs(treeVars_.clusterEta[bClusterA]) < BarrelLimit) {
-        AisEB         = true;
+        // AisEB         = true;
         eTGammaMinA   = eTGammaMinEB_;
         s4s9GammaMinA = s4s9GammaMinEB_;
       }
       else{
-        AisEB         = false;
+        //AisEB         = false;
         eTGammaMinA   = eTGammaMinEE_;
         s4s9GammaMinA = s4s9GammaMinEE_;
       }
@@ -2301,7 +2303,8 @@ SetOfIntPairs selectPi0Candidates()
   	  
   	  
 
-        returnPairs.insert(std::make_pair<int,int>(bClusterA,bClusterB));
+	  //returnPairs.insert(std::make_pair<int,int>(bClusterA,bClusterB));
+	  returnPairs.insert(std::pair<int,int>(bClusterA,bClusterB));
 
       }//loop on candidateB
 
@@ -3156,7 +3159,8 @@ int main (int argc, char** argv)
     {
       for (int bClusterA=bCluster+1; bClusterA < treeVars_.nClusters; bClusterA++)
       {
-        allBCPairs.insert(std::make_pair<int,int>(bCluster,bClusterA));
+        // allBCPairs.insert(std::make_pair<int,int>(bCluster,bClusterA));
+        allBCPairs.insert(std::pair<int,int>(bCluster,bClusterA));
       }
     }
     // Do singleCluster plots -- all BC pairs (no pi-zero selection)
