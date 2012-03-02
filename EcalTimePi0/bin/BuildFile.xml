@@ -1,0 +1,26 @@
+<bin   name="readEcalTimePi0Tree" file="readEcalTimePi0Tree.cpp">
+  <use   name="CalibCalorimetry/EcalTiming"/>
+  <flags   LCGDICT_ARGS="--deep"/>
+</bin>
+<bin   name="readEcalTimePi0TreeForOutOfTimeBuckets" file="readEcalTimePi0TreeForOutOfTimeBuckets.cpp">
+  <use   name="CalibCalorimetry/EcalTiming"/>
+  <flags   LCGDICT_ARGS="--deep"/>
+</bin>
+<bin   name="ecalTimePerformance" file="ecalTimePerformance.cpp">
+  <use   name="FWCore/PluginManager"/>
+  <use   name="FWCore/ParameterSet"/>
+  <use   name="FWCore/ServiceRegistry"/>
+  <use   name="ECALTime/EcalTimePi0"/>
+  <use   name="CommonTools/UtilAlgos"/>
+  <use   name="CalibCalorimetry/EcalTiming"/>
+  <flags   LCGDICT_ARGS="--deep"/>
+</bin>
+<bin   name="timeAnalysis" file="timeAnalysis.cpp">
+  <use   name="FWCore/PluginManager"/>
+  <use   name="FWCore/ParameterSet"/>
+  <use   name="FWCore/ServiceRegistry"/>
+  <use   name="ECALTime/EcalTimePi0"/>
+  <use   name="CommonTools/UtilAlgos"/>
+  <use   name="CalibCalorimetry/EcalTiming"/>
+  <flags   LCGDICT_ARGS="--deep"/>
+</bin>
