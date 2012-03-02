@@ -171,10 +171,10 @@ bool DPSelection::JetMETFilter( bool useJetID ) {
          // Jet ID cuts
          if ( useJetID ) {
             if ( jetNDau[j] <    2 )  continue ;
-	    if ( jetCEM[j] >= 0.99 )  continue ;
+	    if ( jetCM[j] >= 0.99 )  continue ;
 	    if ( jetNHF[j] >= 0.99 )  continue ;
 	    if ( jetNEF[j] >= 0.99 )  continue ;
-	    if ( fabs( jp4.eta() ) < 2.4 && jetCM[j]  <=0 ) continue ;
+	    if ( fabs( jp4.Eta() ) < 2.4 && jetCM[j]  <=0 ) continue ;
          } 
 
 	 double dR_gj = 999. ;
