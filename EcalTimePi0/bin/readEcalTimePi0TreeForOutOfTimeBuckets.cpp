@@ -8,7 +8,7 @@
 #include <set>
 #include <boost/tokenizer.hpp>
 
-#include "ECALTime/EcalTimePi0/interface/EcalTimePi0TreeContent.h"
+#include "CalibCalorimetry/EcalTiming/interface/EcalTimeTreeContent.h"
 #include "DataFormats/GeometryVector/interface/GlobalPoint.h"
 #include "DataFormats/DetId/interface/DetId.h"
 #include "DataFormats/EcalDetId/interface/EBDetId.h"
@@ -47,7 +47,7 @@ struct ClusterTime {
 
 
 // -------- Globals ----------------------------------------
-EcalTimePi0TreeContent treeVars_; 
+EcalTimeTreeContent treeVars_; 
 TFile* saving_;
 std::vector<std::string> listOfFiles_;
 bool speak_=false;
@@ -1057,7 +1057,6 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex)
     else    {  std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
     float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] / sigmaNoiseOfThis; 
     if( ampliOverSigOfThis < minAmpliOverSigma_) continue;
-    // added spike cleaning SIC July 6 2010
     if( treeVars_.xtalInBCSwissCross[bClusterIndex][thisCry] > 0.95) continue;
 
     numCrystals++;
@@ -1806,7 +1805,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
         float ampliOverSigOfThat = treeVars_.xtalInBCAmplitudeADC[bCluster][thatCry] / sigmaNoiseOfThat; 
         float ampliOfThat        = treeVars_.xtalInBCAmplitudeADC[bCluster][thatCry];
         float sigmaOfThat        = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
-  	float swissCrossOfThat   = treeVars_.xtalInBCSwissCross[bCluster][thatCry];
+        float swissCrossOfThat   = treeVars_.xtalInBCSwissCross[bCluster][thatCry];
 
         float Aeff = ampliOfThis * ampliOfThat / sqrt( pow(ampliOfThis,2) + pow(ampliOfThat,2) );
 	float timeOfThis = treeVars_.xtalInBCTime[bCluster][thisCry];
@@ -1827,7 +1826,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
         
   	// remove too low amplitudes and remove spikes as well 
         if( ampliOverSigOfThat < minAmpliOverSigma_) continue;
-  	if( swissCrossOfThat   > 0.95)               continue;
+        if( swissCrossOfThat   > 0.95)               continue;
 
         // for debug
         //std::cout << "ampliOverSigOfThis: " << ampliOverSigOfThis << "\tampliOverSigOfThat: " << ampliOverSigOfThat
@@ -2111,8 +2110,9 @@ SetOfIntPairs selectPi0Candidates()
   	  
   	  
 
-        returnPairs.insert(std::make_pair<int,int>(bClusterA,bClusterB));
-
+	  //returnPairs.insert(std::make_pair<int,int>(bClusterA,bClusterB));
+	  returnPairs.insert(std::pair<int,int>(bClusterA,bClusterB));
+	
       }//loop on candidateB
 
     }//loop on candidateA - (FIRST) to build pi0 candidates and get the mass
@@ -2726,8 +2726,8 @@ int main (int argc, char** argv)
 
   // Tree construction
   // FIX should turn this string into a configurable 
-  //  TChain * chain = new TChain ("EcalTimeAnalysis") ;  // ntuple producer in CMSSW CVS
-  TChain * chain = new TChain ("EcalTimePi0Analysis") ;  // ntuple producer in UserCode/UMN space
+  TChain * chain = new TChain ("EcalTimeAnalysis") ;  // ntuple producer in CMSSW CVS
+  //TChain * chain = new TChain ("EcalTimePi0Analysis") ;  // ntuple producer in UserCode/UMN space
   std::vector<std::string>::const_iterator file_itr;
   for(file_itr=listOfFiles_.begin(); file_itr!=listOfFiles_.end(); file_itr++){
     chain->Add( (*file_itr).c_str() );
@@ -2805,7 +2805,7 @@ int main (int argc, char** argv)
     if (flagOneVertex_ ==1 && (!verticesAreOnlyNextToNominalIP) ) continue;
     if (flagOneVertex_ ==2 && (verticesAreOnlyNextToNominalIP) )  continue;
 
-    int currentLS = treeVars_.lumiSection;
+    //int currentLS = treeVars_.lumiSection;
 
     // this is specific to fill 
 //    if( !(
@@ -2842,7 +2842,6 @@ int main (int argc, char** argv)
     if (speak_)  std::cout << "\n\n------> reading entry " << entry << "\tLS: " << treeVars_.lumiSection << " <------\n" ; 
     if (speak_)  std::cout << "  found " << treeVars_.nSuperClusters << " superclusters" << std::endl ;
     if (speak_)  std::cout << "  found " << treeVars_.nClusters << " basic clusters" << std::endl ;
-    if (speak_)  std::cout << "  found " << treeVars_.nXtals << " crystals\n" ;    
 
     // Plot the control hists
     doControlHists();
@@ -2853,7 +2852,8 @@ int main (int argc, char** argv)
     {
       for (int bClusterA=bCluster+1; bClusterA < treeVars_.nClusters; bClusterA++)
       {
-        allBCPairs.insert(std::make_pair<int,int>(bCluster,bClusterA));
+        //allBCPairs.insert(std::make_pair<int,int>(bCluster,bClusterA));
+        allBCPairs.insert(std::pair<int,int>(bCluster,bClusterA));
       }
     }
     // Do singleCluster plots -- all BC pairs (no pi-zero selection)
