@@ -475,6 +475,187 @@ int main (int argc, char** argv)
 	
   setBranchAddresses (chain, treeVars_);
   
+  
+
+  int eventCounter = 0;
+  /////////////////////////////////////////////////////
+  // preliminary loop over the events to find time average per run and avearge Z
+  std::map <int, std::pair<float,float> >  averageTimePerRun; // runNumber, (EB       ,  EE)
+  std::map <int, std::pair<int,int> >      countersPerRun;    // runNumber, (count EB , count EE)
+
+  for (int entry = 0 ; (entry < nEntries && eventCounter < numEvents_); ++entry)
+    {
+      chain->GetEntry (entry) ;
+      // Keep the event?
+      bool keepEvent = includeEvent(treeVars_.l1ActiveTriggers,
+				    treeVars_.l1NActiveTriggers,trigIncludeVector,trigExcludeVector)
+	&& includeEvent(treeVars_.l1ActiveTechTriggers,
+			treeVars_.l1NActiveTechTriggers,ttrigIncludeVector,ttrigExcludeVector);
+      if(!keepEvent)
+	continue;
+      
+      
+      // do analysis if the run is in the desired range  
+      if( treeVars_.runId<minRun_  || maxRun_<treeVars_.runId) continue;
+      
+      // do analysis if the LS is in the desired range  
+      if( treeVars_.lumiSection<minLS_  || maxLS_<treeVars_.lumiSection) continue;
+      
+      bool verticesAreOnlyNextToNominalIP;
+      int  count=0;
+      
+      for(int v=0; v<treeVars_.nVertices; v++  )
+	{        if (fabs(treeVars_.vtxZ[0])<15) count++; }
+    
+      if ( treeVars_.nVertices >0 && count==treeVars_.nVertices ) verticesAreOnlyNextToNominalIP = true;
+      else                                                        verticesAreOnlyNextToNominalIP = false;
+      
+      //    --vertex: require vertex@IP (1), veto it (2) or either (0, or unset)
+      if (flagOneVertex_ ==1 && (!verticesAreOnlyNextToNominalIP) ) continue;
+      if (flagOneVertex_ ==2 && (verticesAreOnlyNextToNominalIP) )  continue;
+      
+      // if evet being actually processed, increment counter of analyzed events
+      eventCounter++;
+      
+      speak_=false;
+      if (entry<10 || entry%10000==0) speak_=true;
+      
+      if (speak_)  std::cout << "\n\n------> PRELIMINARY loop reading entry " << entry << "\tLS: " << treeVars_.lumiSection << " <------\n" ; 
+      if (speak_)  std::cout << "  found " << treeVars_.nSuperClusters << " superclusters" << std::endl ;
+      if (speak_)  std::cout << "  found " << treeVars_.nClusters << " basic clusters" << std::endl ;
+      
+      
+      ///////////////////////////////////////////////////////////////////////
+      // outer loop on supercluster
+      for (int sc1=0; sc1<treeVars_.nSuperClusters; sc1++){
+	
+	float et1 = treeVars_.superClusterRawEnergy[sc1]/cosh( treeVars_.superClusterEta[sc1] );
+	if (et1<20) continue;
+	
+	math::PtEtaPhiELorentzVectorD  el1(et1  ,
+					   treeVars_.superClusterEta[sc1],
+					   treeVars_.superClusterPhi[sc1],
+					   treeVars_.superClusterRawEnergy[sc1] );
+	
+	///////////////////////////////////////////////////////////////////////
+	// inner loop on supercluster
+	for (int sc2=(sc1+1); sc2<treeVars_.nSuperClusters; sc2++){
+	  
+	  float et2 = treeVars_.superClusterRawEnergy[sc2]/cosh( treeVars_.superClusterEta[sc2] );
+	  if (et2<20) continue;
+	  
+	  math::PtEtaPhiELorentzVectorD  el2(et2 ,
+					     treeVars_.superClusterEta[sc2],
+					     treeVars_.superClusterPhi[sc2],
+					     treeVars_.superClusterRawEnergy[sc2] );
+	  
+	  // there seems to be a problem with vertexing - since nearly none of the electrons have the same vertex... CHECK!
+	  float dvertex = pow(treeVars_.superClusterVertexZ[sc1]-treeVars_.superClusterVertexZ[sc2],2);
+	  dvertex       = sqrt(dvertex);
+	  
+	  math::PtEtaPhiELorentzVectorD diEle = el1;
+	  diEle += el2;
+	  
+	  // require invariant mass
+	  if( fabs( diEle.M() - 91 ) > 20 ) continue;
+	  // require two electrons from the same vertex
+	  if ( dvertex > 0.01 )             continue;
+
+	  // at this stage I have a suitable di-electron system for time studies
+	  
+	  float tmpEne=-9999;
+	  // loop on BC and match to sc1  ===============
+	  int bc1=-1;
+	  for (int bc=0; bc<treeVars_.nClusters; bc++){
+	    if ( (pow(treeVars_.superClusterEta[sc1]-treeVars_.clusterEta[bc],2)+ pow(treeVars_.superClusterPhi[sc1]-treeVars_.clusterPhi[bc],2) ) < 0.02 
+		 && treeVars_.clusterEnergy[bc]>tmpEne) {
+	      tmpEne=treeVars_.clusterEnergy[bc];
+	      bc1=bc;
+	    }// end - if good bc candidate
+	  }// end - loop over BC
+	  
+	
+	  tmpEne=-9999;
+	  // loop on BC and match to sc2 ==============
+	  int bc2=-1;
+	  for (int bc=0; bc<treeVars_.nClusters; bc++){
+	    if ( pow(treeVars_.superClusterEta[sc2]-treeVars_.clusterEta[bc],2)+ pow(treeVars_.superClusterPhi[sc2]-treeVars_.clusterPhi[bc],2) < 0.02 
+		 && treeVars_.clusterEnergy[bc]>tmpEne) {
+	      tmpEne=treeVars_.clusterEnergy[bc];
+	      bc2=bc;
+	    }// end - if good bc candidate
+	  }// end - loop over BC
+	  
+	  // protect in case of no matching
+	  if(bc1==-1 || bc2==-1) continue;
+	  if(0) {
+	    std::cout << "\n\nsc1 : " << treeVars_.superClusterEta[sc1] << " " << treeVars_.superClusterPhi[sc1] << " " << treeVars_.superClusterRawEnergy[sc1] << std::endl;
+	    std::cout << "bc1 : " << treeVars_.clusterEta[bc1] << " " << treeVars_.clusterPhi[bc1] << " " << treeVars_.clusterEnergy[bc1] << "\n"<< std::endl;
+	    std::cout << "sc2 : " << treeVars_.superClusterEta[sc2] << " " << treeVars_.superClusterPhi[sc2] << " " << treeVars_.superClusterRawEnergy[sc2] << std::endl;
+	    std::cout << "bc2 : " << treeVars_.clusterEta[bc2] << " " << treeVars_.clusterPhi[bc2] << " " << treeVars_.clusterEnergy[bc2] << std::endl;
+	  }
+	  
+	  ClusterTime bcTime1 = timeAndUncertSingleCluster(bc1,treeVars_);
+	  ClusterTime bcTime2 = timeAndUncertSingleCluster(bc2,treeVars_);
+	  
+	  if(! (bcTime1.isvalid && bcTime2.isvalid) ) continue;
+	
+
+	  int run = treeVars_.runId;
+	  std::map  <int, std::pair<float,float> >::iterator run_time;
+	  run_time = averageTimePerRun.find(  run  ) ;
+
+	  // if this is a new run, add it to both maps 
+	  if (run_time == averageTimePerRun.end() )
+	    {
+	      averageTimePerRun[ run ] = std::pair<float,float>(0.,0.);
+	      countersPerRun   [ run ] = std::pair<int,int>(0,0);
+	    }
+
+	  run_time                                                = averageTimePerRun.find(  run  ) ;
+	  std::map <int, std::pair<int,int> >::iterator run_count = countersPerRun.find(  run  ) ;
+
+	  
+	  if      ( fabs(treeVars_.clusterEta[bc1])<1.4    &&  fabs(treeVars_.clusterEta[bc2])<1.4 ){
+	    // if EBEB, and subcase 
+	    run_time ->second.first += 2;
+	    run_count->second.first += bcTime1.time;
+	    run_count->second.first += bcTime2.time;
+	  }
+	  
+	  else if ( fabs(treeVars_.clusterEta[bc1])>1.5    &&  fabs(treeVars_.clusterEta[bc2])>1.5 ){
+	    // if EEEE, and subcase 
+	    run_time ->second.second += 2;
+	    run_count->second.second += bcTime1.time;
+	    run_count->second.second += bcTime2.time;
+	  }
+	  
+	  else if ( (fabs(treeVars_.clusterEta[bc1])<1.4 && fabs(treeVars_.clusterEta[bc2])>1.5) ||
+		    (fabs(treeVars_.clusterEta[bc1])>1.5 && fabs(treeVars_.clusterEta[bc2])<1.4)    ) {
+	    // if EBEE, and subcase 
+	    run_count ->second.first  ++;
+	    run_count ->second.second ++; 
+	    if ( fabs(treeVars_.clusterEta[bc1])<1.4 ) {
+	      run_time->second.first  += bcTime1.time;
+	      run_time->second.second += bcTime2.time; }
+	    else {
+	      run_time->second.first  += bcTime2.time;
+	      run_time->second.second += bcTime1.time; }
+	  }
+	  // if I've found a pair of supercluster, bail out of loop to repeat using twice the same supercluster
+	  break;	
+	  
+	}// end loop sc2
+      }// end loop sc1
+      
+    } // end of PRELIMINARY loop over entries
+
+
+
+
+
+
+
   // setting up the TFileService in the ServiceRegistry;
   edmplugin::PluginManager::Config config;
   edmplugin::PluginManager::configure(edmplugin::standard::config());
@@ -574,7 +755,8 @@ int main (int argc, char** argv)
   TFileDirectory subDirGeneral=fs->mkdir("General");  
   initializeHists(subDirGeneral);
 
-  int eventCounter = 0;
+  // reset counter
+  eventCounter = 0;
   /////////////////////////////////////////////////////
   // Main loop over entries
   for (int entry = 0 ; (entry < nEntries && eventCounter < numEvents_); ++entry)

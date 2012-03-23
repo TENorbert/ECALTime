@@ -10,9 +10,10 @@ void HistSet::book(TFileDirectory subDir, const std::string& post) {
   treeVars_ = 0;
 
   nVertices_=subDir.make<TH1F>("num vertices","num vertices; num vertices",41,-0.5,40.5);
-  mass_         =(TH1F*) subDir.make<TH1F>("mass","mass; m(ele,ele) [GeV]",80,50,130);
-  dZvertices_   =(TH1F*) subDir.make<TH1F>("dZvertices","dZvertices; #DeltaZ(ele_{1},ele_{2}) [cm]",250,0,25);
-  Zvertices_    =(TH1F*) subDir.make<TH1F>("Zvertices","Zvertices; z vertex [cm]",250,-25,25);
+  mass_               =(TH1F*) subDir.make<TH1F>("mass","mass; m(ele,ele) [GeV]",80,50,130);
+  dZvertices_         =(TH1F*) subDir.make<TH1F>("dZvertices","dZvertices; #DeltaZ(ele_{1},ele_{2}) [cm]",250,0,25);
+  redAmplitudePair_   =(TH1F*) subDir.make<TH1F>("redAmplitudePair","redAmplitudePair; A_{1}A_{2}/#sqrt(A_{1}^{2}+A_{2}^{2})  [ADC]",250,0,10000);
+  Zvertices_          =(TH1F*) subDir.make<TH1F>("Zvertices","Zvertices; z vertex [cm]",250,-25,25);
 
   // Initialize histograms -- xtals
   chi2_                =(TH1F*) subDir.make<TH1F>("cluster chi2 ","cluster chi2 ; #chi^{2}",100,0,10);
@@ -27,6 +28,8 @@ void HistSet::book(TFileDirectory subDir, const std::string& post) {
   TOFcorrectionsVSdeltaEta_=(TH2F*) subDir.make<TH2F>("TOF corrections VS #Delta#eta","TOF corrections VS #Delta#eta; #Delta#eta; #Delta TOF [ns]; ",30,0,3.,binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
   clusTimeDiffHistTOFVSdeltaEtaRightVertex_=(TH2F*) subDir.make<TH2F>("TOF-corr cluster time difference VS #Delta#eta RightVertex","TOF-corr cluster time difference VS #Delta#eta RightVertex; |#Delta#eta|; (t_{clus1} - t_{clus2}) TOF-corrected [ns]; ",30,0,3.,binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
   clusTimeDiffHistTOFVSdeltaEtaWrongVertex_=(TH2F*) subDir.make<TH2F>("TOF-corr cluster time difference VS #Delta#eta WrongVertex","TOF-corr cluster time difference VS #Delta#eta WrongVertex; |#Delta#eta|;  (t_{clus1} - t_{clus2}) TOF-corrected [ns]; ",30,0,3.,binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
+
+  zPairVsTPair_        =(TH2F*) subDir.make<TH2F>("z_{pair} VS t_{coll}","z_{pair} VS t_{coll}; t_{coll} [ns]; z_{pair}  [cms]",75,-1.5,1.5,50,-25,25);
 
   seed2secSingleClus_  =(TH1F*) subDir.make<TH1F>("single cluster: t_{seed}-t_{second}","single cluster: t_{seed}-t_{second}; t_{seed} - t_{second} [ns]; num. clusters/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
 
@@ -115,6 +118,7 @@ int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut){
   ClusterTime bcTime1 = timeAndUncertSingleCluster(bc1,(*treeVars_));
   ClusterTime bcTime2 = timeAndUncertSingleCluster(bc2,(*treeVars_));
   
+
   ///////////////////////////////////// cuts //////////////////////////////////////////////////////////////
   if (type==0){ // no cuts are being used
     ;
@@ -156,6 +160,10 @@ int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut){
   HistSet::fillSingle(sc1, bc1,  bcTime1, type, cut);
   HistSet::fillSingle(sc2, bc2,  bcTime2, type, cut);
 
+  float A1 = treeVars_->xtalInBCAmplitudeADC[sc1][bcTime1.seed]; 
+  float A2 = treeVars_->xtalInBCAmplitudeADC[sc2][bcTime2.seed]; 
+  redAmplitudePair_ -> Fill( A1*A2 / sqrt( A1*A1 + A2*A2 ));
+
   TOFcorrections_           -> Fill(extraTravelTime(sc2,(*treeVars_)) - extraTravelTime(sc1,(*treeVars_)) ); // double
   TOFcorrectionsVSdeltaEta_ -> Fill(  fabs(treeVars_->superClusterEta[sc2]-treeVars_->superClusterEta[sc1]) , extraTravelTime(sc2,(*treeVars_)) - extraTravelTime(sc1,(*treeVars_))  ); // double
 
@@ -164,7 +172,6 @@ int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut){
   for(int u=0; u<treeVars_->nVertices; u++){
     // matching done with 1mm tolerance
     if( fabs(treeVars_->superClusterVertexZ[sc2]-treeVars_->vtxZ[u]) < 0.1) {       vtxOfThisEle=u;     }
-    //std::cout << u << "\t" << treeVars_->superClusterVertexZ[sc2] << "\t" << treeVars_->vtxZ[u] << std::endl;
   }
   //std::cout << "\n\tdebugging vertices" << std::endl;
   if(vtxOfThisEle >-99){
@@ -174,15 +181,18 @@ int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut){
 	clusTimeDiffHistTOFVSdeltaEtaRightVertex_ -> Fill(  fabs(treeVars_->superClusterEta[sc2]-treeVars_->superClusterEta[sc1]) , 
 							    (bcTime1.time-extraTravelTime(sc1,u,(*treeVars_)))  - (bcTime2.time-extraTravelTime(sc2,u,(*treeVars_)))
 							    //(bcTime1.time-extraTravelTime(sc1,(*treeVars_)))  - (bcTime2.time-extraTravelTime(sc2,(*treeVars_)))
-							    ); //double
+							    );
 
 	tCollVSdeltaEtaRightVertex_-> Fill(  fabs(treeVars_->superClusterEta[sc2]-treeVars_->superClusterEta[sc1]) , 
 					     ( (bcTime1.time-extraTravelTime(sc1,u,(*treeVars_))) + (bcTime2.time-extraTravelTime(sc2,u,(*treeVars_))) ) /2.
-					     ); //double
+					     );
 	tCollVStimeDiffHistTOF_    -> Fill(  ( (bcTime1.time-extraTravelTime(sc1,u,(*treeVars_))) - (bcTime2.time-extraTravelTime(sc2,u,(*treeVars_))) ) /2. ,
 					     ( (bcTime1.time-extraTravelTime(sc1,u,(*treeVars_))) + (bcTime2.time-extraTravelTime(sc2,u,(*treeVars_))) ) /2.
-					     ); //double
+					     );
 	tColl_                     -> Fill( ( (bcTime1.time-extraTravelTime(sc1,u,(*treeVars_))) + (bcTime2.time-extraTravelTime(sc2,u,(*treeVars_))) ) /2. ); // double
+
+	zPairVsTPair_              -> Fill( ( (bcTime1.time-extraTravelTime(sc1,u,(*treeVars_))) + (bcTime2.time-extraTravelTime(sc2,u,(*treeVars_))) ) /2. ,
+					    ( treeVars_->superClusterVertexZ[sc1] + treeVars_->superClusterVertexZ[sc2] )/2. ); 
 
       }// if correct vertex
       else   {

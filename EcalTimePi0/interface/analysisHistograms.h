@@ -45,6 +45,7 @@ struct HistSet{
   TH1F* mass_;
   TH1F* dZvertices_;
   TH1F* Zvertices_;
+  TH1F* redAmplitudePair_;
   TH1F* chi2_;
   TH1F* chi2ndf_;
   TH1F* seedTime_;
@@ -56,6 +57,7 @@ struct HistSet{
   TH1F* seed2secSingleClus_;
   TH2F* seedTimeVSchi2_, /* *seedTimeVSsecondTime_,*/ * seedTimeVSseedMsecond_;
   TH2F* TOFcorrectionsVSdeltaEta_;
+  TH2F* zPairVsTPair_;
   TH2F* clusTimeDiffHistTOFVSdeltaEtaRightVertex_, *clusTimeDiffHistTOFVSdeltaEtaWrongVertex_;
   TH1F* tColl_;
   TH2F* tCollVSdeltaEtaRightVertex_, * tCollVStimeDiffHistTOF_;
