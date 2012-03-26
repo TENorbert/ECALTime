@@ -84,12 +84,6 @@ float eTPi0MinEE_     = 0.800;
 float swissCrossMaxEB_ = 0.95; // 1-E4/E1
 float swissCrossMaxEE_ = 0.95; // 1-E4/E1
 
-// based on range and bins, the bin width is 50 ps  GF FIXME
-//float rangeTDistro_ = 3; // 1-E4/E1
-//float incrementForDelayedGamma_ = 3;
-//int   binsTDistro_  = 120; // 1-E4/E1
-//GF FIXME
-
 std::vector<std::vector<double> > trigIncludeVector;
 std::vector<std::vector<double> > trigExcludeVector;
 std::vector<std::vector<double> > ttrigIncludeVector;
@@ -147,6 +141,16 @@ TH1F* mass_;
 TH1F* dZvertices_;
 TH1F* Zvertices_;
 
+TGraphErrors *ebTimeVsRun;
+TGraphErrors *eeTimeVsRun;
+TGraphErrors *eeTimeVSebTime;
+float        ebTimes[1000];
+float        ebTimeErrs[1000];
+float        eeTimes[1000];
+float        eeTimeErrs[1000];
+float        runs[1000];
+float        runErrs[1000];
+int          runCounter;
 
 // ---------------------------------------------------------------------------------------
 // - Function to decide to include/exclude event based on the vectors passed for triggers 
@@ -423,6 +427,14 @@ void initializeHists(TFileDirectory subDir){
   dZvertices_   = subDir.make<TH1F>("dZvertices global","dZvertices (global); #DeltaZ(ele_{1},ele_{2}) [cm]",250,0,25);
   Zvertices_    = subDir.make<TH1F>("Zvertices global","Zvertices (global); z vertex [cm]",250,-25,25);
   nVertices_=subDir.make<TH1F>("num vertices global","num vertices (global); num vertices",41,-0.5,40.5);
+  
+  // initialize TGraphErrors-related stuff
+  runCounter = 0;
+  for (int v=0; v<1000; v++){
+    ebTimes[v]=0; ebTimeErrs[v]=0;
+    eeTimes[v]=0; eeTimeErrs[v]=0;
+    runs[v]=0;    runErrs[v]=0;
+  }
 
 }//end initializeHists
 
@@ -475,13 +487,34 @@ int main (int argc, char** argv)
 	
   setBranchAddresses (chain, treeVars_);
   
-  
+  // setting up the TFileService in the ServiceRegistry;
+  edmplugin::PluginManager::Config config;
+  edmplugin::PluginManager::configure(edmplugin::standard::config());
+  std::vector<edm::ParameterSet> psets;
+  edm::ParameterSet pSet;
+  pSet.addParameter("@service_type",std::string("TFileService"));
+  //pSet.addParameter("fileName",std::string("TimePerf-plots.root")); // this is the file TFileService will write into
+  pSet.addParameter("fileName",outputRootName_); // this is the file TFileService will write into
+  psets.push_back(pSet);
+  static edm::ServiceToken services(edm::ServiceRegistry::createSet(psets));
+  static edm::ServiceRegistry::Operate operate(services);
+  edm::Service<TFileService> fs;
+  // Initialize the histograms
+  TFileDirectory subDirGeneral=fs->mkdir("General");  
+  initializeHists(subDirGeneral);
+
 
   int eventCounter = 0;
-  /////////////////////////////////////////////////////
-  // preliminary loop over the events to find time average per run and avearge Z
-  std::map <int, std::pair<float,float> >  averageTimePerRun; // runNumber, (EB       ,  EE)
-  std::map <int, std::pair<int,int> >      countersPerRun;    // runNumber, (count EB , count EE)
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // auxiliary loop over the events to find time average per run and avearge Z
+  std::map <int, std::pair<float,float> >  averageTimePerRun;   // runNumber, (timeEB   , timeEE)
+  std::map <int, std::pair<float,float> >  averageTimeSqPerRun; // runNumber, (time^2EB , time^2EE)
+  std::map <int, std::pair<int,int> >      countersPerRun;      // runNumber, (count EB , count EE)
+  
+  std::map  <int, std::pair<float,float> >::iterator run_time;
+  std::map <int, std::pair<float,float> >::iterator  run_timeSq;
+  std::map <int, std::pair<int,int> >::iterator      run_count;
 
   for (int entry = 0 ; (entry < nEntries && eventCounter < numEvents_); ++entry)
     {
@@ -595,39 +628,43 @@ int main (int argc, char** argv)
 	    std::cout << "bc2 : " << treeVars_.clusterEta[bc2] << " " << treeVars_.clusterPhi[bc2] << " " << treeVars_.clusterEnergy[bc2] << std::endl;
 	  }
 	  
+
 	  ClusterTime bcTime1 = timeAndUncertSingleCluster(bc1,treeVars_);
 	  ClusterTime bcTime2 = timeAndUncertSingleCluster(bc2,treeVars_);
-	  
 	  if(! (bcTime1.isvalid && bcTime2.isvalid) ) continue;
 	
 
 	  int run = treeVars_.runId;
-	  std::map  <int, std::pair<float,float> >::iterator run_time;
+	  
 	  run_time = averageTimePerRun.find(  run  ) ;
-
 	  // if this is a new run, add it to both maps 
 	  if (run_time == averageTimePerRun.end() )
 	    {
-	      averageTimePerRun[ run ] = std::pair<float,float>(0.,0.);
-	      countersPerRun   [ run ] = std::pair<int,int>(0,0);
+	      averageTimePerRun[ run ]   = std::pair<float,float>(0.,0.);
+	      averageTimeSqPerRun[ run ] = std::pair<float,float>(0.,0.);
+	      countersPerRun   [ run ]   = std::pair<int,int>(0,0);
 	    }
-
-	  run_time                                                = averageTimePerRun.find(  run  ) ;
-	  std::map <int, std::pair<int,int> >::iterator run_count = countersPerRun.find(  run  ) ;
-
+	  run_time   = averageTimePerRun  .find( run ) ;
+	  run_timeSq = averageTimeSqPerRun.find( run ) ;
+	  run_count  = countersPerRun     .find( run ) ;
+	  
 	  
 	  if      ( fabs(treeVars_.clusterEta[bc1])<1.4    &&  fabs(treeVars_.clusterEta[bc2])<1.4 ){
 	    // if EBEB, and subcase 
-	    run_time ->second.first += 2;
-	    run_count->second.first += bcTime1.time;
-	    run_count->second.first += bcTime2.time;
+	    run_count ->second.first += 2;
+	    run_time  ->second.first += bcTime1.time;
+	    run_time  ->second.first += bcTime2.time;
+	    run_timeSq->second.first += (bcTime1.time)*(bcTime1.time);
+	    run_timeSq->second.first += (bcTime2.time)*(bcTime2.time);
 	  }
 	  
 	  else if ( fabs(treeVars_.clusterEta[bc1])>1.5    &&  fabs(treeVars_.clusterEta[bc2])>1.5 ){
 	    // if EEEE, and subcase 
-	    run_time ->second.second += 2;
-	    run_count->second.second += bcTime1.time;
-	    run_count->second.second += bcTime2.time;
+	    run_count ->second.second += 2;
+	    run_time  ->second.second += bcTime1.time;
+	    run_time  ->second.second += bcTime2.time;
+	    run_timeSq->second.second += (bcTime1.time)*(bcTime1.time);
+	    run_timeSq->second.second += (bcTime2.time)*(bcTime2.time);
 	  }
 	  
 	  else if ( (fabs(treeVars_.clusterEta[bc1])<1.4 && fabs(treeVars_.clusterEta[bc2])>1.5) ||
@@ -636,11 +673,15 @@ int main (int argc, char** argv)
 	    run_count ->second.first  ++;
 	    run_count ->second.second ++; 
 	    if ( fabs(treeVars_.clusterEta[bc1])<1.4 ) {
-	      run_time->second.first  += bcTime1.time;
-	      run_time->second.second += bcTime2.time; }
+	      run_time  ->second.first  += bcTime1.time; 
+	      run_time  ->second.second += bcTime2.time; 
+	      run_timeSq->second.first  += (bcTime1.time)*(bcTime1.time); 
+	      run_timeSq->second.second += (bcTime2.time)*(bcTime2.time);    }
 	    else {
-	      run_time->second.first  += bcTime2.time;
-	      run_time->second.second += bcTime1.time; }
+	      run_time  ->second.first  += bcTime2.time;
+	      run_time  ->second.second += bcTime1.time;
+	      run_timeSq->second.first  += (bcTime2.time)*(bcTime2.time); 
+	      run_timeSq->second.second += (bcTime1.time)*(bcTime1.time);    }
 	  }
 	  // if I've found a pair of supercluster, bail out of loop to repeat using twice the same supercluster
 	  break;	
@@ -651,23 +692,63 @@ int main (int argc, char** argv)
     } // end of PRELIMINARY loop over entries
 
 
+  // check that the size of the three maps is the same
+  if ( averageTimePerRun.size()==averageTimeSqPerRun.size() && averageTimeSqPerRun.size()==countersPerRun.size() && countersPerRun.size()<=1000 ){
+    std::cout << "++ averageTimePerRun, averageTimeSqPerRun and countersPerRun have all the same size: " << countersPerRun.size() << std::endl;   }
+  else if (averageTimePerRun.size()>=1000 || averageTimeSqPerRun.size()>=1000 || countersPerRun.size()>=1000) {
+    std::cout << "++ one of : averageTimePerRun, averageTimeSqPerRun and countersPerRun has size > 1000 (" << countersPerRun.size() << ") - bailing out" << std::endl;  assert(0);  }
+  else{
+    std::cout << "++ averageTimePerRun, averageTimeSqPerRun and countersPerRun DO NOT have all the same size - bailing out " << std::endl; assert(0);  }
+  
+  runCounter = 0;
+  run_time   = averageTimePerRun.begin();
+  run_timeSq = averageTimeSqPerRun.begin();
+  run_count  = countersPerRun.begin();
+  for( ;
+       run_time!=averageTimePerRun.end() && run_timeSq!=averageTimeSqPerRun.end() && run_count!=countersPerRun.end() ;
+         
+       )
+    {
+      if( run_count->second.first < 2) continue;
+      
+      float avEb   = run_time  ->second.first  / run_count->second.first;
+      float avEe   = run_time  ->second.second / run_count->second.second;
+      float varEb  = ( run_timeSq->second.first   - avEb * run_time->second.first  ) / (run_count->second.first  - 1 );
+      float varEe  = ( run_timeSq->second.second  - avEe * run_time->second.second ) / (run_count->second.second - 1 );
+     
+      std::cout << "\t\t run: " << run_count->first // << " (" << run_time->first << " , " << run_timeSq->first << ") "
+		<< "\t\t entries EB: " << run_count->second.first 
+		<< "\t av time EB: " << avEb
+		<< "\t err time EB: " << sqrt(varEb)
+		<< "\t\t entries EE: " << run_count->second.second
+		<< "\t av. time EE: " << avEe
+		<< "\t err time EB: " << sqrt(varEe)
+		<< std::endl;
+      
+      runs[runCounter]      = run_count->first;
+      runErrs[runCounter]   = 0.;
+      ebTimes[runCounter]   = avEb;
+      ebTimeErrs[runCounter]= sqrt(varEb/run_count->second.first);
+      eeTimes[runCounter]   = avEe;
+      eeTimeErrs[runCounter]= sqrt(varEe/run_count->second.second);
 
+      run_count++;
+      run_timeSq++;
+      run_time++;
+      runCounter++;
+    }
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////
+  
+  // save the history of times VS run number into a TGraph
+  // ebTimeVsRun = new TGraphErrors(runCounter, runs, ebTimes, runErrs, ebTimeErrs );   
+  ebTimeVsRun = subDirGeneral.make <TGraphErrors> (runCounter, runs, ebTimes, runErrs, ebTimeErrs );   
+  ebTimeVsRun->SetTitle("EB time VS run"); ebTimeVsRun->GetXaxis()->SetTitle("run number"); ebTimeVsRun->GetYaxis()->SetTitle("EB per-run averate time [ns]");
+  eeTimeVsRun = subDirGeneral.make <TGraphErrors> (runCounter, runs, eeTimes, runErrs, eeTimeErrs );
+  eeTimeVsRun->SetTitle("EE time VS run");  eeTimeVsRun->GetXaxis()->SetTitle("run number"); eeTimeVsRun->GetYaxis()->SetTitle("EE per-run averate time [ns]");
+  eeTimeVSebTime = subDirGeneral.make <TGraphErrors> (runCounter, ebTimes, eeTimes, ebTimeErrs, eeTimeErrs );
+  eeTimeVSebTime->SetTitle("EE time VS EB time");  eeTimeVsRun->GetXaxis()->SetTitle("EB per-run averate time [ns]"); eeTimeVsRun->GetYaxis()->SetTitle("EE per-run averate time [ns]");
 
-
-
-
-  // setting up the TFileService in the ServiceRegistry;
-  edmplugin::PluginManager::Config config;
-  edmplugin::PluginManager::configure(edmplugin::standard::config());
-  std::vector<edm::ParameterSet> psets;
-  edm::ParameterSet pSet;
-  pSet.addParameter("@service_type",std::string("TFileService"));
-  //pSet.addParameter("fileName",std::string("TimePerf-plots.root")); // this is the file TFileService will write into
-  pSet.addParameter("fileName",outputRootName_); // this is the file TFileService will write into
-  psets.push_back(pSet);
-  static edm::ServiceToken services(edm::ServiceRegistry::createSet(psets));
-  static edm::ServiceRegistry::Operate operate(services);
-  edm::Service<TFileService> fs;
 
   TFileDirectory subDirECALECAL=fs->mkdir("ECALECAL");  
   HistSet plotsECALECAL;   plotsECALECAL.book(subDirECALECAL,std::string("ECALECAL"));
@@ -746,18 +827,13 @@ int main (int argc, char** argv)
   timeCorrector theCorr;
   std::cout << "\ncreated object theCorr to be used for timeVsAmpliCorrections" << std::endl;
   std::cout << "\ninitializing theCorr" << std::endl;
-  //theCorr.initEB( std::string("EBmod4") );
-  //theCorr.initEE( std::string("EElow") );
   theCorr.initEB( std::string("EB") );
   theCorr.initEE( std::string("EElow") );
 
-  // Initialize the histograms
-  TFileDirectory subDirGeneral=fs->mkdir("General");  
-  initializeHists(subDirGeneral);
-
   // reset counter
   eventCounter = 0;
-  /////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Main loop over entries
   for (int entry = 0 ; (entry < nEntries && eventCounter < numEvents_); ++entry)
   {
@@ -792,7 +868,20 @@ int main (int argc, char** argv)
     
     // if evet being actually processed, increment counter of analyzed events
     eventCounter++;
-    
+
+    // find the average time for EE and EB based on the auxiliary loop
+    run_time   = averageTimePerRun  .find( treeVars_.runId );
+    run_timeSq = averageTimeSqPerRun.find( treeVars_.runId );
+    run_count  = countersPerRun     .find( treeVars_.runId );
+    float eBtimeForRun=0.;
+    float eEtimeForRun=0.;
+    if( run_time!=averageTimePerRun.end() && run_timeSq!=averageTimeSqPerRun.end() && run_count!=countersPerRun.end() ){
+      eBtimeForRun = (run_time->second.first  / run_count->second.first);
+      eEtimeForRun = (run_time->second.second / run_count->second.second);
+   }
+    std::pair <float,float> thePhases ( eBtimeForRun, eEtimeForRun);
+
+
     speak_=false;
     if (entry<10 || entry%10000==0) speak_=true;
 
@@ -887,24 +976,24 @@ int main (int argc, char** argv)
 	if(! (bcTime1.isvalid && bcTime2.isvalid) ) continue;
 
 	// fill the structures which hold all the plots
-	plotsECALECAL.fill(sc1,sc2, bc1,bc2);
+	plotsECALECAL.fill(sc1,sc2, bc1,bc2,thePhases);
 	if      ( fabs(treeVars_.clusterEta[bc1])<1.4    &&  fabs(treeVars_.clusterEta[bc2])<1.4 ){
- 	  plotsEBEB    .fill(sc1,sc2, bc1,bc2);
+ 	  plotsEBEB    .fill(sc1,sc2, bc1,bc2,thePhases);
 
 	  int type=3; float cut=6;
-	  plotsEBEBchi2loose.fill(sc1,sc2, bc1,bc2, type, cut); // cutting on chi2/ndf of 2
+	  plotsEBEBchi2loose.fill(sc1,sc2, bc1,bc2, type, cut, thePhases); // cutting on chi2/ndf of 2
 	  type=3; cut=4.;
-	  plotsEBEBchi2    .fill(sc1,sc2, bc1,bc2, type, cut); // cutting on chi2/ndf of 2.5
+	  plotsEBEBchi2    .fill(sc1,sc2, bc1,bc2, type, cut, thePhases); // cutting on chi2/ndf of 2.5
 	  type=3; cut=3.;
-	  plotsEBEBchi2tight.fill(sc1,sc2, bc1,bc2, type, cut); // cutting on chi2/ndf of 2
+	  plotsEBEBchi2tight.fill(sc1,sc2, bc1,bc2, type, cut, thePhases); // cutting on chi2/ndf of 2
 	  type=1;  cut=1.5;
-	  plotsEBEBseed2sec.fill(sc1,sc2, bc1,bc2, type, cut); // cutting on agreement (<1.5ns) between seed and second, within a cluster
+	  plotsEBEBseed2sec.fill(sc1,sc2, bc1,bc2, type, cut, thePhases); // cutting on agreement (<1.5ns) between seed and second, within a cluster
 
 	  // fill different according to different pile up (selected on number of reco vertices)
-	  if      (treeVars_.nVertices<6)  plotsEBEBlowPU  .fill(sc1,sc2, bc1,bc2);
-	  else if (treeVars_.nVertices<11) plotsEBEBmidPU  .fill(sc1,sc2, bc1,bc2);
-	  else if (treeVars_.nVertices<16) plotsEBEBhighPU .fill(sc1,sc2, bc1,bc2);
-	  else                             plotsEBEBsuperPU.fill(sc1,sc2, bc1,bc2);
+	  if      (treeVars_.nVertices<6)  plotsEBEBlowPU  .fill(sc1,sc2, bc1,bc2, thePhases);
+	  else if (treeVars_.nVertices<11) plotsEBEBmidPU  .fill(sc1,sc2, bc1,bc2, thePhases);
+	  else if (treeVars_.nVertices<16) plotsEBEBhighPU .fill(sc1,sc2, bc1,bc2, thePhases);
+	  else                             plotsEBEBsuperPU.fill(sc1,sc2, bc1,bc2, thePhases);
 
 	  float energyRatio1 = treeVars_.xtalInBCEnergy[bc1][bcTime1.seed];
 	  if(bcTime1.second>-1) {energyRatio1 /= treeVars_.xtalInBCEnergy[bc1][bcTime1.second]; }
@@ -914,25 +1003,25 @@ int main (int argc, char** argv)
 	  else { energyRatio2 /= 99999; }
 	  
 	  float minRatio = 0.7; float maxRatio = 1.3;
-	  if(minRatio<energyRatio1 && minRatio<energyRatio2 && energyRatio1<maxRatio && energyRatio2<maxRatio) 	  plotsEBEBequalShare.fill(sc1,sc2, bc1,bc2);  
+	  if(minRatio<energyRatio1 && minRatio<energyRatio2 && energyRatio1<maxRatio && energyRatio2<maxRatio) 	  plotsEBEBequalShare.fill(sc1,sc2, bc1,bc2, thePhases);  
 	  
 	  minRatio = 2; maxRatio = 10;
-	  if(minRatio<energyRatio1 && minRatio<energyRatio2 && energyRatio1<maxRatio && energyRatio2<maxRatio) 	  plotsEBEBunevenShare.fill(sc1,sc2, bc1,bc2);  
+	  if(minRatio<energyRatio1 && minRatio<energyRatio2 && energyRatio1<maxRatio && energyRatio2<maxRatio) 	  plotsEBEBunevenShare.fill(sc1,sc2, bc1,bc2, thePhases);  
 	  
 	}// if EBEB, and subcases
-	else if ( fabs(treeVars_.clusterEta[bc1])>1.5    &&  fabs(treeVars_.clusterEta[bc2])>1.5 ) 	  plotsEEEE.fill(sc1,sc2, bc1,bc2);
+	else if ( fabs(treeVars_.clusterEta[bc1])>1.5    &&  fabs(treeVars_.clusterEta[bc2])>1.5 ) 	  plotsEEEE.fill(sc1,sc2, bc1,bc2, thePhases);
 	else if ( (fabs(treeVars_.clusterEta[bc1])<1.4 && fabs(treeVars_.clusterEta[bc2])>1.5) ||
 		  (fabs(treeVars_.clusterEta[bc1])>1.5 && fabs(treeVars_.clusterEta[bc2])<1.4)    ) {
-	  plotsEBEE.fill(sc1,sc2, bc1,bc2);
+	  plotsEBEE.fill(sc1,sc2, bc1,bc2, thePhases);
 	  
 	  int type=3; float cut=6.; 
-	  plotsEBEEchi2loose    .fill(sc1,sc2, bc1,bc2, type, cut); // cutting on chi2/ndf of 2.
+	  plotsEBEEchi2loose    .fill(sc1,sc2, bc1,bc2, type, cut, thePhases); // cutting on chi2/ndf of 2.
 	  type=3; cut=4.;
-	  plotsEBEEchi2    .fill(sc1,sc2, bc1,bc2, type, cut); // cutting on chi2/ndf of 2.5
+	  plotsEBEEchi2    .fill(sc1,sc2, bc1,bc2, type, cut, thePhases); // cutting on chi2/ndf of 2.5
 	  type=3; cut=3.;
-	  plotsEBEEchi2tight    .fill(sc1,sc2, bc1,bc2, type, cut); // cutting on chi2/ndf of 3.
+	  plotsEBEEchi2tight    .fill(sc1,sc2, bc1,bc2, type, cut, thePhases); // cutting on chi2/ndf of 3.
 	  type=1; cut=1.5;
-	  plotsEBEEseed2sec.fill(sc1,sc2, bc1,bc2, type, cut); // cutting on agreement (<1.5ns) between seed and second, within a cluster
+	  plotsEBEEseed2sec.fill(sc1,sc2, bc1,bc2, type, cut, thePhases); // cutting on agreement (<1.5ns) between seed and second, within a cluster
 	}
 	// if I've found a pair of supercluster, bail out of loop to repeat using twice the same supercluster
 	break;	

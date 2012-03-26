@@ -19,11 +19,17 @@ ClusterTime timeAndUncertyJet(int bClusterIndex, EcalTimePhyTreeContent treeVars
 }
 
 
+ClusterTime timeAndUncertSingleCluster(int bClusterIndex, EcalTimePhyTreeContent treeVars_)
+{
+  // 'phase' is an absolute time phase which you want to calibrate away from all measured times held by ClusterTime
+  float phase=0.;
+  return timeAndUncertSingleCluster(bClusterIndex, phase, treeVars_);
+}
 
 // ---------------------------------------------------------------------------------------
 // ------------------ Function to compute time and error for a cluster -------------------
 
-ClusterTime timeAndUncertSingleCluster(int bClusterIndex, EcalTimePhyTreeContent treeVars_)
+ClusterTime timeAndUncertSingleCluster(int bClusterIndex, float phase, EcalTimePhyTreeContent treeVars_)
 {
   ClusterTime theResult; //initialize
   theResult.isvalid = false;
@@ -178,12 +184,12 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex, EcalTimePhyTreeContent
     theResult.numCry     = numCrystals;
     theResult.seed       = seed;
     theResult.second     = second;
-    theResult.seedtime   = treeVars_.xtalInBCTime[bClusterIndex][seed];
+    theResult.seedtime   = treeVars_.xtalInBCTime[bClusterIndex][seed] - phase;
     if(second>-1 ) {
-      theResult.secondtime = treeVars_.xtalInBCTime[bClusterIndex][second];}
-    theResult.time       = bestTime;
+      theResult.secondtime = treeVars_.xtalInBCTime[bClusterIndex][second] - phase;}
+    theResult.time       = bestTime - phase;
     theResult.timeErr    = sqrt(1/weightSum);       // error from propagation of cluster time (as if single cry errors were uncorrelated)
-    theResult.otherstime = bestOtherTime;           // error from propagation of time of others (as if single cry errors were uncorrelated)
+    theResult.otherstime = bestOtherTime - phase;   // error from propagation of time of others (as if single cry errors were uncorrelated)
     theResult.otherstimeErr=sqrt(1/weightOtherSum);
     theResult.chi2       = chi2;
     return theResult;

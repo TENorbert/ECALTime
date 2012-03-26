@@ -37,7 +37,7 @@ void HistSet::book(TFileDirectory subDir, const std::string& post) {
   tCollVStimeDiffHistTOF_=(TH2F*) subDir.make<TH2F>("TOF-corrected: (t_{clus1} + t_{clus2})/2  VS  (t_{clus1} - t_{clus2})/2","TOF-corrected: (t_{clus1} + t_{clus2})/2  VS  (t_{clus1} - t_{clus2})/2 [ns]; (t_{clus1} - t_{clus2})/2 ; (t_{clus1} + t_{clus2})/2 VS [ns]; ",binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.,binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
 
   seedTimeVSchi2_  =(TH2F*) subDir.make<TH2F>("t_{seed} VS #chi^{2}/N_{dof}","t_{seed} VS #chi^{2}/N_{dof}; t_{seed} [ns];  #chi^{2}/N_{dof}; ",binsTDistro_,-rangeTDistro_/4.,rangeTDistro_/4.,20,0,10);
-  //seedTimeVSsecondTime_=(TH2F*) subDir.make<TH2F>("t_{seed} VS t_{second}","t_{seed} VS t_{second}; t_{seed} [ns]; t_{second} [ns]; ",binsTDistro_,-rangeTDistro_/4.,rangeTDistro_/4.,binsTDistro_,-rangeTDistro_/4.,rangeTDistro_/4.);
+
   seedTimeVSseedMsecond_ =(TH2F*) subDir.make<TH2F>("t_{seed} VS (t_{seed}-t_{second})","t_{seed} VS  (t_{seed}-t_{second}); t_{seed} [ns];  (t_{seed}-t_{second}) [ns]; ",binsTDistro_,-rangeTDistro_/4.,rangeTDistro_/4.,binsTDistro_/2.,-rangeTDistro_/8.,rangeTDistro_/8.);
 
   seedTimeDiffHist_    =(TH1F*) subDir.make<TH1F>("time difference of seeds","seeds time difference; t_{seed1} - t_{seed2} [ns]; num. seed pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
@@ -81,10 +81,24 @@ int HistSet::fill(int sc1, int sc2, int bc1, int bc2 ){
   // call the generalized 'fil' setting type=0 and cut=0,
   // which means cuts are ignored 
   int type=0; float cut=0; 
-  return fill(sc1, sc2, bc1, bc2, type, cut);
+  return fill(sc1, sc2, bc1, bc2, type, cut, std::make_pair(0.,0.));
 }
 
-int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut){
+int HistSet::fill(int sc1, int sc2, int bc1, int bc2, std::pair<float,float> globalPhases ){
+  // if launched with no arguments for cuts, 
+  // call the generalized 'fil' setting type=0 and cut=0,
+  // which means cuts are ignored 
+  int type=0; float cut=0; 
+  return fill(sc1, sc2, bc1, bc2, type, cut, globalPhases);
+}
+
+int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut) {
+  return fill(sc1, sc2, bc1, bc2, type,  cut, std::make_pair(0.,0.) );
+}
+
+
+
+int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut, std::pair<float,float> globalPhases){
   
   if(!treeVars_)   {
     std::cout << " treeVars_ is null when calling HistSet::fill! Bailing out."<< std::endl;
@@ -106,17 +120,23 @@ int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut){
   diEle += el2;
   
   // ////////////////////////
-  mass_      ->Fill(diEle.M()); // double
+  mass_      ->Fill(diEle.M()); 
   float dvertex = pow(treeVars_->superClusterVertexZ[sc1]-treeVars_->superClusterVertexZ[sc2],2);
-  //dvertex       += pow(treeVars_->superClusterVertexY[sc1]-treeVars_->superClusterVertexY[sc2],2);
-  //dvertex       += pow(treeVars_->superClusterVertexX[sc1]-treeVars_->superClusterVertexX[sc2],2);
-  dvertex       = sqrt(dvertex);
-  dZvertices_->Fill(dvertex); // double
-  Zvertices_->Fill( (treeVars_->superClusterVertexZ[sc1]+treeVars_->superClusterVertexZ[sc2])/2 ); //double
-  nVertices_->Fill(treeVars_->nVertices); // double
 
-  ClusterTime bcTime1 = timeAndUncertSingleCluster(bc1,(*treeVars_));
-  ClusterTime bcTime2 = timeAndUncertSingleCluster(bc2,(*treeVars_));
+  dvertex       = sqrt(dvertex);
+  dZvertices_->Fill(dvertex); 
+  Zvertices_->Fill( (treeVars_->superClusterVertexZ[sc1]+treeVars_->superClusterVertexZ[sc2])/2 ); 
+  nVertices_->Fill(treeVars_->nVertices); 
+
+
+  float phase(0.);
+  if( fabs(treeVars_->superClusterEta[sc1])<1.45 ) phase=globalPhases.first;
+  else                                             phase=globalPhases.second;
+  ClusterTime bcTime1 = timeAndUncertSingleCluster(bc1,phase,(*treeVars_));
+
+  if( fabs(treeVars_->superClusterEta[sc2])<1.45 ) phase=globalPhases.first;
+  else                                             phase=globalPhases.second;
+  ClusterTime bcTime2 = timeAndUncertSingleCluster(bc2,phase,(*treeVars_));
   
 
   ///////////////////////////////////// cuts //////////////////////////////////////////////////////////////
@@ -240,12 +260,25 @@ int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1){
   // which means cuts are ignored 
   int type  =0;
   float cut =0;
-  return fillSingle(sc1, bc1, bcTime1,  type,  cut );
+  return fillSingle(sc1, bc1, bcTime1,  type,  cut , std::make_pair(0.,0.));
+}
+
+int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, std::pair<float,float> globalPhases){  
+  // if launched with no arguments for cuts, 
+  // call the generalized 'fil' setting type=0 and cut=0,
+  // which means cuts are ignored 
+  int type  =0;
+  float cut =0;
+  return fillSingle(sc1, bc1, bcTime1,  type,  cut , globalPhases);
 }
 
 
+int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, int type, float cut){
+  return fillSingle(sc1, bc1, bcTime1, type, cut , std::make_pair(0.,0.) );
+}
 
-int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, int type, float cut ){  
+
+int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, int type, float cut , std::pair<float,float> globalPhases){  
   
   if(!bcTime1.isvalid) return -1;
   

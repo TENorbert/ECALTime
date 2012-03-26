@@ -28,6 +28,7 @@ struct ClusterTime {
   float chi2;
 } ;
 
+ClusterTime timeAndUncertSingleCluster (int bClusterIndex, float phase, EcalTimePhyTreeContent treeVars_);
 ClusterTime timeAndUncertSingleCluster (int bClusterIndex, EcalTimePhyTreeContent treeVars_);
 ClusterTime timeAndUncertyPhoton       (int bClusterIndex, EcalTimePhyTreeContent treeVars_);
 ClusterTime timeAndUncertyJet          (int bClusterIndex, EcalTimePhyTreeContent treeVars_);
