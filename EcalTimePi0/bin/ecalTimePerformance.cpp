@@ -503,6 +503,79 @@ int main (int argc, char** argv)
   TFileDirectory subDirGeneral=fs->mkdir("General");  
   initializeHists(subDirGeneral);
 
+ 
+  TFileDirectory subDirECALECAL=fs->mkdir("ECALECAL");  
+  HistSet plotsECALECAL;   plotsECALECAL.book(subDirECALECAL,std::string("ECALECAL"));
+  plotsECALECAL.setTree(&treeVars_);
+  
+  TFileDirectory subDirEBEB=fs->mkdir("EBEB");  
+  HistSet plotsEBEB;   plotsEBEB.book(subDirEBEB,std::string("EBEB"));
+  plotsEBEB.setTree(&treeVars_);
+  
+  // separate folders for different number of reconstructed vertices
+  TFileDirectory subDirEBEBlowPU=fs->mkdir("EBEBlowPU");  
+  HistSet plotsEBEBlowPU;   plotsEBEBlowPU.book(subDirEBEBlowPU,std::string("EBEBlowPU"));
+  plotsEBEBlowPU.setTree(&treeVars_);
+  
+  TFileDirectory subDirEBEBmidPU=fs->mkdir("EBEBmidPU");  
+  HistSet plotsEBEBmidPU;   plotsEBEBmidPU.book(subDirEBEBmidPU,std::string("EBEBmidPU"));
+  plotsEBEBmidPU.setTree(&treeVars_);
+  
+  TFileDirectory subDirEBEBhighPU=fs->mkdir("EBEBhighPU");  
+  HistSet plotsEBEBhighPU;   plotsEBEBhighPU.book(subDirEBEBhighPU,std::string("EBEBhighPU"));
+  plotsEBEBhighPU.setTree(&treeVars_);
+  
+  TFileDirectory subDirEBEBsuperPU=fs->mkdir("EBEBsuperPU");  
+  HistSet plotsEBEBsuperPU;   plotsEBEBsuperPU.book(subDirEBEBsuperPU,std::string("EBEBsuperPU"));
+  plotsEBEBsuperPU.setTree(&treeVars_);
+  
+  TFileDirectory subDirEEEE=fs->mkdir("EEEE");  
+  HistSet plotsEEEE;   plotsEEEE.book(subDirEEEE,std::string("EEEE"));
+  plotsEEEE.setTree(&treeVars_);
+    
+  TFileDirectory subDirEBEE=fs->mkdir("EBEE");  
+  HistSet plotsEBEE;   plotsEBEE.book(subDirEBEE,std::string("EBEE"));
+  plotsEBEE.setTree(&treeVars_);
+    
+  TFileDirectory subDirEBEBequalShare=fs->mkdir("EBEBequalShare");  
+  HistSet plotsEBEBequalShare;   plotsEBEBequalShare.book(subDirEBEBequalShare,std::string("EBEBequalShare"));
+  plotsEBEBequalShare.setTree(&treeVars_);
+    
+  TFileDirectory subDirEBEBunevenShare=fs->mkdir("EBEBunevenShare");  
+  HistSet plotsEBEBunevenShare;   plotsEBEBunevenShare.book(subDirEBEBunevenShare,std::string("EBEBunevenShare"));
+  plotsEBEBunevenShare.setTree(&treeVars_);
+  
+  TFileDirectory subDirEBEBchi2=fs->mkdir("EBEBchi2");  
+  HistSet plotsEBEBchi2;   plotsEBEBchi2.book(subDirEBEBchi2,std::string("EBEBchi2"));
+  plotsEBEBchi2.setTree(&treeVars_);
+
+  TFileDirectory subDirEBEEchi2=fs->mkdir("EBEEchi2");  
+  HistSet plotsEBEEchi2;   plotsEBEEchi2.book(subDirEBEEchi2,std::string("EBEEchi2"));
+  plotsEBEEchi2.setTree(&treeVars_);
+  
+  TFileDirectory subDirEBEBchi2loose=fs->mkdir("EBEBchi2loose");  
+  HistSet plotsEBEBchi2loose;   plotsEBEBchi2loose.book(subDirEBEBchi2loose,std::string("EBEBchi2loose"));
+  plotsEBEBchi2loose.setTree(&treeVars_);
+
+  TFileDirectory subDirEBEEchi2loose=fs->mkdir("EBEEchi2loose");  
+  HistSet plotsEBEEchi2loose;   plotsEBEEchi2loose.book(subDirEBEEchi2loose,std::string("EBEEchi2loose"));
+  plotsEBEEchi2loose.setTree(&treeVars_);
+
+  TFileDirectory subDirEBEBchi2tight=fs->mkdir("EBEBchi2tight");  
+  HistSet plotsEBEBchi2tight;   plotsEBEBchi2tight.book(subDirEBEBchi2tight,std::string("EBEBchi2tight"));
+  plotsEBEBchi2tight.setTree(&treeVars_);
+
+  TFileDirectory subDirEBEEchi2tight=fs->mkdir("EBEEchi2tight");  
+  HistSet plotsEBEEchi2tight;   plotsEBEEchi2tight.book(subDirEBEEchi2tight,std::string("EBEEchi2tight"));
+  plotsEBEEchi2tight.setTree(&treeVars_);
+  
+  TFileDirectory subDirEBEBseed2sec=fs->mkdir("EBEBseed2sec");  
+  HistSet plotsEBEBseed2sec;   plotsEBEBseed2sec.book(subDirEBEBseed2sec,std::string("EBEBseed2sec"));
+  plotsEBEBseed2sec.setTree(&treeVars_);
+
+  TFileDirectory subDirEBEEseed2sec=fs->mkdir("EBEEseed2sec");  
+  HistSet plotsEBEEseed2sec;   plotsEBEEseed2sec.book(subDirEBEEseed2sec,std::string("EBEEseed2sec"));
+  plotsEBEEseed2sec.setTree(&treeVars_);
 
   int eventCounter = 0;
   //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -739,91 +812,21 @@ int main (int argc, char** argv)
     }
   //////////////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////////////////////////////////
-  
+
   // save the history of times VS run number into a TGraph
-  // ebTimeVsRun = new TGraphErrors(runCounter, runs, ebTimes, runErrs, ebTimeErrs );   
+  ebTimeVsRun = new TGraphErrors(runCounter, runs, ebTimes, runErrs, ebTimeErrs );   
   ebTimeVsRun = subDirGeneral.make <TGraphErrors> (runCounter, runs, ebTimes, runErrs, ebTimeErrs );   
-  ebTimeVsRun->SetTitle("EB time VS run"); ebTimeVsRun->GetXaxis()->SetTitle("run number"); ebTimeVsRun->GetYaxis()->SetTitle("EB per-run averate time [ns]");
-  eeTimeVsRun = subDirGeneral.make <TGraphErrors> (runCounter, runs, eeTimes, runErrs, eeTimeErrs );
-  eeTimeVsRun->SetTitle("EE time VS run");  eeTimeVsRun->GetXaxis()->SetTitle("run number"); eeTimeVsRun->GetYaxis()->SetTitle("EE per-run averate time [ns]");
-  eeTimeVSebTime = subDirGeneral.make <TGraphErrors> (runCounter, ebTimes, eeTimes, ebTimeErrs, eeTimeErrs );
-  eeTimeVSebTime->SetTitle("EE time VS EB time");  eeTimeVsRun->GetXaxis()->SetTitle("EB per-run averate time [ns]"); eeTimeVsRun->GetYaxis()->SetTitle("EE per-run averate time [ns]");
+  ebTimeVsRun->SetTitle("EB time VS run"); ebTimeVsRun->GetXaxis()->SetTitle("run number"); ebTimeVsRun->GetYaxis()->SetTitle("EB per-run average time [ns]");
+  ebTimeVsRun->SetName("EB time VS run");   ebTimeVsRun->Write();
 
+  eeTimeVsRun = new TGraphErrors (runCounter, runs, eeTimes, runErrs, eeTimeErrs );
+  eeTimeVsRun->SetTitle("EE time VS run");  eeTimeVsRun->GetXaxis()->SetTitle("run number"); eeTimeVsRun->GetYaxis()->SetTitle("EE per-run average time [ns]");
+  eeTimeVsRun->SetName("EE time VS run");   eeTimeVsRun->Write();  
 
-  TFileDirectory subDirECALECAL=fs->mkdir("ECALECAL");  
-  HistSet plotsECALECAL;   plotsECALECAL.book(subDirECALECAL,std::string("ECALECAL"));
-  plotsECALECAL.setTree(&treeVars_);
-  
-  TFileDirectory subDirEBEB=fs->mkdir("EBEB");  
-  HistSet plotsEBEB;   plotsEBEB.book(subDirEBEB,std::string("EBEB"));
-  plotsEBEB.setTree(&treeVars_);
-  
-  // separate folders for different number of reconstructed vertices
-  TFileDirectory subDirEBEBlowPU=fs->mkdir("EBEBlowPU");  
-  HistSet plotsEBEBlowPU;   plotsEBEBlowPU.book(subDirEBEBlowPU,std::string("EBEBlowPU"));
-  plotsEBEBlowPU.setTree(&treeVars_);
-  
-  TFileDirectory subDirEBEBmidPU=fs->mkdir("EBEBmidPU");  
-  HistSet plotsEBEBmidPU;   plotsEBEBmidPU.book(subDirEBEBmidPU,std::string("EBEBmidPU"));
-  plotsEBEBmidPU.setTree(&treeVars_);
-  
-  TFileDirectory subDirEBEBhighPU=fs->mkdir("EBEBhighPU");  
-  HistSet plotsEBEBhighPU;   plotsEBEBhighPU.book(subDirEBEBhighPU,std::string("EBEBhighPU"));
-  plotsEBEBhighPU.setTree(&treeVars_);
-  
-  TFileDirectory subDirEBEBsuperPU=fs->mkdir("EBEBsuperPU");  
-  HistSet plotsEBEBsuperPU;   plotsEBEBsuperPU.book(subDirEBEBsuperPU,std::string("EBEBsuperPU"));
-  plotsEBEBsuperPU.setTree(&treeVars_);
-  
-  TFileDirectory subDirEEEE=fs->mkdir("EEEE");  
-  HistSet plotsEEEE;   plotsEEEE.book(subDirEEEE,std::string("EEEE"));
-  plotsEEEE.setTree(&treeVars_);
-    
-  TFileDirectory subDirEBEE=fs->mkdir("EBEE");  
-  HistSet plotsEBEE;   plotsEBEE.book(subDirEBEE,std::string("EBEE"));
-  plotsEBEE.setTree(&treeVars_);
-    
-  TFileDirectory subDirEBEBequalShare=fs->mkdir("EBEBequalShare");  
-  HistSet plotsEBEBequalShare;   plotsEBEBequalShare.book(subDirEBEBequalShare,std::string("EBEBequalShare"));
-  plotsEBEBequalShare.setTree(&treeVars_);
-    
-  TFileDirectory subDirEBEBunevenShare=fs->mkdir("EBEBunevenShare");  
-  HistSet plotsEBEBunevenShare;   plotsEBEBunevenShare.book(subDirEBEBunevenShare,std::string("EBEBunevenShare"));
-  plotsEBEBunevenShare.setTree(&treeVars_);
-  
-  TFileDirectory subDirEBEBchi2=fs->mkdir("EBEBchi2");  
-  HistSet plotsEBEBchi2;   plotsEBEBchi2.book(subDirEBEBchi2,std::string("EBEBchi2"));
-  plotsEBEBchi2.setTree(&treeVars_);
+  eeTimeVSebTime = new TGraphErrors (runCounter, ebTimes, eeTimes, ebTimeErrs, eeTimeErrs );
+  eeTimeVSebTime->SetTitle("EE time VS EB time");  eeTimeVSebTime->GetXaxis()->SetTitle("EB per-run avegate time [ns]"); eeTimeVSebTime->GetYaxis()->SetTitle("EE per-run average time [ns]");
+  eeTimeVSebTime->SetName("EE time VS EB time");    eeTimeVSebTime->Write();  
 
-  TFileDirectory subDirEBEEchi2=fs->mkdir("EBEEchi2");  
-  HistSet plotsEBEEchi2;   plotsEBEEchi2.book(subDirEBEEchi2,std::string("EBEEchi2"));
-  plotsEBEEchi2.setTree(&treeVars_);
-  
-  TFileDirectory subDirEBEBchi2loose=fs->mkdir("EBEBchi2loose");  
-  HistSet plotsEBEBchi2loose;   plotsEBEBchi2loose.book(subDirEBEBchi2loose,std::string("EBEBchi2loose"));
-  plotsEBEBchi2loose.setTree(&treeVars_);
-
-  TFileDirectory subDirEBEEchi2loose=fs->mkdir("EBEEchi2loose");  
-  HistSet plotsEBEEchi2loose;   plotsEBEEchi2loose.book(subDirEBEEchi2loose,std::string("EBEEchi2loose"));
-  plotsEBEEchi2loose.setTree(&treeVars_);
-
-  TFileDirectory subDirEBEBchi2tight=fs->mkdir("EBEBchi2tight");  
-  HistSet plotsEBEBchi2tight;   plotsEBEBchi2tight.book(subDirEBEBchi2tight,std::string("EBEBchi2tight"));
-  plotsEBEBchi2tight.setTree(&treeVars_);
-
-  TFileDirectory subDirEBEEchi2tight=fs->mkdir("EBEEchi2tight");  
-  HistSet plotsEBEEchi2tight;   plotsEBEEchi2tight.book(subDirEBEEchi2tight,std::string("EBEEchi2tight"));
-  plotsEBEEchi2tight.setTree(&treeVars_);
-  
-  TFileDirectory subDirEBEBseed2sec=fs->mkdir("EBEBseed2sec");  
-  HistSet plotsEBEBseed2sec;   plotsEBEBseed2sec.book(subDirEBEBseed2sec,std::string("EBEBseed2sec"));
-  plotsEBEBseed2sec.setTree(&treeVars_);
-
-  TFileDirectory subDirEBEEseed2sec=fs->mkdir("EBEEseed2sec");  
-  HistSet plotsEBEEseed2sec;   plotsEBEEseed2sec.book(subDirEBEEseed2sec,std::string("EBEEseed2sec"));
-  plotsEBEEseed2sec.setTree(&treeVars_);
-
-  
   timeCorrector theCorr;
   std::cout << "\ncreated object theCorr to be used for timeVsAmpliCorrections" << std::endl;
   std::cout << "\ninitializing theCorr" << std::endl;
