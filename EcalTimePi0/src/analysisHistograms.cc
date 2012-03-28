@@ -20,8 +20,11 @@ void HistSet::book(TFileDirectory subDir, const std::string& post) {
   chi2ndf_             =(TH1F*) subDir.make<TH1F>("cluster chi2 per d.o.f.","cluster chi2 ; #chi^{2}/N_{dof}",100,0,10);
 
   seedTime_            =(TH1F*) subDir.make<TH1F>("seed time","seed time; t_{seed} [ns]; num. seeds/0.05ns",binsTDistro_*incrementForDelayedGamma_,-rangeTDistro_*incrementForDelayedGamma_,rangeTDistro_*incrementForDelayedGamma_);
+  seedTimeTOF_            =(TH1F*) subDir.make<TH1F>("seed time TOF-corr","seed time TOF-corr; t_{seed} [ns]; num. seeds/0.05ns",binsTDistro_*incrementForDelayedGamma_,-rangeTDistro_*incrementForDelayedGamma_,rangeTDistro_*incrementForDelayedGamma_);
   secondTime_          =(TH1F*) subDir.make<TH1F>("second time","second time; t_{second} [ns]; num. secs/0.05ns",binsTDistro_*incrementForDelayedGamma_,-rangeTDistro_*incrementForDelayedGamma_,rangeTDistro_*incrementForDelayedGamma_);
+  secondTimeTOF_          =(TH1F*) subDir.make<TH1F>("second time TOF-corr","second time TOF-corr; t_{second} [ns]; num. secs/0.05ns",binsTDistro_*incrementForDelayedGamma_,-rangeTDistro_*incrementForDelayedGamma_,rangeTDistro_*incrementForDelayedGamma_);
   clusterTime_         =(TH1F*) subDir.make<TH1F>("cluster time","cluster time; t_{cluster} [ns]; num. clusters/0.05ns",binsTDistro_*incrementForDelayedGamma_,-rangeTDistro_*incrementForDelayedGamma_,rangeTDistro_*incrementForDelayedGamma_);
+  clusterTimeTOF_         =(TH1F*) subDir.make<TH1F>("cluster time TOF-corr","cluster time TOF-corr; t_{cluster} [ns]; num. clusters/0.05ns",binsTDistro_*incrementForDelayedGamma_,-rangeTDistro_*incrementForDelayedGamma_,rangeTDistro_*incrementForDelayedGamma_);
 
   TOFsingle_           = (TH1F*) subDir.make<TH1F>("TOF single","TOF single correction; #Delta TOF [ns]; num. clusters/0.05ns",binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
   TOFcorrections_      = (TH1F*) subDir.make<TH1F>("TOF difference","TOF difference; #Delta TOF [ns]; num. clusters/0.05ns",binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
@@ -322,7 +325,8 @@ int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, int type, float c
     chi2_   ->Fill(bcTime1.chi2);      chi2ndf_->Fill(bcTime1.chi2/bcTime1.numCry);   } //single
 
   // take care of the seeds
-  seedTime_            -> Fill(bcTime1.seedtime); //single
+  seedTime_               -> Fill(bcTime1.seedtime); //single
+  seedTimeTOF_            -> Fill(bcTime1.seedtime-extraTravelTime(sc1,(*treeVars_))); //single
 
 
   // take care of the second-highest amplitude crystal
@@ -330,10 +334,12 @@ int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, int type, float c
     secondAmpli_        -> Fill(treeVars_->xtalInBCEnergy[bc1][bcTime1.second]);  // check that there's crystals beyond seed // single
     seed2secSingleClus_ -> Fill( bcTime1.seedtime - bcTime1.secondtime ); // single
     secondTime_         -> Fill( bcTime1.secondtime);
+    secondTimeTOF_      -> Fill( bcTime1.secondtime-extraTravelTime(sc1,(*treeVars_)));
   }
   else                  secondAmpli_->Fill(0);  
   
   clusterTime_         -> Fill(bcTime1.time);
+  clusterTimeTOF_      -> Fill(bcTime1.time-extraTravelTime(sc1,(*treeVars_)));
   seedAmpli_->Fill(treeVars_->xtalInBCEnergy[bc1][bcTime1.seed]); // single
 
   

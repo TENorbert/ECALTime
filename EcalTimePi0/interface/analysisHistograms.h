@@ -14,8 +14,8 @@
 
 
 // based on range and bins, the bin width is 50 ps
-float rangeTDistro_ = 3; // 1-E4/E1
-float incrementForDelayedGamma_ = 3;
+float rangeTDistro_ = 3;
+float incrementForDelayedGamma_ = 1;
 int   binsTDistro_  = 120; // 1-E4/E1
 
 
@@ -53,8 +53,11 @@ struct HistSet{
   TH1F* chi2_;
   TH1F* chi2ndf_;
   TH1F* seedTime_;
+  TH1F* seedTimeTOF_;
   TH1F* secondTime_;
+  TH1F* secondTimeTOF_;
   TH1F* clusterTime_;
+  TH1F* clusterTimeTOF_;
   TH1F* seedTimeDiffHist_;
   TH1F* TOFsingle_;
   TH1F* TOFcorrections_;

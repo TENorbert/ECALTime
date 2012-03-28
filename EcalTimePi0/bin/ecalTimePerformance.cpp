@@ -533,6 +533,18 @@ int main (int argc, char** argv)
   HistSet plotsEEEE;   plotsEEEE.book(subDirEEEE,std::string("EEEE"));
   plotsEEEE.setTree(&treeVars_);
     
+  TFileDirectory subDirEEPEEP=fs->mkdir("EEPEEP");  
+  HistSet plotsEEPEEP;   plotsEEPEEP.book(subDirEEPEEP,std::string("EEPEEP"));
+  plotsEEPEEP.setTree(&treeVars_);
+  
+  TFileDirectory subDirEEMEEM=fs->mkdir("EEMEEM");  
+  HistSet plotsEEMEEM;   plotsEEMEEM.book(subDirEEMEEM,std::string("EEMEEM"));
+  plotsEEMEEM.setTree(&treeVars_);
+    
+  TFileDirectory subDirEEPEEM=fs->mkdir("EEPEEM");  
+  HistSet plotsEEPEEM;   plotsEEPEEM.book(subDirEEPEEM,std::string("EEPEEM"));
+  plotsEEPEEM.setTree(&treeVars_);
+    
   TFileDirectory subDirEBEE=fs->mkdir("EBEE");  
   HistSet plotsEBEE;   plotsEBEE.book(subDirEBEE,std::string("EBEE"));
   plotsEBEE.setTree(&treeVars_);
@@ -1012,7 +1024,17 @@ int main (int argc, char** argv)
 	  if(minRatio<energyRatio1 && minRatio<energyRatio2 && energyRatio1<maxRatio && energyRatio2<maxRatio) 	  plotsEBEBunevenShare.fill(sc1,sc2, bc1,bc2, thePhases);  
 	  
 	}// if EBEB, and subcases
-	else if ( fabs(treeVars_.clusterEta[bc1])>1.5    &&  fabs(treeVars_.clusterEta[bc2])>1.5 ) 	  plotsEEEE.fill(sc1,sc2, bc1,bc2, thePhases);
+	else if ( fabs(treeVars_.clusterEta[bc1])>1.5    &&  fabs(treeVars_.clusterEta[bc2])>1.5 ) 	  {
+	  plotsEEEE.fill(sc1,sc2, bc1,bc2, thePhases);
+	  if(  treeVars_.clusterEta[bc1]>1.5    &&  treeVars_.clusterEta[bc2]>1.5         ) 	  {
+	    plotsEEPEEP.fill(sc1,sc2, bc1,bc2, thePhases);}
+	  else if(  (treeVars_.clusterEta[bc1]>1.5 && treeVars_.clusterEta[bc2]<-1.5 ) ||  (treeVars_.clusterEta[bc2]>1.5 && treeVars_.clusterEta[bc1]<-1.5 ) ){
+	    plotsEEPEEM.fill(sc1,sc2, bc1,bc2, thePhases); }
+	  else if(  treeVars_.clusterEta[bc1]<-1.5    &&  treeVars_.clusterEta[bc2]<-1.5   )  {   
+	    plotsEEMEEM.fill(sc1,sc2, bc1,bc2, thePhases); }
+	
+	}
+
 	else if ( (fabs(treeVars_.clusterEta[bc1])<1.4 && fabs(treeVars_.clusterEta[bc2])>1.5) ||
 		  (fabs(treeVars_.clusterEta[bc1])>1.5 && fabs(treeVars_.clusterEta[bc2])<1.4)    ) {
 	  plotsEBEE.fill(sc1,sc2, bc1,bc2, thePhases);
