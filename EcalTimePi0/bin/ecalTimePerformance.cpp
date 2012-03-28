@@ -91,6 +91,7 @@ std::vector<std::vector<double> > ttrigExcludeVector;
 
 int  minEntriesForFit_ = 7;
 int  flagOneVertex_ = 0;
+int  stringDoAveragePerRun_ = 1;
 bool limitFit_(true); 
 //std::string fitOption_(""); // default: use chi2 method
 std::string fitOption_("L"); // use likelihood method
@@ -282,6 +283,7 @@ void parseArguments(int argc, char** argv)
   std::string vertex                 = "--vertex";
   std::string stringTriggers         = "--trig";
   std::string stringTechTriggers     = "--techTrig";
+  std::string stringDoAveragePerRun  = "--stringDoAveragePerRun";
 
   // if no arguments are passed, suggest help
   if (argc < 2){
@@ -311,6 +313,7 @@ void parseArguments(int argc, char** argv)
       std::cout << " --minLS: lowest lumi section number considered" << std::endl;
       std::cout << " --maxLS: highest lumi section number considered" << std::endl;
       std::cout << " --vertex: require vertex@IP (1), veto it (2) or either (0, or unset)" << std::endl;
+      std::cout << " --stringDoAveragePerRun: do (1) or don't (0) subtrct average time by run" << std::endl;
       std::cout << " --trig: L1 triggers to include (exclude with x)" << std::endl;
       std::cout << " --techTrig: L1 technical triggers to include (exclude with x)" << std::endl;
       exit(1);      }
@@ -378,6 +381,13 @@ void parseArguments(int argc, char** argv)
       flagOneVertex_  = atof(argv[v+1]);
        if (flagOneVertex_!=0 && flagOneVertex_!=1 && flagOneVertex_!=2){
          std::cout << "Not a valid value for flagOneVertex_ (0,1,2). Returning." << std::endl;
+	 exit (1);}
+       v++;
+    } 
+    else if (argv[v] == stringDoAveragePerRun) { // collect requirement for whether averate run time should be subtracted or not
+      stringDoAveragePerRun_  = atof(argv[v+1]);
+       if (stringDoAveragePerRun_!=0 && stringDoAveragePerRun_!=1 ){
+         std::cout << "Not a valid value for stringDoAveragePerRun_ (0,1). Returning." << std::endl;
 	 exit (1);}
        v++;
     } 
@@ -512,6 +522,10 @@ int main (int argc, char** argv)
   HistSet plotsEBEB;   plotsEBEB.book(subDirEBEB,std::string("EBEB"));
   plotsEBEB.setTree(&treeVars_);
   
+  TFileDirectory subDirEBEBzsmall=fs->mkdir("EBEBzsmall");  
+  HistSet plotsEBEBzsmall;   plotsEBEBzsmall.book(subDirEBEBzsmall,std::string("EBEBzsmall"));
+  plotsEBEBzsmall.setTree(&treeVars_);
+  
   // separate folders for different number of reconstructed vertices
   TFileDirectory subDirEBEBlowPU=fs->mkdir("EBEBlowPU");  
   HistSet plotsEBEBlowPU;   plotsEBEBlowPU.book(subDirEBEBlowPU,std::string("EBEBlowPU"));
@@ -532,6 +546,10 @@ int main (int argc, char** argv)
   TFileDirectory subDirEEEE=fs->mkdir("EEEE");  
   HistSet plotsEEEE;   plotsEEEE.book(subDirEEEE,std::string("EEEE"));
   plotsEEEE.setTree(&treeVars_);
+  
+  TFileDirectory subDirEEEEzsmall=fs->mkdir("EEEEzsmall");  
+  HistSet plotsEEEEzsmall;   plotsEEEEzsmall.book(subDirEEEEzsmall,std::string("EEEEzsmall"));
+  plotsEEEEzsmall.setTree(&treeVars_);
     
   TFileDirectory subDirEEPEEP=fs->mkdir("EEPEEP");  
   HistSet plotsEEPEEP;   plotsEEPEEP.book(subDirEEPEEP,std::string("EEPEEP"));
@@ -774,12 +792,14 @@ int main (int argc, char** argv)
 	}// end loop sc2
       }// end loop sc1
       
-    } // end of PRELIMINARY loop over entries
-
+    } // end of  auxiliary  PRELIMINARY loop over entries
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   // check that the size of the three maps is the same
   if ( averageTimePerRun.size()==averageTimeSqPerRun.size() && averageTimeSqPerRun.size()==countersPerRun.size() && countersPerRun.size()<=1000 ){
-    std::cout << "++ averageTimePerRun, averageTimeSqPerRun and countersPerRun have all the same size: " << countersPerRun.size() << std::endl;   }
+    std::cout << "++ averageTimePerRun, averageTimeSqPerRun and countersPerRun have all the same size: " << countersPerRun.size() << std::endl;   
+    std::cout << "++ value of stringDoAveragePerRun_ : " << stringDoAveragePerRun_ << std::endl;
+  }
   else if (averageTimePerRun.size()>=1000 || averageTimeSqPerRun.size()>=1000 || countersPerRun.size()>=1000) {
     std::cout << "++ one of : averageTimePerRun, averageTimeSqPerRun and countersPerRun has size > 1000 (" << countersPerRun.size() << ") - bailing out" << std::endl;  assert(0);  }
   else{
@@ -823,7 +843,6 @@ int main (int argc, char** argv)
       runCounter++;
     }
   //////////////////////////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   // save the history of times VS run number into a TGraph
   ebTimeVsRun = new TGraphErrors(runCounter, runs, ebTimes, runErrs, ebTimeErrs );   
@@ -845,11 +864,14 @@ int main (int argc, char** argv)
   theCorr.initEB( std::string("EB") );
   theCorr.initEE( std::string("EElow") );
 
+
+
   // reset counter
   eventCounter = 0;
   //////////////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Main loop over entries
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////
   for (int entry = 0 ; (entry < nEntries && eventCounter < numEvents_); ++entry)
   {
     chain->GetEntry (entry) ;
@@ -890,10 +912,14 @@ int main (int argc, char** argv)
     run_count  = countersPerRun     .find( treeVars_.runId );
     float eBtimeForRun=0.;
     float eEtimeForRun=0.;
-    if( run_time!=averageTimePerRun.end() && run_timeSq!=averageTimeSqPerRun.end() && run_count!=countersPerRun.end() ){
-      eBtimeForRun = (run_time->second.first  / run_count->second.first);
-      eEtimeForRun = (run_time->second.second / run_count->second.second);
-   }
+    if( stringDoAveragePerRun_==1             && 
+	run_time!=averageTimePerRun.end()     && 
+	run_timeSq!=averageTimeSqPerRun.end() && 
+	run_count!=countersPerRun.end() )
+      {
+	eBtimeForRun = (run_time->second.first  / run_count->second.first);
+	eEtimeForRun = (run_time->second.second / run_count->second.second);
+      }
     std::pair <float,float> thePhases ( eBtimeForRun, eEtimeForRun);
 
 
@@ -995,6 +1021,8 @@ int main (int argc, char** argv)
 	if      ( fabs(treeVars_.clusterEta[bc1])<1.4    &&  fabs(treeVars_.clusterEta[bc2])<1.4 ){
  	  plotsEBEB    .fill(sc1,sc2, bc1,bc2,thePhases);
 
+	  if( fabs( treeVars_.superClusterVertexZ[sc1] ) < 2. ) {plotsEBEBzsmall.fill(sc1,sc2, bc1,bc2, thePhases);}
+
 	  int type=3; float cut=6;
 	  plotsEBEBchi2loose.fill(sc1,sc2, bc1,bc2, type, cut, thePhases); // cutting on chi2/ndf of 2
 	  type=3; cut=4.;
@@ -1026,13 +1054,15 @@ int main (int argc, char** argv)
 	}// if EBEB, and subcases
 	else if ( fabs(treeVars_.clusterEta[bc1])>1.5    &&  fabs(treeVars_.clusterEta[bc2])>1.5 ) 	  {
 	  plotsEEEE.fill(sc1,sc2, bc1,bc2, thePhases);
+
+	  if( fabs( treeVars_.superClusterVertexZ[sc1] ) < 2. ) {plotsEEEEzsmall.fill(sc1,sc2, bc1,bc2, thePhases);}
+
 	  if(  treeVars_.clusterEta[bc1]>1.5    &&  treeVars_.clusterEta[bc2]>1.5         ) 	  {
 	    plotsEEPEEP.fill(sc1,sc2, bc1,bc2, thePhases);}
 	  else if(  (treeVars_.clusterEta[bc1]>1.5 && treeVars_.clusterEta[bc2]<-1.5 ) ||  (treeVars_.clusterEta[bc2]>1.5 && treeVars_.clusterEta[bc1]<-1.5 ) ){
 	    plotsEEPEEM.fill(sc1,sc2, bc1,bc2, thePhases); }
 	  else if(  treeVars_.clusterEta[bc1]<-1.5    &&  treeVars_.clusterEta[bc2]<-1.5   )  {   
 	    plotsEEMEEM.fill(sc1,sc2, bc1,bc2, thePhases); }
-	
 	}
 
 	else if ( (fabs(treeVars_.clusterEta[bc1])<1.4 && fabs(treeVars_.clusterEta[bc2])>1.5) ||

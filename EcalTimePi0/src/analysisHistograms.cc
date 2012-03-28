@@ -212,7 +212,7 @@ int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut, std::
 	tCollVStimeDiffHistTOF_    -> Fill(  ( (bcTime1.time-extraTravelTime(sc1,u,(*treeVars_))) - (bcTime2.time-extraTravelTime(sc2,u,(*treeVars_))) ) /2. ,
 					     ( (bcTime1.time-extraTravelTime(sc1,u,(*treeVars_))) + (bcTime2.time-extraTravelTime(sc2,u,(*treeVars_))) ) /2.
 					     );
-	tColl_                     -> Fill( ( (bcTime1.time-extraTravelTime(sc1,u,(*treeVars_))) + (bcTime2.time-extraTravelTime(sc2,u,(*treeVars_))) ) /2. ); // double
+	tColl_                     -> Fill( ( (bcTime1.time-extraTravelTime(sc1,u,(*treeVars_))) + (bcTime2.time-extraTravelTime(sc2,u,(*treeVars_))))  /2. ); // double
 
 	zPairVsTPair_              -> Fill( ( (bcTime1.time-extraTravelTime(sc1,u,(*treeVars_))) + (bcTime2.time-extraTravelTime(sc2,u,(*treeVars_))) ) /2. ,
 					    ( treeVars_->superClusterVertexZ[sc1] + treeVars_->superClusterVertexZ[sc2] )/2. ); 
