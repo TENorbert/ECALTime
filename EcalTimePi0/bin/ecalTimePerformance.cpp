@@ -522,9 +522,41 @@ int main (int argc, char** argv)
   HistSet plotsEBEB;   plotsEBEB.book(subDirEBEB,std::string("EBEB"));
   plotsEBEB.setTree(&treeVars_);
   
+  TFileDirectory subDirEBEBnear=fs->mkdir("EBEBnear");  
+  HistSet plotsEBEBnear;   plotsEBEBnear.book(subDirEBEBnear,std::string("EBEBnear"));
+  plotsEBEBnear.setTree(&treeVars_);
+  
+  TFileDirectory subDirEBEBfar=fs->mkdir("EBEBfar");  
+  HistSet plotsEBEBfar;   plotsEBEBfar.book(subDirEBEBfar,std::string("EBEBfar"));
+  plotsEBEBfar.setTree(&treeVars_);
+  
+  TFileDirectory subDirEEEEnear=fs->mkdir("EEEEnear");  
+  HistSet plotsEEEEnear;   plotsEEEEnear.book(subDirEEEEnear,std::string("EEEEnear"));
+  plotsEEEEnear.setTree(&treeVars_);
+  
+  TFileDirectory subDirEEEEfar=fs->mkdir("EEEEfar");  
+  HistSet plotsEEEEfar;   plotsEEEEfar.book(subDirEEEEfar,std::string("EEEEfar"));
+  plotsEEEEfar.setTree(&treeVars_);
+  
+  TFileDirectory subDirEBMEEM=fs->mkdir("EBMEEM");  
+  HistSet plotsEBMEEM;   plotsEBMEEM.book(subDirEBMEEM,std::string("EBMEEM"));
+  plotsEBMEEM.setTree(&treeVars_);
+  
+  TFileDirectory subDirEBPEEP=fs->mkdir("EBPEEP");  
+  HistSet plotsEBPEEP;   plotsEBPEEP.book(subDirEBPEEP,std::string("EBPEEP"));
+  plotsEBPEEP.setTree(&treeVars_);
+  
   TFileDirectory subDirEBEBzsmall=fs->mkdir("EBEBzsmall");  
   HistSet plotsEBEBzsmall;   plotsEBEBzsmall.book(subDirEBEBzsmall,std::string("EBEBzsmall"));
   plotsEBEBzsmall.setTree(&treeVars_);
+  
+  TFileDirectory subDirEBEBzbigP=fs->mkdir("EBEBzbigP");  
+  HistSet plotsEBEBzbigP;   plotsEBEBzbigP.book(subDirEBEBzbigP,std::string("EBEBzbigP"));
+  plotsEBEBzbigP.setTree(&treeVars_);
+  
+  TFileDirectory subDirEBEBzbigN=fs->mkdir("EBEBzbigN");  
+  HistSet plotsEBEBzbigN;   plotsEBEBzbigN.book(subDirEBEBzbigN,std::string("EBEBzbigN"));
+  plotsEBEBzbigN.setTree(&treeVars_);
   
   // separate folders for different number of reconstructed vertices
   TFileDirectory subDirEBEBlowPU=fs->mkdir("EBEBlowPU");  
@@ -550,6 +582,14 @@ int main (int argc, char** argv)
   TFileDirectory subDirEEEEzsmall=fs->mkdir("EEEEzsmall");  
   HistSet plotsEEEEzsmall;   plotsEEEEzsmall.book(subDirEEEEzsmall,std::string("EEEEzsmall"));
   plotsEEEEzsmall.setTree(&treeVars_);
+
+  TFileDirectory subDirEEEEzbigP=fs->mkdir("EEEEzbigP");  
+  HistSet plotsEEEEzbigP;   plotsEEEEzbigP.book(subDirEEEEzbigP,std::string("EEEEzbigP"));
+  plotsEEEEzbigP.setTree(&treeVars_);
+  
+  TFileDirectory subDirEEEEzbigN=fs->mkdir("EEEEzbigN");  
+  HistSet plotsEEEEzbigN;   plotsEEEEzbigN.book(subDirEEEEzbigN,std::string("EEEEzbigN"));
+  plotsEEEEzbigN.setTree(&treeVars_);
     
   TFileDirectory subDirEEPEEP=fs->mkdir("EEPEEP");  
   HistSet plotsEEPEEP;   plotsEEPEEP.book(subDirEEPEEP,std::string("EEPEEP"));
@@ -1021,7 +1061,12 @@ int main (int argc, char** argv)
 	if      ( fabs(treeVars_.clusterEta[bc1])<1.4    &&  fabs(treeVars_.clusterEta[bc2])<1.4 ){
  	  plotsEBEB    .fill(sc1,sc2, bc1,bc2,thePhases);
 
-	  if( fabs( treeVars_.superClusterVertexZ[sc1] ) < 2. ) {plotsEBEBzsmall.fill(sc1,sc2, bc1,bc2, thePhases);}
+	  if( fabs( treeVars_.clusterEta[bc1] - treeVars_.clusterEta[bc2] ) < 1. )    plotsEBEBnear.fill(sc1,sc2, bc1,bc2,thePhases);
+	  else                                                                        plotsEBEB.fill(sc1,sc2, bc1,bc2,thePhases);
+
+	  if       ( fabs( treeVars_.superClusterVertexZ[sc1] ) <  2.) {plotsEBEBzsmall.fill(sc1,sc2, bc1,bc2, thePhases);}
+	  else if  (  treeVars_.superClusterVertexZ[sc1]        < -5.) {plotsEBEBzbigN .fill(sc1,sc2, bc1,bc2, thePhases);}
+	  else if  (  treeVars_.superClusterVertexZ[sc1]        >  5.) {plotsEBEBzbigP .fill(sc1,sc2, bc1,bc2, thePhases);}
 
 	  int type=3; float cut=6;
 	  plotsEBEBchi2loose.fill(sc1,sc2, bc1,bc2, type, cut, thePhases); // cutting on chi2/ndf of 2
@@ -1054,8 +1099,14 @@ int main (int argc, char** argv)
 	}// if EBEB, and subcases
 	else if ( fabs(treeVars_.clusterEta[bc1])>1.5    &&  fabs(treeVars_.clusterEta[bc2])>1.5 ) 	  {
 	  plotsEEEE.fill(sc1,sc2, bc1,bc2, thePhases);
+	  
+	  if( fabs( treeVars_.clusterEta[bc1] - treeVars_.clusterEta[bc2] ) < 0.5 ) plotsEEEEnear.fill(sc1,sc2, bc1,bc2, thePhases);
+	  else                                                                      plotsEEEEfar .fill(sc1,sc2, bc1,bc2, thePhases);
 
-	  if( fabs( treeVars_.superClusterVertexZ[sc1] ) < 2. ) {plotsEEEEzsmall.fill(sc1,sc2, bc1,bc2, thePhases);}
+	  if       ( fabs( treeVars_.superClusterVertexZ[sc1] ) <  2. ){plotsEEEEzsmall.fill(sc1,sc2, bc1,bc2, thePhases);}
+	  else if  (  treeVars_.superClusterVertexZ[sc1]        < -5.) {plotsEEEEzbigN .fill(sc1,sc2, bc1,bc2, thePhases);}
+	  else if  (  treeVars_.superClusterVertexZ[sc1]        >  5.) {plotsEEEEzbigP .fill(sc1,sc2, bc1,bc2, thePhases);}
+
 
 	  if(  treeVars_.clusterEta[bc1]>1.5    &&  treeVars_.clusterEta[bc2]>1.5         ) 	  {
 	    plotsEEPEEP.fill(sc1,sc2, bc1,bc2, thePhases);}
@@ -1077,6 +1128,17 @@ int main (int argc, char** argv)
 	  plotsEBEEchi2tight    .fill(sc1,sc2, bc1,bc2, type, cut, thePhases); // cutting on chi2/ndf of 3.
 	  type=1; cut=1.5;
 	  plotsEBEEseed2sec.fill(sc1,sc2, bc1,bc2, type, cut, thePhases); // cutting on agreement (<1.5ns) between seed and second, within a cluster
+
+	  if ( 
+	      (treeVars_.clusterEta[bc1]<1.4 && treeVars_.clusterEta[bc1]>0 && treeVars_.clusterEta[bc2]>1.5 ) ||
+	      (treeVars_.clusterEta[bc2]<1.4 && treeVars_.clusterEta[bc2]>0 && treeVars_.clusterEta[bc1]>1.5 ) 
+	      ) plotsEBPEEP.fill(sc1,sc2, bc1,bc2, type, cut, thePhases);
+	  
+	  if ( 
+	      (treeVars_.clusterEta[bc1]>-1.4 && treeVars_.clusterEta[bc1]<0 && treeVars_.clusterEta[bc2]<-1.5 ) ||
+	      (treeVars_.clusterEta[bc2]>-1.4 && treeVars_.clusterEta[bc2]<0 && treeVars_.clusterEta[bc1]<-1.5 ) 
+	      ) plotsEBMEEM.fill(sc1,sc2, bc1,bc2, type, cut, thePhases);
+	  
 	}
 	// if I've found a pair of supercluster, bail out of loop to repeat using twice the same supercluster
 	break;	
