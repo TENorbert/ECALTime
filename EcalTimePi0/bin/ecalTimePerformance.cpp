@@ -1060,9 +1060,10 @@ int main (int argc, char** argv)
 	plotsECALECAL.fill(sc1,sc2, bc1,bc2,thePhases);
 	if      ( fabs(treeVars_.clusterEta[bc1])<1.4    &&  fabs(treeVars_.clusterEta[bc2])<1.4 ){
  	  plotsEBEB    .fill(sc1,sc2, bc1,bc2,thePhases);
-
-	  if( fabs( treeVars_.clusterEta[bc1] - treeVars_.clusterEta[bc2] ) < 1. )    plotsEBEBnear.fill(sc1,sc2, bc1,bc2,thePhases);
-	  else                                                                        plotsEBEB.fill(sc1,sc2, bc1,bc2,thePhases);
+	  
+	  if( sqrt( pow(treeVars_.clusterEta[bc1]-treeVars_.clusterEta[bc2],2) +  pow(treeVars_.clusterPhi[bc1]-treeVars_.clusterPhi[bc2],2) ) < 1.5 ) {
+	    plotsEBEBnear.fill(sc1,sc2, bc1,bc2,thePhases);}
+	  else                                                                        plotsEBEBfar.fill(sc1,sc2, bc1,bc2,thePhases);
 
 	  if       ( fabs( treeVars_.superClusterVertexZ[sc1] ) <  2.) {plotsEBEBzsmall.fill(sc1,sc2, bc1,bc2, thePhases);}
 	  else if  (  treeVars_.superClusterVertexZ[sc1]        < -5.) {plotsEBEBzbigN .fill(sc1,sc2, bc1,bc2, thePhases);}
@@ -1100,7 +1101,8 @@ int main (int argc, char** argv)
 	else if ( fabs(treeVars_.clusterEta[bc1])>1.5    &&  fabs(treeVars_.clusterEta[bc2])>1.5 ) 	  {
 	  plotsEEEE.fill(sc1,sc2, bc1,bc2, thePhases);
 	  
-	  if( fabs( treeVars_.clusterEta[bc1] - treeVars_.clusterEta[bc2] ) < 0.5 ) plotsEEEEnear.fill(sc1,sc2, bc1,bc2, thePhases);
+	  if( sqrt( pow(treeVars_.clusterEta[bc1]-treeVars_.clusterEta[bc2],2) + pow(treeVars_.clusterPhi[bc1]-treeVars_.clusterPhi[bc2],2) ) < 0.75 ){
+	    plotsEEEEnear.fill(sc1,sc2, bc1,bc2, thePhases);}
 	  else                                                                      plotsEEEEfar .fill(sc1,sc2, bc1,bc2, thePhases);
 
 	  if       ( fabs( treeVars_.superClusterVertexZ[sc1] ) <  2. ){plotsEEEEzsmall.fill(sc1,sc2, bc1,bc2, thePhases);}
@@ -1108,7 +1110,7 @@ int main (int argc, char** argv)
 	  else if  (  treeVars_.superClusterVertexZ[sc1]        >  5.) {plotsEEEEzbigP .fill(sc1,sc2, bc1,bc2, thePhases);}
 
 
-	  if(  treeVars_.clusterEta[bc1]>1.5    &&  treeVars_.clusterEta[bc2]>1.5         ) 	  {
+	  if(  treeVars_.clusterEta[bc1]>1.5 && treeVars_.clusterEta[bc2]>1.5        ) 	  {
 	    plotsEEPEEP.fill(sc1,sc2, bc1,bc2, thePhases);}
 	  else if(  (treeVars_.clusterEta[bc1]>1.5 && treeVars_.clusterEta[bc2]<-1.5 ) ||  (treeVars_.clusterEta[bc2]>1.5 && treeVars_.clusterEta[bc1]<-1.5 ) ){
 	    plotsEEPEEM.fill(sc1,sc2, bc1,bc2, thePhases); }
