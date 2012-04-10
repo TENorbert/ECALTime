@@ -503,7 +503,6 @@ int main (int argc, char** argv)
   std::vector<edm::ParameterSet> psets;
   edm::ParameterSet pSet;
   pSet.addParameter("@service_type",std::string("TFileService"));
-  //pSet.addParameter("fileName",std::string("TimePerf-plots.root")); // this is the file TFileService will write into
   pSet.addParameter("fileName",outputRootName_); // this is the file TFileService will write into
   psets.push_back(pSet);
   static edm::ServiceToken services(edm::ServiceRegistry::createSet(psets));
@@ -526,9 +525,37 @@ int main (int argc, char** argv)
   HistSet plotsEBEBnear;   plotsEBEBnear.book(subDirEBEBnear,std::string("EBEBnear"));
   plotsEBEBnear.setTree(&treeVars_);
   
+  TFileDirectory subDirEBEBEtaNear=fs->mkdir("EBEBEtaNear");  
+  HistSet plotsEBEBEtaNear;   plotsEBEBEtaNear.book(subDirEBEBEtaNear,std::string("EBEBEtaNear"));
+  plotsEBEBEtaNear.setTree(&treeVars_);
+
   TFileDirectory subDirEBEBfar=fs->mkdir("EBEBfar");  
   HistSet plotsEBEBfar;   plotsEBEBfar.book(subDirEBEBfar,std::string("EBEBfar"));
   plotsEBEBfar.setTree(&treeVars_);
+
+  TFileDirectory subDirEBEBVeryFar=fs->mkdir("EBEBVeryFar");  
+  HistSet plotsEBEBVeryFar;   plotsEBEBVeryFar.book(subDirEBEBVeryFar,std::string("EBEBVeryFar"));
+  plotsEBEBVeryFar.setTree(&treeVars_);
+
+  TFileDirectory subDirEBEBforward=fs->mkdir("EBEBforward");  
+  HistSet plotsEBEBforward;   plotsEBEBforward.book(subDirEBEBforward,std::string("EBEBforward"));
+  plotsEBEBforward.setTree(&treeVars_);
+
+  TFileDirectory subDirEBEBmod1=fs->mkdir("EBEBmod1");  
+  HistSet plotsEBEBmod1;   plotsEBEBmod1.book(subDirEBEBmod1,std::string("EBEBmod1"));
+  plotsEBEBmod1.setTree(&treeVars_);
+
+  TFileDirectory subDirEBEBmod2=fs->mkdir("EBEBmod2");  
+  HistSet plotsEBEBmod2;   plotsEBEBmod2.book(subDirEBEBmod2,std::string("EBEBmod2"));
+  plotsEBEBmod2.setTree(&treeVars_);
+  
+  TFileDirectory subDirEBEBmod3=fs->mkdir("EBEBmod3");  
+  HistSet plotsEBEBmod3;   plotsEBEBmod3.book(subDirEBEBmod3,std::string("EBEBmod3"));
+  plotsEBEBmod3.setTree(&treeVars_);
+  
+  TFileDirectory subDirEBEBmod4=fs->mkdir("EBEBmod4");  
+  HistSet plotsEBEBmod4;   plotsEBEBmod4.book(subDirEBEBmod4,std::string("EBEBmod4"));
+  plotsEBEBmod4.setTree(&treeVars_);
   
   TFileDirectory subDirEEEEnear=fs->mkdir("EEEEnear");  
   HistSet plotsEEEEnear;   plotsEEEEnear.book(subDirEEEEnear,std::string("EEEEnear"));
@@ -537,6 +564,14 @@ int main (int argc, char** argv)
   TFileDirectory subDirEEEEfar=fs->mkdir("EEEEfar");  
   HistSet plotsEEEEfar;   plotsEEEEfar.book(subDirEEEEfar,std::string("EEEEfar"));
   plotsEEEEfar.setTree(&treeVars_);
+  
+  TFileDirectory subDirEEEEVeryFar=fs->mkdir("EEEEVeryFar");  
+  HistSet plotsEEEEVeryFar;   plotsEEEEVeryFar.book(subDirEEEEVeryFar,std::string("EEEEVeryFar"));
+  plotsEEEEVeryFar.setTree(&treeVars_);
+  
+  TFileDirectory subDirEEEEEtaNear=fs->mkdir("EEEEEtaNear");  
+  HistSet plotsEEEEEtaNear;   plotsEEEEEtaNear.book(subDirEEEEEtaNear,std::string("EEEEEtaNear"));
+  plotsEEEEEtaNear.setTree(&treeVars_);
   
   TFileDirectory subDirEBMEEM=fs->mkdir("EBMEEM");  
   HistSet plotsEBMEEM;   plotsEBMEEM.book(subDirEBMEEM,std::string("EBMEEM"));
@@ -1061,9 +1096,24 @@ int main (int argc, char** argv)
 	if      ( fabs(treeVars_.clusterEta[bc1])<1.4    &&  fabs(treeVars_.clusterEta[bc2])<1.4 ){
  	  plotsEBEB    .fill(sc1,sc2, bc1,bc2,thePhases);
 	  
+	  if           ( fabs(treeVars_.clusterEta[bc1])<0.44 && fabs(treeVars_.clusterEta[bc2])<0.44)  plotsEBEBmod1.fill(sc1,sc2, bc1,bc2,thePhases);
+	  else if      ( fabs(treeVars_.clusterEta[bc1])<0.79 && fabs(treeVars_.clusterEta[bc2])<0.79)  plotsEBEBmod2.fill(sc1,sc2, bc1,bc2,thePhases);
+	  else if      ( fabs(treeVars_.clusterEta[bc1])<1.13 && fabs(treeVars_.clusterEta[bc2])<1.13)  plotsEBEBmod3.fill(sc1,sc2, bc1,bc2,thePhases);
+	  else if      ( fabs(treeVars_.clusterEta[bc1])<1.4  && fabs(treeVars_.clusterEta[bc2])<1.4 )  plotsEBEBmod4.fill(sc1,sc2, bc1,bc2,thePhases);
+
+	  if      ( (treeVars_.clusterEta[bc1]>1. && treeVars_.clusterEta[bc2]>1. ) ||
+		    (treeVars_.clusterEta[bc1]<-1. && treeVars_.clusterEta[bc2]<-1. ) )          plotsEBEBforward.fill(sc1,sc2, bc1,bc2,thePhases);
+
 	  if( sqrt( pow(treeVars_.clusterEta[bc1]-treeVars_.clusterEta[bc2],2) +  pow(treeVars_.clusterPhi[bc1]-treeVars_.clusterPhi[bc2],2) ) < 1.5 ) {
 	    plotsEBEBnear.fill(sc1,sc2, bc1,bc2,thePhases);}
 	  else                                                                        plotsEBEBfar.fill(sc1,sc2, bc1,bc2,thePhases);
+
+	  if( sqrt( pow(treeVars_.clusterEta[bc1]-treeVars_.clusterEta[bc2],2) +  pow(treeVars_.clusterPhi[bc1]-treeVars_.clusterPhi[bc2],2) ) > 3. ) {
+	    plotsEBEBVeryFar.fill(sc1,sc2, bc1,bc2,thePhases);}
+
+	  if (fabs ( treeVars_.clusterEta[bc1]-treeVars_.clusterEta[bc2] ) < 0.2 ){
+	    plotsEBEBEtaNear.fill(sc1,sc2, bc1,bc2,thePhases);}
+
 
 	  if       ( fabs( treeVars_.superClusterVertexZ[sc1] ) <  2.) {plotsEBEBzsmall.fill(sc1,sc2, bc1,bc2, thePhases);}
 	  else if  (  treeVars_.superClusterVertexZ[sc1]        < -5.) {plotsEBEBzbigN .fill(sc1,sc2, bc1,bc2, thePhases);}
@@ -1104,6 +1154,14 @@ int main (int argc, char** argv)
 	  if( sqrt( pow(treeVars_.clusterEta[bc1]-treeVars_.clusterEta[bc2],2) + pow(treeVars_.clusterPhi[bc1]-treeVars_.clusterPhi[bc2],2) ) < 0.75 ){
 	    plotsEEEEnear.fill(sc1,sc2, bc1,bc2, thePhases);}
 	  else                                                                      plotsEEEEfar .fill(sc1,sc2, bc1,bc2, thePhases);
+
+	  if( sqrt( pow(treeVars_.clusterEta[bc1]-treeVars_.clusterEta[bc2],2) + pow(treeVars_.clusterPhi[bc1]-treeVars_.clusterPhi[bc2],2) ) > 1.5 ){
+	    plotsEEEEVeryFar.fill(sc1,sc2, bc1,bc2, thePhases);}
+
+	  if (fabs ( treeVars_.clusterEta[bc1]-treeVars_.clusterEta[bc2] ) < 0.2 ){
+	    plotsEEEEEtaNear.fill(sc1,sc2, bc1,bc2,thePhases);}
+      
+
 
 	  if       ( fabs( treeVars_.superClusterVertexZ[sc1] ) <  2. ){plotsEEEEzsmall.fill(sc1,sc2, bc1,bc2, thePhases);}
 	  else if  (  treeVars_.superClusterVertexZ[sc1]        < -5.) {plotsEEEEzbigN .fill(sc1,sc2, bc1,bc2, thePhases);}
