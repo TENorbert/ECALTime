@@ -1057,6 +1057,7 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex)
     else    {  std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
     float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] / sigmaNoiseOfThis; 
     if( ampliOverSigOfThis < minAmpliOverSigma_) continue;
+    if( treeVars_.xtalInBCSwissCross[bClusterIndex][thisCry] > 0.95) continue;
 
     numCrystals++;
     float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry];
@@ -1786,9 +1787,11 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
       float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry] / sigmaNoiseOfThis; 
       float ampliOfThis        = treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry]; 
       float sigmaOfThis        = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
+      float swissCrossOfThis   = treeVars_.xtalInBCSwissCross[bCluster][thisCry];
 
       // remove too low amplitudes and remove spikes as well 
       if( ampliOverSigOfThis < minAmpliOverSigma_) continue;
+      if( swissCrossOfThis   > 0.95)               continue;
       
 
       // loop on the _other_ cryS among the components of a basic cluster
@@ -1802,6 +1805,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
         float ampliOverSigOfThat = treeVars_.xtalInBCAmplitudeADC[bCluster][thatCry] / sigmaNoiseOfThat; 
         float ampliOfThat        = treeVars_.xtalInBCAmplitudeADC[bCluster][thatCry];
         float sigmaOfThat        = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
+        float swissCrossOfThat   = treeVars_.xtalInBCSwissCross[bCluster][thatCry];
 
         float Aeff = ampliOfThis * ampliOfThat / sqrt( pow(ampliOfThis,2) + pow(ampliOfThat,2) );
 	float timeOfThis = treeVars_.xtalInBCTime[bCluster][thisCry];
@@ -1822,6 +1826,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
         
   	// remove too low amplitudes and remove spikes as well 
         if( ampliOverSigOfThat < minAmpliOverSigma_) continue;
+        if( swissCrossOfThat   > 0.95)               continue;
 
         // for debug
         //std::cout << "ampliOverSigOfThis: " << ampliOverSigOfThis << "\tampliOverSigOfThat: " << ampliOverSigOfThat
@@ -2105,8 +2110,9 @@ SetOfIntPairs selectPi0Candidates()
   	  
   	  
 
-        returnPairs.insert(std::make_pair<int,int>(bClusterA,bClusterB));
-
+	  //returnPairs.insert(std::make_pair<int,int>(bClusterA,bClusterB));
+	  returnPairs.insert(std::pair<int,int>(bClusterA,bClusterB));
+	
       }//loop on candidateB
 
     }//loop on candidateA - (FIRST) to build pi0 candidates and get the mass
@@ -2799,7 +2805,7 @@ int main (int argc, char** argv)
     if (flagOneVertex_ ==1 && (!verticesAreOnlyNextToNominalIP) ) continue;
     if (flagOneVertex_ ==2 && (verticesAreOnlyNextToNominalIP) )  continue;
 
-    int currentLS = treeVars_.lumiSection;
+    //int currentLS = treeVars_.lumiSection;
 
     // this is specific to fill 
 //    if( !(
@@ -2836,7 +2842,6 @@ int main (int argc, char** argv)
     if (speak_)  std::cout << "\n\n------> reading entry " << entry << "\tLS: " << treeVars_.lumiSection << " <------\n" ; 
     if (speak_)  std::cout << "  found " << treeVars_.nSuperClusters << " superclusters" << std::endl ;
     if (speak_)  std::cout << "  found " << treeVars_.nClusters << " basic clusters" << std::endl ;
-    if (speak_)  std::cout << "  found " << treeVars_.nXtals << " crystals\n" ;    
 
     // Plot the control hists
     doControlHists();
@@ -2847,7 +2852,8 @@ int main (int argc, char** argv)
     {
       for (int bClusterA=bCluster+1; bClusterA < treeVars_.nClusters; bClusterA++)
       {
-        allBCPairs.insert(std::make_pair<int,int>(bCluster,bClusterA));
+        //allBCPairs.insert(std::make_pair<int,int>(bCluster,bClusterA));
+        allBCPairs.insert(std::pair<int,int>(bCluster,bClusterA));
       }
     }
     // Do singleCluster plots -- all BC pairs (no pi-zero selection)

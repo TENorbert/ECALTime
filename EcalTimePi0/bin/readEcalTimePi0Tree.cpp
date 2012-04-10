@@ -1171,21 +1171,24 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex)
   // loop on the cry components of a basic cluster; get timeBest and uncertainty 
   for(int thisCry=0; thisCry<treeVars_.nXtalsInCluster[bClusterIndex]; thisCry++)
   {
-    bool  thisIsInEB=false;
+    // bool  thisIsInEB=false;
     float sigmaNoiseOfThis=0;
     if(treeVars_.xtalInBCIEta[bClusterIndex][thisCry]!=-999999)       {
       sigmaNoiseOfThis   =sigmaNoiseEB;
       timingResParamN    =timingResParamNEB;
       timingResParamConst=timingResParamConstEB;
-      thisIsInEB=true;    }
+      //thisIsInEB=true;   
+    }
     else if(treeVars_.xtalInBCIy[bClusterIndex][thisCry]!=-999999)    {
       sigmaNoiseOfThis=sigmaNoiseEE;
       timingResParamN    =timingResParamNEE;
       timingResParamConst=timingResParamConstEE;
-      thisIsInEB=false;    }
+      //thisIsInEB=false;    
+    }
     else    {  std::cout << "crystal neither in eb nor in ee?? PROBLEM." << std::endl;}
     float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] / sigmaNoiseOfThis; 
     if( ampliOverSigOfThis < minAmpliOverSigma_) continue;
+    if( treeVars_.xtalInBCSwissCross[bClusterIndex][thisCry] > 0.95) continue;
 
     numCrystals++;
     float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry];
@@ -1300,14 +1303,14 @@ void doControlHists()
 
       // count number of crystals in a BC over threshold
       int numCryOverThreshold=0; 
-      int bClusterSeedIndex = -1;
+      // int bClusterSeedIndex = -1;
       float seedCryEnergy = -1000;
       for(int thisCry=0; thisCry<treeVars_.nXtalsInCluster[bCluster]; thisCry++)
       {
         if(treeVars_.xtalInBCEnergy[bCluster][thisCry] > seedCryEnergy)
         {
           seedCryEnergy = treeVars_.xtalInBCEnergy[bCluster][thisCry];
-          bClusterSeedIndex = thisCry;
+          // bClusterSeedIndex = thisCry;
         }
 
         if (treeVars_.xtalInBCIEta[bCluster][thisCry]!=-999999)  xtalIEtaHist_ -> Fill (treeVars_.xtalInBCIEta[bCluster][thisCry]);
@@ -1367,13 +1370,13 @@ void doControlHists()
       for (int bClusterEE=0; bClusterEE < treeVars_.nClusters; ++bClusterEE)
       {
         float seedCryEnergyB = -1000;
-        int bClusterSeedIndexB = -1;
+        // int bClusterSeedIndexB = -1;
         for (int cryInBC=0; cryInBC < treeVars_.nXtalsInCluster[bClusterEE]; cryInBC++)
         {
           if(treeVars_.xtalInBCEnergy[bClusterEE][cryInBC] > seedCryEnergyB)
           {
             seedCryEnergyB = treeVars_.xtalInBCEnergy[bClusterEE][cryInBC];
-            bClusterSeedIndexB = cryInBC;
+            // bClusterSeedIndexB = cryInBC;
           }
         }
         // Cut clusterB seed energy
@@ -1910,6 +1913,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
       float ampliOverSigOfThis = treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry] / sigmaNoiseOfThis; 
       float ampliOfThis        = treeVars_.xtalInBCAmplitudeADC[bCluster][thisCry]; 
       float sigmaOfThis        = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
+      //float swissCrossOfThis   = treeVars_.xtalInBCSwissCross[bCluster][thisCry];
 
       // remove too low amplitudes and remove spikes as well 
       if( ampliOverSigOfThis < minAmpliOverSigma_) continue;
@@ -1994,6 +1998,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
         float ampliOverSigOfThat = treeVars_.xtalInBCAmplitudeADC[bCluster][thatCry] / sigmaNoiseOfThat; 
         float ampliOfThat        = treeVars_.xtalInBCAmplitudeADC[bCluster][thatCry];
         float sigmaOfThat        = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
+        float swissCrossOfThat   = treeVars_.xtalInBCSwissCross[bCluster][thatCry];
 
         float Aeff = ampliOfThis * ampliOfThat / sqrt( pow(ampliOfThis,2) + pow(ampliOfThat,2) );
 	float timeOfThis = treeVars_.xtalInBCTime[bCluster][thisCry];
@@ -2014,6 +2019,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
         
   	// remove too low amplitudes and remove spikes as well 
         if( ampliOverSigOfThat < minAmpliOverSigma_) continue;
+        if( swissCrossOfThat   > 0.95)               continue;
 
         // for debug
         //std::cout << "ampliOverSigOfThis: " << ampliOverSigOfThis << "\tampliOverSigOfThat: " << ampliOverSigOfThat
@@ -2170,7 +2176,7 @@ SetOfIntPairs selectPi0Candidates()
   float e22A, e33A,    e22B, e33B;
   float eTGammaMinA,   eTGammaMinB;
   float s4s9GammaMinA, s4s9GammaMinB;
-  bool  AisEB,         BisEB;
+  bool  /*AisEB,*/         BisEB;
   float eTPi0Min;
 
   // (FIRST) loop on basic cluster - to build pi0 candidates and get the mass
@@ -2183,12 +2189,12 @@ SetOfIntPairs selectPi0Candidates()
       
       // discriminate between EE and EB and set thresholds accordingly
       if ( fabs(treeVars_.clusterEta[bClusterA]) < BarrelLimit) {
-        AisEB         = true;
+        // AisEB         = true;
         eTGammaMinA   = eTGammaMinEB_;
         s4s9GammaMinA = s4s9GammaMinEB_;
       }
       else{
-        AisEB         = false;
+        //AisEB         = false;
         eTGammaMinA   = eTGammaMinEE_;
         s4s9GammaMinA = s4s9GammaMinEE_;
       }
@@ -2297,7 +2303,8 @@ SetOfIntPairs selectPi0Candidates()
   	  
   	  
 
-        returnPairs.insert(std::make_pair<int,int>(bClusterA,bClusterB));
+	  //returnPairs.insert(std::make_pair<int,int>(bClusterA,bClusterB));
+	  returnPairs.insert(std::pair<int,int>(bClusterA,bClusterB));
 
       }//loop on candidateB
 
@@ -3142,7 +3149,6 @@ int main (int argc, char** argv)
     if (speak_)  std::cout << "\n\n------> reading entry " << entry << "\tLS: " << treeVars_.lumiSection << " <------\n" ; 
     if (speak_)  std::cout << "  found " << treeVars_.nSuperClusters << " superclusters" << std::endl ;
     if (speak_)  std::cout << "  found " << treeVars_.nClusters << " basic clusters" << std::endl ;
-    if (speak_)  std::cout << "  found " << treeVars_.nXtals << " crystals\n" ;    
 
     // Plot the control hists
     doControlHists();
@@ -3153,7 +3159,8 @@ int main (int argc, char** argv)
     {
       for (int bClusterA=bCluster+1; bClusterA < treeVars_.nClusters; bClusterA++)
       {
-        allBCPairs.insert(std::make_pair<int,int>(bCluster,bClusterA));
+        // allBCPairs.insert(std::make_pair<int,int>(bCluster,bClusterA));
+        allBCPairs.insert(std::pair<int,int>(bCluster,bClusterA));
       }
     }
     // Do singleCluster plots -- all BC pairs (no pi-zero selection)
