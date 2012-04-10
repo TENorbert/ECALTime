@@ -21,7 +21,9 @@ process.load("Configuration.StandardSequences.MagneticField_38T_cff")
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 #process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_noesprefer_cff")
 #process.GlobalTag.globaltag = 'CRAFT_ALL_V12::All'
-process.GlobalTag.globaltag = 'GR_R_35X_V8A::All'
+#process.GlobalTag.globaltag = 'GR_R_35X_V8A::All'
+# this one works in 44x
+process.GlobalTag.globaltag = 'GR_P_V27::All'
 
 # Trigger
 process.load("L1TriggerConfig.L1ScalesProducers.L1MuTriggerScalesConfig_cff")
@@ -125,7 +127,7 @@ process.multi5x5SuperClustersTimePi0Endcap =  RecoEcal.EgammaClusterProducers.mu
 
 # this is the ntuple producer
 process.load("ECALTime.EcalTimePi0.ecalTimePi0Tree_cfi")
-process.ecalTimePi0Tree.fileName = 'EcalTimePi0Tree'
+process.ecalTimePi0Tree.fileName = 'EcalTimeTree'
 process.ecalTimePi0Tree.muonCollection = cms.InputTag("muons")
 process.ecalTimePi0Tree.runNum = 135149
 process.ecalTimePi0Tree.useRaw = cms.untracked.bool(True)
