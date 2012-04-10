@@ -87,6 +87,14 @@ int HistSet::fill(int sc1, int sc2, int bc1, int bc2 ){
   return fill(sc1, sc2, bc1, bc2, type, cut, std::make_pair(0.,0.));
 }
 
+int HistSet::fill(int sc1, int sc2, int bc1, int bc2, std::pair<float,float> globalPhases, timeCorrector& theCorrector ){
+  // if launched with no arguments for cuts, 
+  // call the generalized 'fil' setting type=0 and cut=0,
+  // which means cuts are ignored 
+  int type=0; float cut=0; 
+  return fill(sc1, sc2, bc1, bc2, type, cut, globalPhases, theCorrector);
+}
+
 int HistSet::fill(int sc1, int sc2, int bc1, int bc2, std::pair<float,float> globalPhases ){
   // if launched with no arguments for cuts, 
   // call the generalized 'fil' setting type=0 and cut=0,
@@ -100,8 +108,12 @@ int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut) {
 }
 
 
+int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut, std::pair<float,float> globalPhases ){
+  timeCorrector theCorrector;
+  return fill(sc1, sc2, bc1, bc2, type, cut, globalPhases, theCorrector );
+}
 
-int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut, std::pair<float,float> globalPhases){
+int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut, std::pair<float,float> globalPhases, timeCorrector& theCorrector ){
   
   if(!treeVars_)   {
     std::cout << " treeVars_ is null when calling HistSet::fill! Bailing out."<< std::endl;
@@ -135,11 +147,11 @@ int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut, std::
   float phase(0.);
   if( fabs(treeVars_->superClusterEta[sc1])<1.45 ) phase=globalPhases.first;
   else                                             phase=globalPhases.second;
-  ClusterTime bcTime1 = timeAndUncertSingleCluster(bc1,phase,(*treeVars_));
+  ClusterTime bcTime1 = timeAndUncertSingleCluster(bc1,phase,theCorrector,(*treeVars_));
 
   if( fabs(treeVars_->superClusterEta[sc2])<1.45 ) phase=globalPhases.first;
   else                                             phase=globalPhases.second;
-  ClusterTime bcTime2 = timeAndUncertSingleCluster(bc2,phase,(*treeVars_));
+  ClusterTime bcTime2 = timeAndUncertSingleCluster(bc2,phase,theCorrector,(*treeVars_));
   
 
   ///////////////////////////////////// cuts //////////////////////////////////////////////////////////////
@@ -180,8 +192,8 @@ int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut, std::
 
   //std::cout << "analysisHisograms is launching fillSingle; bcTime1.seedtime: " << bcTime1.seedtime << std::endl;
   // FIRST, tale care of all single-cluster histograms; do for each of the two clusters  
-  HistSet::fillSingle(sc1, bc1,  bcTime1, type, cut);
-  HistSet::fillSingle(sc2, bc2,  bcTime2, type, cut);
+  HistSet::fillSingle(sc1, bc1,  bcTime1, type, cut, globalPhases, theCorrector);
+  HistSet::fillSingle(sc2, bc2,  bcTime2, type, cut, globalPhases, theCorrector);
 
   float A1 = treeVars_->xtalInBCAmplitudeADC[sc1][bcTime1.seed]; 
   float A2 = treeVars_->xtalInBCAmplitudeADC[sc2][bcTime2.seed]; 
@@ -272,7 +284,18 @@ int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, std::pair<float,f
   // which means cuts are ignored 
   int type  =0;
   float cut =0;
-  return fillSingle(sc1, bc1, bcTime1,  type,  cut , globalPhases);
+  timeCorrector theCorrector;
+  return fillSingle(sc1, bc1, bcTime1,  type,  cut , globalPhases, theCorrector);
+}
+
+
+int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, std::pair<float,float> globalPhases, timeCorrector& theCorrector){  
+  // if launched with no arguments for cuts, 
+  // call the generalized 'fil' setting type=0 and cut=0,
+  // which means cuts are ignored 
+  int type  =0;
+  float cut =0;
+  return fillSingle(sc1, bc1, bcTime1,  type,  cut , globalPhases, theCorrector);
 }
 
 
@@ -282,7 +305,14 @@ int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, int type, float c
 
 
 int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, int type, float cut , std::pair<float,float> globalPhases){  
+  timeCorrector theCorrector;
+  return fillSingle(sc1, bc1, bcTime1, type, cut , globalPhases, theCorrector);
+}
+
+
+int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, int type, float cut , std::pair<float,float> globalPhases, timeCorrector& theCorrector){  
   
+
   if(!bcTime1.isvalid) return -1;
   
   
@@ -342,9 +372,7 @@ int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, int type, float c
   clusterTimeTOF_      -> Fill(bcTime1.time-extraTravelTime(sc1,(*treeVars_)));
   seedAmpli_->Fill(treeVars_->xtalInBCEnergy[bc1][bcTime1.seed]); // single
 
-  
-  // std::cout << "otherstime:  " << bcTime1.otherstime << "\t" << bcTime2.otherstime << std::endl;
-  // std::cout << "seedtime:  " << bcTime1.seedtime << "\t" << bcTime2.seedtime << std::endl;
+ 
   if(bcTime1.otherstime>-999) // check that there's crystals beyond seed
     {
       diffSeedOther_ -> Fill(bcTime1.seedtime-bcTime1.otherstime); // single

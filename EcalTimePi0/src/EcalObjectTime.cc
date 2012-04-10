@@ -28,7 +28,9 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex, EcalTimePhyTreeContent
 
 ClusterTime timeAndUncertSingleCluster(int bClusterIndex, float phase, EcalTimePhyTreeContent treeVars_)
 {
+  std::cout << "GF inside timeAndUncertSingleCluster 1 B" << std::endl;
   timeCorrector dummyCorrector;
+  std::cout << "GF inside timeAndUncertSingleCluster 1 A" << std::endl;
   return timeAndUncertSingleCluster(bClusterIndex, phase, dummyCorrector,  treeVars_);
 }
 
@@ -53,7 +55,6 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex, float phase, timeCorre
   float timingResParamN    =0;
   float timingResParamConst=0;
   
-
   
   //bool  thisIsInEB=false;
   float sigmaNoiseOfThis=0;
@@ -77,7 +78,7 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex, float phase, timeCorre
 	tmpEne=treeVars_.xtalInBCEnergy[bClusterIndex][cry];
 	second=cry;
       } 	}
-  if(second==-1 && 0) std::cout << "second not found" << std::endl;
+  if(second==-1 && 0) std::cout << "EcalObjectTime: second not found" << std::endl;
 
   
   if(0) std::cout << "\n++ BC statrs (eta: " << treeVars_.clusterEta[bClusterIndex] << ") : "  << std::endl;
@@ -108,7 +109,8 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex, float phase, timeCorre
     if( treeVars_.xtalInBCSwissCross[bClusterIndex][thisCry] > 0.95) continue;
 
     numCrystals++;
-    float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry];
+    float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry] 
+      + theCorrector.getCorrection( treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry], treeVars_.xtalInBCEta[bClusterIndex][thisCry] );
     //    old estimated: fully parameterized
     //    float sigmaOfThis = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
     //    new estimate: error from ratio + constant term  
@@ -161,7 +163,8 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex, float phase, timeCorre
 	float doAnalytically=false;
 	doAnalytically=true;
 	// pull up the old definition of chi2, based on CRAFT-paper error parameterization
-  	float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry];
+  	float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry] 
+	  + theCorrector.getCorrection( treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry], treeVars_.xtalInBCEta[bClusterIndex][thisCry] );
   	float sigmaOfThis = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
 	// you can choose also to use the noise-type error directly from the ratio
 	if(!doAnalytically){
@@ -190,9 +193,9 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex, float phase, timeCorre
     theResult.numCry     = numCrystals;
     theResult.seed       = seed;
     theResult.second     = second;
-    theResult.seedtime   = treeVars_.xtalInBCTime[bClusterIndex][seed] - phase;
+    theResult.seedtime   = treeVars_.xtalInBCTime[bClusterIndex][seed] + theCorrector.getCorrection( treeVars_.xtalInBCAmplitudeADC[bClusterIndex][seed], treeVars_.xtalInBCEta[bClusterIndex][seed] ) - phase;
     if(second>-1 ) {
-      theResult.secondtime = treeVars_.xtalInBCTime[bClusterIndex][second] - phase;}
+      theResult.secondtime = treeVars_.xtalInBCTime[bClusterIndex][second] + theCorrector.getCorrection( treeVars_.xtalInBCAmplitudeADC[bClusterIndex][second], treeVars_.xtalInBCEta[bClusterIndex][second] ) - phase;}
     theResult.time       = bestTime - phase;
     theResult.timeErr    = sqrt(1/weightSum);       // error from propagation of cluster time (as if single cry errors were uncorrelated)
     theResult.otherstime = bestOtherTime - phase;   // error from propagation of time of others (as if single cry errors were uncorrelated)

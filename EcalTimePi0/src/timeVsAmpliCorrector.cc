@@ -11,6 +11,8 @@ timeCorrector::timeCorrector(){
   theCorrectionsEE.push_back(0.0);   theBinsEE.push_back(-10.0);
   theCorrectionsEE.push_back(0.0);   theBinsEE.push_back(10626.2);
 
+  std::cout << "\n++ timeCorrector constructor; by default, dummy corrections (==0.) applied;" << std::endl;
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -93,7 +95,7 @@ float timeCorrector::getCorrection(float A, float eta){
 
 
 void timeCorrector::initEE(std::string version){
-   std::cout << "\ninitializing corrections for EE" << std::endl;
+   std::cout << "\n++ initializing corrections for EE (no longer dummy corrections)" << std::endl;
    theCorrectionsEE.clear();          theBinsEE.clear();
  
    // this is binned measured bias in nanosecond; correction needs be the opposited. 
@@ -251,7 +253,7 @@ void timeCorrector::initEE(std::string version){
 
 
 void timeCorrector::initEB(std::string version){
-  std::cout << "\ninitializing corrections for EB" << std::endl;
+  std::cout << "\n++ initializing corrections for EB (no longer dummy corrections)" << std::endl;
 
    theCorrectionsEB.clear();          theBinsEB.clear();
 

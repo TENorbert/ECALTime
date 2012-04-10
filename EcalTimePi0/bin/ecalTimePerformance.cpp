@@ -92,6 +92,7 @@ std::vector<std::vector<double> > ttrigExcludeVector;
 int  minEntriesForFit_ = 7;
 int  flagOneVertex_ = 0;
 int  stringDoAveragePerRun_ = 1;
+int  doAdepCorrections_ = 1;
 bool limitFit_(true); 
 //std::string fitOption_(""); // default: use chi2 method
 std::string fitOption_("L"); // use likelihood method
@@ -283,7 +284,8 @@ void parseArguments(int argc, char** argv)
   std::string vertex                 = "--vertex";
   std::string stringTriggers         = "--trig";
   std::string stringTechTriggers     = "--techTrig";
-  std::string stringDoAveragePerRun  = "--stringDoAveragePerRun";
+  std::string stringDoAveragePerRun  = "--doAveragePerRun";
+  std::string stringdoAdepCorrections= "--doAdepCorrections";
 
   // if no arguments are passed, suggest help
   if (argc < 2){
@@ -313,7 +315,8 @@ void parseArguments(int argc, char** argv)
       std::cout << " --minLS: lowest lumi section number considered" << std::endl;
       std::cout << " --maxLS: highest lumi section number considered" << std::endl;
       std::cout << " --vertex: require vertex@IP (1), veto it (2) or either (0, or unset)" << std::endl;
-      std::cout << " --stringDoAveragePerRun: do (1) or don't (0) subtrct average time by run" << std::endl;
+      std::cout << " --doAveragePerRun: do (1) or don't (0) subtrct average time by run" << std::endl;
+      std::cout << " --doAdepCorrections: do (1) or don't (0) include ampli-dependent corrections" << std::endl;
       std::cout << " --trig: L1 triggers to include (exclude with x)" << std::endl;
       std::cout << " --techTrig: L1 technical triggers to include (exclude with x)" << std::endl;
       exit(1);      }
@@ -389,6 +392,16 @@ void parseArguments(int argc, char** argv)
        if (stringDoAveragePerRun_!=0 && stringDoAveragePerRun_!=1 ){
          std::cout << "Not a valid value for stringDoAveragePerRun_ (0,1). Returning." << std::endl;
 	 exit (1);}
+       v++;
+    } 
+    else if (argv[v] == stringdoAdepCorrections ) { // collect requirement for whether amplitude dependent corrections should be performed, crystal by crystal
+      doAdepCorrections_  = atof(argv[v+1]);
+       if (doAdepCorrections_!=0 && doAdepCorrections_!=1 ){
+         std::cout << "Not a valid value for doAdepCorrections_ (0,1). Returning." << std::endl;
+	 exit (1);}
+       else{
+         std::cout << "doAdepCorrections_ :" << doAdepCorrections_ << std::endl;
+       }
        v++;
     } 
     else if (argv[v] == stringTriggers) { // set L1 triggers to include/exclude
@@ -496,7 +509,20 @@ int main (int argc, char** argv)
   std::cout << "\tmaxLS: "          <<  maxLS_ << std::endl;
 	
   setBranchAddresses (chain, treeVars_);
-  
+
+  // set up the corrector: initilized for actual corrections, or for 'dummy' corrections
+  timeCorrector theCorrector;
+  if(doAdepCorrections_==1){
+    theCorrector.initEB("EB");
+    theCorrector.initEE("EElow");
+    std::cout << "\ncreated object theCorr to be used for timeVsAmpliCorrections" << std::endl;
+    std::cout << "\nA-dependent  corrections will actually be applied (doAdepCorrections_ = " << doAdepCorrections_ << ")" << std::endl;
+  }
+  else {
+    std::cout << "\nA-dependent  corrections will NOT be applied (doAdepCorrections_ = " << doAdepCorrections_ << ")" << std::endl;
+  }
+
+
   // setting up the TFileService in the ServiceRegistry;
   edmplugin::PluginManager::Config config;
   edmplugin::PluginManager::configure(edmplugin::standard::config());
@@ -806,9 +832,11 @@ int main (int argc, char** argv)
 	    std::cout << "bc2 : " << treeVars_.clusterEta[bc2] << " " << treeVars_.clusterPhi[bc2] << " " << treeVars_.clusterEnergy[bc2] << std::endl;
 	  }
 	  
-
-	  ClusterTime bcTime1 = timeAndUncertSingleCluster(bc1,treeVars_);
-	  ClusterTime bcTime2 = timeAndUncertSingleCluster(bc2,treeVars_);
+	  // use dummyPhase since phase is always irrelevant at this stage, as we're computing the per-run phases
+	  // in fact, at this stage you don't want to touch the phase, since you're measuring it.
+	  float dummyPhase(0.);
+	  ClusterTime bcTime1 = timeAndUncertSingleCluster(bc1, dummyPhase, theCorrector,treeVars_);
+	  ClusterTime bcTime2 = timeAndUncertSingleCluster(bc2, dummyPhase, theCorrector,treeVars_);
 	  if(! (bcTime1.isvalid && bcTime2.isvalid) ) continue;
 	
 
@@ -932,13 +960,6 @@ int main (int argc, char** argv)
   eeTimeVSebTime = new TGraphErrors (runCounter, ebTimes, eeTimes, ebTimeErrs, eeTimeErrs );
   eeTimeVSebTime->SetTitle("EE time VS EB time");  eeTimeVSebTime->GetXaxis()->SetTitle("EB per-run avegate time [ns]"); eeTimeVSebTime->GetYaxis()->SetTitle("EE per-run average time [ns]");
   eeTimeVSebTime->SetName("EE time VS EB time");    eeTimeVSebTime->Write();  
-
-  timeCorrector theCorr;
-  std::cout << "\ncreated object theCorr to be used for timeVsAmpliCorrections" << std::endl;
-  std::cout << "\ninitializing theCorr" << std::endl;
-  theCorr.initEB( std::string("EB") );
-  theCorr.initEE( std::string("EElow") );
-
 
 
   // reset counter
@@ -1085,54 +1106,57 @@ int main (int argc, char** argv)
 	std::cout << "sc2 : " << treeVars_.superClusterEta[sc2] << " " << treeVars_.superClusterPhi[sc2] << " " << treeVars_.superClusterRawEnergy[sc2] << std::endl;
 	std::cout << "bc2 : " << treeVars_.clusterEta[bc2] << " " << treeVars_.clusterPhi[bc2] << " " << treeVars_.clusterEnergy[bc2] << std::endl;
 	}
-	
-	ClusterTime bcTime1 = timeAndUncertSingleCluster(bc1,treeVars_);
-	ClusterTime bcTime2 = timeAndUncertSingleCluster(bc2,treeVars_);
+
+	// use dummyPhase since phase is always irrelevant at this stage
+	// bcTime1 and bcTime2 are used only to check sanity use indices. No usage of their time values, which are handled internally by HistSet 
+	float dummyPhase(0.);
+	ClusterTime bcTime1 = timeAndUncertSingleCluster(bc1,dummyPhase,theCorrector,treeVars_);
+	ClusterTime bcTime2 = timeAndUncertSingleCluster(bc2,dummyPhase,theCorrector,treeVars_);
 
 	if(! (bcTime1.isvalid && bcTime2.isvalid) ) continue;
 
 	// fill the structures which hold all the plots
-	plotsECALECAL.fill(sc1,sc2, bc1,bc2,thePhases);
+	plotsECALECAL.fill(sc1,sc2, bc1,bc2,thePhases,theCorrector);
 	if      ( fabs(treeVars_.clusterEta[bc1])<1.4    &&  fabs(treeVars_.clusterEta[bc2])<1.4 ){
- 	  plotsEBEB    .fill(sc1,sc2, bc1,bc2,thePhases);
+ 	  plotsEBEB    .fill(sc1,sc2, bc1,bc2,thePhases,theCorrector);
 	  
-	  if           ( fabs(treeVars_.clusterEta[bc1])<0.44 && fabs(treeVars_.clusterEta[bc2])<0.44)  plotsEBEBmod1.fill(sc1,sc2, bc1,bc2,thePhases);
-	  else if      ( fabs(treeVars_.clusterEta[bc1])<0.79 && fabs(treeVars_.clusterEta[bc2])<0.79)  plotsEBEBmod2.fill(sc1,sc2, bc1,bc2,thePhases);
-	  else if      ( fabs(treeVars_.clusterEta[bc1])<1.13 && fabs(treeVars_.clusterEta[bc2])<1.13)  plotsEBEBmod3.fill(sc1,sc2, bc1,bc2,thePhases);
-	  else if      ( fabs(treeVars_.clusterEta[bc1])<1.4  && fabs(treeVars_.clusterEta[bc2])<1.4 )  plotsEBEBmod4.fill(sc1,sc2, bc1,bc2,thePhases);
+	  if           ( fabs(treeVars_.clusterEta[bc1])<0.44 && fabs(treeVars_.clusterEta[bc2])<0.44)  plotsEBEBmod1.fill(sc1,sc2, bc1,bc2,thePhases,theCorrector);
+	  else if      ( fabs(treeVars_.clusterEta[bc1])<0.79 && fabs(treeVars_.clusterEta[bc2])<0.79)  plotsEBEBmod2.fill(sc1,sc2, bc1,bc2,thePhases,theCorrector);
+	  else if      ( fabs(treeVars_.clusterEta[bc1])<1.13 && fabs(treeVars_.clusterEta[bc2])<1.13)  plotsEBEBmod3.fill(sc1,sc2, bc1,bc2,thePhases,theCorrector);
+	  else if      ( fabs(treeVars_.clusterEta[bc1])<1.4  && fabs(treeVars_.clusterEta[bc2])<1.4 )  plotsEBEBmod4.fill(sc1,sc2, bc1,bc2,thePhases,theCorrector);
 
 	  if      ( (treeVars_.clusterEta[bc1]>1. && treeVars_.clusterEta[bc2]>1. ) ||
-		    (treeVars_.clusterEta[bc1]<-1. && treeVars_.clusterEta[bc2]<-1. ) )          plotsEBEBforward.fill(sc1,sc2, bc1,bc2,thePhases);
+		    (treeVars_.clusterEta[bc1]<-1. && treeVars_.clusterEta[bc2]<-1. ) )          plotsEBEBforward.fill(sc1,sc2, bc1,bc2,thePhases,theCorrector);
 
 	  if( sqrt( pow(treeVars_.clusterEta[bc1]-treeVars_.clusterEta[bc2],2) +  pow(treeVars_.clusterPhi[bc1]-treeVars_.clusterPhi[bc2],2) ) < 1.5 ) {
-	    plotsEBEBnear.fill(sc1,sc2, bc1,bc2,thePhases);}
-	  else                                                                        plotsEBEBfar.fill(sc1,sc2, bc1,bc2,thePhases);
+	    plotsEBEBnear.fill(sc1,sc2, bc1,bc2,thePhases,theCorrector);}
+	  else                                                                        plotsEBEBfar.fill(sc1,sc2, bc1,bc2,thePhases,theCorrector);
 
 	  if( sqrt( pow(treeVars_.clusterEta[bc1]-treeVars_.clusterEta[bc2],2) +  pow(treeVars_.clusterPhi[bc1]-treeVars_.clusterPhi[bc2],2) ) > 3. ) {
-	    plotsEBEBVeryFar.fill(sc1,sc2, bc1,bc2,thePhases);}
+	    plotsEBEBVeryFar.fill(sc1,sc2, bc1,bc2,thePhases,theCorrector);}
 
 	  if (fabs ( treeVars_.clusterEta[bc1]-treeVars_.clusterEta[bc2] ) < 0.2 ){
-	    plotsEBEBEtaNear.fill(sc1,sc2, bc1,bc2,thePhases);}
+	    plotsEBEBEtaNear.fill(sc1,sc2, bc1,bc2,thePhases,theCorrector);}
 
 
-	  if       ( fabs( treeVars_.superClusterVertexZ[sc1] ) <  2.) {plotsEBEBzsmall.fill(sc1,sc2, bc1,bc2, thePhases);}
-	  else if  (  treeVars_.superClusterVertexZ[sc1]        < -5.) {plotsEBEBzbigN .fill(sc1,sc2, bc1,bc2, thePhases);}
-	  else if  (  treeVars_.superClusterVertexZ[sc1]        >  5.) {plotsEBEBzbigP .fill(sc1,sc2, bc1,bc2, thePhases);}
+	  if       ( fabs( treeVars_.superClusterVertexZ[sc1] ) <  2.) {plotsEBEBzsmall.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);}
+	  else if  (  treeVars_.superClusterVertexZ[sc1]        < -5.) {plotsEBEBzbigN .fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);}
+	  else if  (  treeVars_.superClusterVertexZ[sc1]        >  5.) {plotsEBEBzbigP .fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);}
 
 	  int type=3; float cut=6;
-	  plotsEBEBchi2loose.fill(sc1,sc2, bc1,bc2, type, cut, thePhases); // cutting on chi2/ndf of 2
+	  plotsEBEBchi2loose.fill(sc1,sc2, bc1,bc2, type, cut, thePhases,theCorrector); // cutting on chi2/ndf of 2
 	  type=3; cut=4.;
-	  plotsEBEBchi2    .fill(sc1,sc2, bc1,bc2, type, cut, thePhases); // cutting on chi2/ndf of 2.5
+	  plotsEBEBchi2    .fill(sc1,sc2, bc1,bc2, type, cut, thePhases,theCorrector); // cutting on chi2/ndf of 2.5
 	  type=3; cut=3.;
-	  plotsEBEBchi2tight.fill(sc1,sc2, bc1,bc2, type, cut, thePhases); // cutting on chi2/ndf of 2
+	  plotsEBEBchi2tight.fill(sc1,sc2, bc1,bc2, type, cut, thePhases,theCorrector); // cutting on chi2/ndf of 2
 	  type=1;  cut=1.5;
-	  plotsEBEBseed2sec.fill(sc1,sc2, bc1,bc2, type, cut, thePhases); // cutting on agreement (<1.5ns) between seed and second, within a cluster
+	  plotsEBEBseed2sec.fill(sc1,sc2, bc1,bc2, type, cut, thePhases,theCorrector); // cutting on agreement (<1.5ns) between seed and second, within a cluster
 
 	  // fill different according to different pile up (selected on number of reco vertices)
-	  if      (treeVars_.nVertices<6)  plotsEBEBlowPU  .fill(sc1,sc2, bc1,bc2, thePhases);
-	  else if (treeVars_.nVertices<11) plotsEBEBmidPU  .fill(sc1,sc2, bc1,bc2, thePhases);
-	  else if (treeVars_.nVertices<16) plotsEBEBhighPU .fill(sc1,sc2, bc1,bc2, thePhases);
-	  else                             plotsEBEBsuperPU.fill(sc1,sc2, bc1,bc2, thePhases);
+	  if      (treeVars_.nVertices<6)  plotsEBEBlowPU  .fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);
+	  else if (treeVars_.nVertices<11) plotsEBEBmidPU  .fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);
+	  else if (treeVars_.nVertices<16) plotsEBEBhighPU .fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);
+	  else                             plotsEBEBsuperPU.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);
 
 	  float energyRatio1 = treeVars_.xtalInBCEnergy[bc1][bcTime1.seed];
 	  if(bcTime1.second>-1) {energyRatio1 /= treeVars_.xtalInBCEnergy[bc1][bcTime1.second]; }
@@ -1142,62 +1166,62 @@ int main (int argc, char** argv)
 	  else { energyRatio2 /= 99999; }
 	  
 	  float minRatio = 0.7; float maxRatio = 1.3;
-	  if(minRatio<energyRatio1 && minRatio<energyRatio2 && energyRatio1<maxRatio && energyRatio2<maxRatio) 	  plotsEBEBequalShare.fill(sc1,sc2, bc1,bc2, thePhases);  
+	  if(minRatio<energyRatio1 && minRatio<energyRatio2 && energyRatio1<maxRatio && energyRatio2<maxRatio) 	  plotsEBEBequalShare.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);  
 	  
 	  minRatio = 2; maxRatio = 10;
-	  if(minRatio<energyRatio1 && minRatio<energyRatio2 && energyRatio1<maxRatio && energyRatio2<maxRatio) 	  plotsEBEBunevenShare.fill(sc1,sc2, bc1,bc2, thePhases);  
+	  if(minRatio<energyRatio1 && minRatio<energyRatio2 && energyRatio1<maxRatio && energyRatio2<maxRatio) 	  plotsEBEBunevenShare.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);  
 	  
 	}// if EBEB, and subcases
 	else if ( fabs(treeVars_.clusterEta[bc1])>1.5    &&  fabs(treeVars_.clusterEta[bc2])>1.5 ) 	  {
-	  plotsEEEE.fill(sc1,sc2, bc1,bc2, thePhases);
+	  plotsEEEE.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);
 	  
 	  if( sqrt( pow(treeVars_.clusterEta[bc1]-treeVars_.clusterEta[bc2],2) + pow(treeVars_.clusterPhi[bc1]-treeVars_.clusterPhi[bc2],2) ) < 0.75 ){
-	    plotsEEEEnear.fill(sc1,sc2, bc1,bc2, thePhases);}
-	  else                                                                      plotsEEEEfar .fill(sc1,sc2, bc1,bc2, thePhases);
+	    plotsEEEEnear.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);}
+	  else                                                                      plotsEEEEfar .fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);
 
 	  if( sqrt( pow(treeVars_.clusterEta[bc1]-treeVars_.clusterEta[bc2],2) + pow(treeVars_.clusterPhi[bc1]-treeVars_.clusterPhi[bc2],2) ) > 1.5 ){
-	    plotsEEEEVeryFar.fill(sc1,sc2, bc1,bc2, thePhases);}
+	    plotsEEEEVeryFar.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);}
 
 	  if (fabs ( treeVars_.clusterEta[bc1]-treeVars_.clusterEta[bc2] ) < 0.2 ){
-	    plotsEEEEEtaNear.fill(sc1,sc2, bc1,bc2,thePhases);}
+	    plotsEEEEEtaNear.fill(sc1,sc2, bc1,bc2,thePhases,theCorrector);}
       
 
 
-	  if       ( fabs( treeVars_.superClusterVertexZ[sc1] ) <  2. ){plotsEEEEzsmall.fill(sc1,sc2, bc1,bc2, thePhases);}
-	  else if  (  treeVars_.superClusterVertexZ[sc1]        < -5.) {plotsEEEEzbigN .fill(sc1,sc2, bc1,bc2, thePhases);}
-	  else if  (  treeVars_.superClusterVertexZ[sc1]        >  5.) {plotsEEEEzbigP .fill(sc1,sc2, bc1,bc2, thePhases);}
+	  if       ( fabs( treeVars_.superClusterVertexZ[sc1] ) <  2. ){plotsEEEEzsmall.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);}
+	  else if  (  treeVars_.superClusterVertexZ[sc1]        < -5.) {plotsEEEEzbigN .fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);}
+	  else if  (  treeVars_.superClusterVertexZ[sc1]        >  5.) {plotsEEEEzbigP .fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);}
 
 
 	  if(  treeVars_.clusterEta[bc1]>1.5 && treeVars_.clusterEta[bc2]>1.5        ) 	  {
-	    plotsEEPEEP.fill(sc1,sc2, bc1,bc2, thePhases);}
+	    plotsEEPEEP.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);}
 	  else if(  (treeVars_.clusterEta[bc1]>1.5 && treeVars_.clusterEta[bc2]<-1.5 ) ||  (treeVars_.clusterEta[bc2]>1.5 && treeVars_.clusterEta[bc1]<-1.5 ) ){
-	    plotsEEPEEM.fill(sc1,sc2, bc1,bc2, thePhases); }
+	    plotsEEPEEM.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector); }
 	  else if(  treeVars_.clusterEta[bc1]<-1.5    &&  treeVars_.clusterEta[bc2]<-1.5   )  {   
-	    plotsEEMEEM.fill(sc1,sc2, bc1,bc2, thePhases); }
+	    plotsEEMEEM.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector); }
 	}
 
 	else if ( (fabs(treeVars_.clusterEta[bc1])<1.4 && fabs(treeVars_.clusterEta[bc2])>1.5) ||
 		  (fabs(treeVars_.clusterEta[bc1])>1.5 && fabs(treeVars_.clusterEta[bc2])<1.4)    ) {
-	  plotsEBEE.fill(sc1,sc2, bc1,bc2, thePhases);
+	  plotsEBEE.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);
 	  
 	  int type=3; float cut=6.; 
-	  plotsEBEEchi2loose    .fill(sc1,sc2, bc1,bc2, type, cut, thePhases); // cutting on chi2/ndf of 2.
+	  plotsEBEEchi2loose    .fill(sc1,sc2, bc1,bc2, type, cut, thePhases,theCorrector); // cutting on chi2/ndf of 2.
 	  type=3; cut=4.;
-	  plotsEBEEchi2    .fill(sc1,sc2, bc1,bc2, type, cut, thePhases); // cutting on chi2/ndf of 2.5
+	  plotsEBEEchi2    .fill(sc1,sc2, bc1,bc2, type, cut, thePhases,theCorrector); // cutting on chi2/ndf of 2.5
 	  type=3; cut=3.;
-	  plotsEBEEchi2tight    .fill(sc1,sc2, bc1,bc2, type, cut, thePhases); // cutting on chi2/ndf of 3.
+	  plotsEBEEchi2tight    .fill(sc1,sc2, bc1,bc2, type, cut, thePhases,theCorrector); // cutting on chi2/ndf of 3.
 	  type=1; cut=1.5;
-	  plotsEBEEseed2sec.fill(sc1,sc2, bc1,bc2, type, cut, thePhases); // cutting on agreement (<1.5ns) between seed and second, within a cluster
+	  plotsEBEEseed2sec.fill(sc1,sc2, bc1,bc2, type, cut, thePhases,theCorrector); // cutting on agreement (<1.5ns) between seed and second, within a cluster
 
 	  if ( 
 	      (treeVars_.clusterEta[bc1]<1.4 && treeVars_.clusterEta[bc1]>0 && treeVars_.clusterEta[bc2]>1.5 ) ||
 	      (treeVars_.clusterEta[bc2]<1.4 && treeVars_.clusterEta[bc2]>0 && treeVars_.clusterEta[bc1]>1.5 ) 
-	      ) plotsEBPEEP.fill(sc1,sc2, bc1,bc2, type, cut, thePhases);
+	      ) plotsEBPEEP.fill(sc1,sc2, bc1,bc2, type, cut, thePhases,theCorrector);
 	  
 	  if ( 
 	      (treeVars_.clusterEta[bc1]>-1.4 && treeVars_.clusterEta[bc1]<0 && treeVars_.clusterEta[bc2]<-1.5 ) ||
 	      (treeVars_.clusterEta[bc2]>-1.4 && treeVars_.clusterEta[bc2]<0 && treeVars_.clusterEta[bc1]<-1.5 ) 
-	      ) plotsEBMEEM.fill(sc1,sc2, bc1,bc2, type, cut, thePhases);
+	      ) plotsEBMEEM.fill(sc1,sc2, bc1,bc2, type, cut, thePhases,theCorrector);
 	  
 	}
 	// if I've found a pair of supercluster, bail out of loop to repeat using twice the same supercluster
