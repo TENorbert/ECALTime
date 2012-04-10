@@ -1,5 +1,18 @@
 #include "ECALTime/EcalTimePi0/interface/timeVsAmpliCorrector.h"
 
+timeCorrector::timeCorrector(){
+
+  // the  constructor sets the time corrections to 0 everywhere => the timeVsAmpliCorrector can be used in 'off mode' 
+  // provided initEB and initEE are not invoked
+
+  theCorrectionsEB.push_back(0.0);   theBinsEB.push_back(-10.0);
+  theCorrectionsEB.push_back(0.0);   theBinsEB.push_back(21610.);
+
+  theCorrectionsEE.push_back(0.0);   theBinsEE.push_back(-10.0);
+  theCorrectionsEE.push_back(0.0);   theBinsEE.push_back(10626.2);
+
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////
 // implementation of the class methods
 
@@ -35,7 +48,6 @@ float timeCorrector::getCorrection(float A, float eta){
   std::cout << "wrong eta value: " << eta << std::endl; 
   return -999;
   }
-
 
   double theCorrection=0;
 

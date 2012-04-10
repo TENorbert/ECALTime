@@ -1,9 +1,12 @@
+#ifndef DEFINED_timeVsAmpliCorrector
+#define DEFINED_timeVsAmpliCorrector 1
+
 #include <assert.h>
 #include <stdio.h>
 
 #include <iostream>
-#include<string>
-#include<vector>
+#include <string>
+#include <vector>
 
 
 #include <math.h>
@@ -18,11 +21,13 @@ class timeCorrector {
     std::vector <float> theCorrectionsEE; 
     std::vector <float> theBinsEE; 
 
-
   public:
+    timeCorrector();
     float getCorrection(float,float);
     float getCorrectionEB(float);
     float getCorrectionEE(float);
-    void initEB(std::string);
-    void initEE(std::string);
-  };
+    void  initEB(std::string);
+    void  initEE(std::string);
+};
+
+#endif
