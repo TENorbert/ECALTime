@@ -26,10 +26,16 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex, EcalTimePhyTreeContent
   return timeAndUncertSingleCluster(bClusterIndex, phase, treeVars_);
 }
 
+ClusterTime timeAndUncertSingleCluster(int bClusterIndex, float phase, EcalTimePhyTreeContent treeVars_)
+{
+  timeCorrector dummyCorrector;
+  return timeAndUncertSingleCluster(bClusterIndex, phase, dummyCorrector,  treeVars_);
+}
+
 // ---------------------------------------------------------------------------------------
 // ------------------ Function to compute time and error for a cluster -------------------
 
-ClusterTime timeAndUncertSingleCluster(int bClusterIndex, float phase, EcalTimePhyTreeContent treeVars_)
+ClusterTime timeAndUncertSingleCluster(int bClusterIndex, float phase, timeCorrector& theCorrector, EcalTimePhyTreeContent treeVars_)
 {
   ClusterTime theResult; //initialize
   theResult.isvalid = false;
