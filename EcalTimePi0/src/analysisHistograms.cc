@@ -84,10 +84,11 @@ int HistSet::fill(int sc1, int sc2, int bc1, int bc2 ){
   // call the generalized 'fil' setting type=0 and cut=0,
   // which means cuts are ignored 
   int type=0; float cut=0; 
-  return fill(sc1, sc2, bc1, bc2, type, cut, std::make_pair(0.,0.));
+  std::pair<float,float> dummyPhase = std::make_pair(0.,0.);
+  return fill(sc1, sc2, bc1, bc2, type, cut, dummyPhase);
 }
 
-int HistSet::fill(int sc1, int sc2, int bc1, int bc2, std::pair<float,float> globalPhases, timeCorrector& theCorrector ){
+int HistSet::fill(int sc1, int sc2, int bc1, int bc2, std::pair<float,float>& globalPhases, timeCorrector& theCorrector ){
   // if launched with no arguments for cuts, 
   // call the generalized 'fil' setting type=0 and cut=0,
   // which means cuts are ignored 
@@ -95,7 +96,7 @@ int HistSet::fill(int sc1, int sc2, int bc1, int bc2, std::pair<float,float> glo
   return fill(sc1, sc2, bc1, bc2, type, cut, globalPhases, theCorrector);
 }
 
-int HistSet::fill(int sc1, int sc2, int bc1, int bc2, std::pair<float,float> globalPhases ){
+int HistSet::fill(int sc1, int sc2, int bc1, int bc2, std::pair<float,float>& globalPhases ){
   // if launched with no arguments for cuts, 
   // call the generalized 'fil' setting type=0 and cut=0,
   // which means cuts are ignored 
@@ -104,16 +105,17 @@ int HistSet::fill(int sc1, int sc2, int bc1, int bc2, std::pair<float,float> glo
 }
 
 int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut) {
-  return fill(sc1, sc2, bc1, bc2, type,  cut, std::make_pair(0.,0.) );
+  std::pair<float,float> dummyPhase = std::make_pair(0.,0.);
+  return fill(sc1, sc2, bc1, bc2, type,  cut, dummyPhase );
 }
 
 
-int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut, std::pair<float,float> globalPhases ){
+int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut, std::pair<float,float>& globalPhases ){
   timeCorrector theCorrector;
   return fill(sc1, sc2, bc1, bc2, type, cut, globalPhases, theCorrector );
 }
 
-int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut, std::pair<float,float> globalPhases, timeCorrector& theCorrector ){
+int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut, std::pair<float,float>& globalPhases, timeCorrector& theCorrector ){
   
   if(!treeVars_)   {
     std::cout << " treeVars_ is null when calling HistSet::fill! Bailing out."<< std::endl;
@@ -275,10 +277,11 @@ int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1){
   // which means cuts are ignored 
   int type  =0;
   float cut =0;
-  return fillSingle(sc1, bc1, bcTime1,  type,  cut , std::make_pair(0.,0.));
+  std::pair<float,float> dummyPhase = std::make_pair(0.,0.);
+  return fillSingle(sc1, bc1, bcTime1,  type,  cut , dummyPhase);
 }
 
-int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, std::pair<float,float> globalPhases){  
+int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, std::pair<float,float>& globalPhases){  
   // if launched with no arguments for cuts, 
   // call the generalized 'fil' setting type=0 and cut=0,
   // which means cuts are ignored 
@@ -289,7 +292,7 @@ int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, std::pair<float,f
 }
 
 
-int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, std::pair<float,float> globalPhases, timeCorrector& theCorrector){  
+int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, std::pair<float,float>& globalPhases, timeCorrector& theCorrector){  
   // if launched with no arguments for cuts, 
   // call the generalized 'fil' setting type=0 and cut=0,
   // which means cuts are ignored 
@@ -300,17 +303,18 @@ int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, std::pair<float,f
 
 
 int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, int type, float cut){
-  return fillSingle(sc1, bc1, bcTime1, type, cut , std::make_pair(0.,0.) );
+  std::pair<float,float> dummyPhase = std::make_pair(0.,0.);
+  return fillSingle(sc1, bc1, bcTime1, type, cut , dummyPhase );
 }
 
 
-int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, int type, float cut , std::pair<float,float> globalPhases){  
+int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, int type, float cut , std::pair<float,float>& globalPhases){  
   timeCorrector theCorrector;
   return fillSingle(sc1, bc1, bcTime1, type, cut , globalPhases, theCorrector);
 }
 
 
-int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, int type, float cut , std::pair<float,float> globalPhases, timeCorrector& theCorrector){  
+int HistSet::fillSingle(int sc1, int bc1, ClusterTime bcTime1, int type, float cut , std::pair<float,float>& globalPhases, timeCorrector& theCorrector){  
   
 
   if(!bcTime1.isvalid) return -1;

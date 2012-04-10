@@ -32,22 +32,22 @@ struct HistSet{
   
   // fill all histos of the set with the two electron candidates
   int fill(int sc1, int sc2, int cl1, int cl2);
-  int fill(int sc1, int sc2, int bc1, int bc2, std::pair<float,float> globalPhases );
-  int fill(int sc1, int sc2, int bc1, int bc2, std::pair<float,float> globalPhases, timeCorrector& theCorrector );
+  int fill(int sc1, int sc2, int bc1, int bc2, std::pair<float,float>& globalPhases );
+  int fill(int sc1, int sc2, int bc1, int bc2, std::pair<float,float>& globalPhases, timeCorrector& theCorrector );
   // fill all histos of the set with the two electron candidates; using the last two arguments to implements some specific selections
   // "type" allows to have different usages for 'cut'
   // "cut"  is what you really cut on 
   int fill(int sc1, int sc2, int cl1, int cl2, int type, float cut);
-  int fill(int sc1, int sc2, int bc1, int bc2, int type, float cut, std::pair<float,float> globalPhases);
-  int fill(int sc1, int sc2, int bc1, int bc2, int type, float cut, std::pair<float,float> globalPhases, timeCorrector& theCorrector);
+  int fill(int sc1, int sc2, int bc1, int bc2, int type, float cut, std::pair<float,float>& globalPhases);
+  int fill(int sc1, int sc2, int bc1, int bc2, int type, float cut, std::pair<float,float>& globalPhases, timeCorrector& theCorrector);
 
   // fill specifically single-cluster related quantities
   int fillSingle(int sc1, int cl1, ClusterTime bcTime1);
-  int fillSingle(int sc1, int bc1, ClusterTime bcTime1, std::pair<float,float> globalPhases);  
-  int fillSingle(int sc1, int bc1, ClusterTime bcTime1, std::pair<float,float> globalPhases, timeCorrector& theCorrector);  
+  int fillSingle(int sc1, int bc1, ClusterTime bcTime1, std::pair<float,float>& globalPhases);  
+  int fillSingle(int sc1, int bc1, ClusterTime bcTime1, std::pair<float,float>& globalPhases, timeCorrector& theCorrector);  
   int fillSingle(int sc1, int cl1, ClusterTime bcTime1,int type,float cut);
-  int fillSingle(int sc1, int bc1, ClusterTime bcTime1, int type, float cut , std::pair<float,float> globalPhases);
-  int fillSingle(int sc1, int bc1, ClusterTime bcTime1, int type, float cut , std::pair<float,float> globalPhases, timeCorrector& theCorrector);
+  int fillSingle(int sc1, int bc1, ClusterTime bcTime1, int type, float cut , std::pair<float,float>& globalPhases);
+  int fillSingle(int sc1, int bc1, ClusterTime bcTime1, int type, float cut , std::pair<float,float>& globalPhases, timeCorrector& theCorrector);
 
   TH1 * nVertices_;
   TH1F* mass_;
