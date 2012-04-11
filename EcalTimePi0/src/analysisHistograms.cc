@@ -59,7 +59,9 @@ void HistSet::book(TFileDirectory subDir, const std::string& post) {
 
   clusTimeDiffHistTOFwrongVertex_=(TH1F*) subDir.make<TH1F>("TOF-corr cluster time difference wrong vertex","TOF-corr cluster time difference wronge vertex; (t_{clus1} - t_{clus2}) TOF-corrected [ns]; num. cluster pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
 
-  tColl_=(TH1F*) subDir.make<TH1F>("t_{coll}","t_{coll} [ns];  (t_{clus1} + t_{clus2})/2 [ns]",binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
+  tColl_     =(TH1F*) subDir.make<TH1F>("t_{coll}","t_{coll} [ns];  (t_{clus1} + t_{clus2})/2 [ns]",binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
+  tCollseeds_=(TH1F*) subDir.make<TH1F>("t_{coll-seeds}","t_{coll-seeds} [ns];  (t_{seed1} + t_{seed2})/2 [ns]",binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
+  tCollsecs_ =(TH1F*) subDir.make<TH1F>("t_{coll-seconds}","t_{coll-seconds} [ns];  (t_{second1} + t_{second2})/2 [ns]",binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
 
 
   numCryBC1            =(TH1F*) subDir.make<TH1F>("num cry in bc1","num cry in bc1; num cry",25,0,25);
@@ -226,7 +228,9 @@ int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut, std::
 	tCollVStimeDiffHistTOF_    -> Fill(  ( (bcTime1.time-extraTravelTime(sc1,u,(*treeVars_))) - (bcTime2.time-extraTravelTime(sc2,u,(*treeVars_))) ) /2. ,
 					     ( (bcTime1.time-extraTravelTime(sc1,u,(*treeVars_))) + (bcTime2.time-extraTravelTime(sc2,u,(*treeVars_))) ) /2.
 					     );
-	tColl_                     -> Fill( ( (bcTime1.time-extraTravelTime(sc1,u,(*treeVars_))) + (bcTime2.time-extraTravelTime(sc2,u,(*treeVars_))))  /2. ); // double
+	tColl_                     -> Fill( ( (bcTime1.time-extraTravelTime(sc1,u,(*treeVars_))) + (bcTime2.time-extraTravelTime(sc2,u,(*treeVars_))))  /2. );
+	tCollseeds_                -> Fill( ( (bcTime1.seedtime-extraTravelTime(sc1,u,(*treeVars_))) + (bcTime2.seedtime-extraTravelTime(sc2,u,(*treeVars_))))  /2. );
+	tCollsecs_                 -> Fill( ( (bcTime1.secondtime-extraTravelTime(sc1,u,(*treeVars_))) + (bcTime2.secondtime-extraTravelTime(sc2,u,(*treeVars_))))  /2. );
 
 	zPairVsTPair_              -> Fill( ( (bcTime1.time-extraTravelTime(sc1,u,(*treeVars_))) + (bcTime2.time-extraTravelTime(sc2,u,(*treeVars_))) ) /2. ,
 					    ( treeVars_->superClusterVertexZ[sc1] + treeVars_->superClusterVertexZ[sc2] )/2. ); 

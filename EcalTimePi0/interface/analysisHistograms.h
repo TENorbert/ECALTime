@@ -70,7 +70,7 @@ struct HistSet{
   TH2F* TOFcorrectionsVSdeltaEta_;
   TH2F* zPairVsTPair_;
   TH2F* clusTimeDiffHistTOFVSdeltaEtaRightVertex_, *clusTimeDiffHistTOFVSdeltaEtaWrongVertex_;
-  TH1F* tColl_;
+  TH1F* tColl_, *tCollseeds_, *tCollsecs_;
   TH2F* tCollVSdeltaEtaRightVertex_, * tCollVStimeDiffHistTOF_;
   TH1F* seedTimeDiffHistTOF_;
   TH1F* secondTimeDiffHist_;
