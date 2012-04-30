@@ -12,7 +12,7 @@ void HistSet::book(TFileDirectory subDir, const std::string& post) {
   nVertices_=subDir.make<TH1F>("num vertices","num vertices; num vertices",41,-0.5,40.5);
   mass_               =(TH1F*) subDir.make<TH1F>("mass","mass; m(ele,ele) [GeV]",80,50,130);
   dZvertices_         =(TH1F*) subDir.make<TH1F>("dZvertices","dZvertices; #DeltaZ(ele_{1},ele_{2}) [cm]",250,0,25);
-  redAmplitudePair_   =(TH1F*) subDir.make<TH1F>("redAmplitudePair","redAmplitudePair; A_{1}A_{2}/#sqrt(A_{1}^{2}+A_{2}^{2})  [ADC]",250,0,10000);
+  redAmplitudePair_   =(TH1F*) subDir.make<TH1F>("redAmplitudePair","redAmplitudePair; A_{1}A_{2}/#sqrt(A_{1}^{2}+A_{2}^{2})  [ADC]",500,0,5000);
   Zvertices_          =(TH1F*) subDir.make<TH1F>("Zvertices","Zvertices; z vertex [cm]",250,-25,25);
 
   // Initialize histograms -- xtals
@@ -70,8 +70,8 @@ void HistSet::book(TFileDirectory subDir, const std::string& post) {
   timeVsEtaLead_       =(TH2F*) subDir.make<TH2F>("timeVsEtaLead","timeVsEtaLead;#eta_{lead}; t [ns]",50,-2.5,2.5,150,-1.5,1.5);
   timeVsEtaSub_        =(TH2F*) subDir.make<TH2F>("timeVsEtaSub","timeVsEtaSub; #eta_{sublead}; t [ns]",50,-2.5,2.5,150,-1.5,1.5);
   outliersVsEtaPhi_    =(TH2F*) subDir.make<TH2F>("outliersVsEtaPhi","outliersVsEtaPhi; #eta; #phi",50,-2.5,2.5,72,-3.14,3.14);
-  seedAmpli_           =(TH1F*) subDir.make<TH1F>("E(seed)  ","E(seed) ; E [GeV]",130,0,130);
-  secondAmpli_         =(TH1F*) subDir.make<TH1F>("E(second)  ","E(second) ; E [GeV]",130,0,130);
+  seedAmpli_           =(TH1F*) subDir.make<TH1F>("E(seed)  ","E(seed) ; E [GeV]",250,0,250);
+  secondAmpli_         =(TH1F*) subDir.make<TH1F>("E(second)  ","E(second) ; E [GeV]",250,0,250);
   diffSeedOther_       =(TH1F*) subDir.make<TH1F>("t_{seed}-t_{others}","t_{seed}-t_{others}; t_{seed}-t_{others} [ns]; num./0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
   diffSeedOtherOverErr_ =(TH1F*) subDir.make<TH1F>("(t_{seed}-t_{others})/#sigma","(t_{seed}-t_{others})/#sigma; (t_{seed}-t_{others})/#sigma; num./0.05ns",binsTDistro_*5./3,-rangeTDistro_*5./3,rangeTDistro_*5./3);
 
