@@ -42,9 +42,7 @@
 
 
 typedef std::set<std::pair<int,int> > SetOfIntPairs;
-//float travelDistance(int sc_num, EcalTimeTreeContent treeVars_);
-//float extraTravelTime(int sc_num, EcalTimeTreeContent & treeVars_);
-//float extraTravelTime(int sc_num, int vtx_num, EcalTimeTreeContent & treeVars_);
+
 
 // authors: S. Cooper and G. Franzoni (UMN)
 
@@ -93,6 +91,7 @@ int  minEntriesForFit_ = 7;
 int  flagOneVertex_ = 0;
 int  stringDoAveragePerRun_ = 1;
 int  doAdepCorrections_ = 1;
+int  doWallClockStudy_  = 0;
 bool limitFit_(true); 
 //std::string fitOption_(""); // default: use chi2 method
 std::string fitOption_("L"); // use likelihood method
@@ -140,19 +139,31 @@ int DtMax_      = 15; // useful to catch tails also at low Aeff (<10)
 // -------- Histograms -------------------------------------
 TH1 * nVertices_;
 TH1F* mass_;
+TH1F* ebTimes_;
+TH1F* eeTimes_;
 TH1F* dZvertices_;
 TH1F* Zvertices_;
 
 TGraphErrors *ebTimeVsRun;
 TGraphErrors *eeTimeVsRun;
 TGraphErrors *eeTimeVSebTime;
-float        ebTimes[1000];
-float        ebTimeErrs[1000];
-float        eeTimes[1000];
-float        eeTimeErrs[1000];
-float        runs[1000];
-float        runErrs[1000];
+TGraph       *ebTimeVsWallClock;
+TGraph       *eeTimeVsWallClock;
+//TGraph       *eeTimeVsebTime;
+float        ebTimes[10000];
+float        ebTimeErrs[10000];
+float        eeTimes[10000];
+float        eeTimeErrs[10000];
+float        runs[10000];
+float        runErrs[10000];
 int          runCounter;
+
+float        ebWallClock[10000];
+float        ebRecoTime[10000];
+float        eeWallClock[10000];
+float        eeRecoTime[10000];
+
+
 
 // ---------------------------------------------------------------------------------------
 // - Function to decide to include/exclude event based on the vectors passed for triggers 
@@ -260,6 +271,7 @@ void genIncludeExcludeVectors(std::string optionString,
   }
 }
 
+bool timeOrder ( std::pair<float,float> a, std::pair<float,float> b) { return (a.first < b.first); }
 
 // ---------------------------------------------------------------------------------------
 // ------------------ Function to parse the command-line arguments------------------------
@@ -286,6 +298,7 @@ void parseArguments(int argc, char** argv)
   std::string stringTechTriggers     = "--techTrig";
   std::string stringDoAveragePerRun  = "--doAveragePerRun";
   std::string stringdoAdepCorrections= "--doAdepCorrections";
+  std::string stringdoWallClockStudy = "--doWallClockStudy";
 
   // if no arguments are passed, suggest help
   if (argc < 2){
@@ -317,6 +330,7 @@ void parseArguments(int argc, char** argv)
       std::cout << " --vertex: require vertex@IP (1), veto it (2) or either (0, or unset)" << std::endl;
       std::cout << " --doAveragePerRun: do (1) or don't (0) subtrct average time by run" << std::endl;
       std::cout << " --doAdepCorrections: do (1) or don't (0) include ampli-dependent corrections" << std::endl;
+      std::cout << " --doWallClockStudy: do (1) or don't (0 - default) the history study VS Wall Clock time (LS)" << std::endl;
       std::cout << " --trig: L1 triggers to include (exclude with x)" << std::endl;
       std::cout << " --techTrig: L1 technical triggers to include (exclude with x)" << std::endl;
       exit(1);      }
@@ -404,6 +418,16 @@ void parseArguments(int argc, char** argv)
        }
        v++;
     } 
+    else if (argv[v] == stringdoWallClockStudy ) { // collect requirement for whether the history study VS Wall Clock time (LS) should be performed
+      doWallClockStudy_  = atof(argv[v+1]);
+       if (doWallClockStudy_!=0 && doWallClockStudy_!=1 ){
+         std::cout << "Not a valid value for doWallClockStudy_ (0,1). Returning." << std::endl;
+	 exit (1);}
+       else{
+         std::cout << "doWallClockStudy_ :" << doWallClockStudy_ << std::endl;
+       }
+       v++;
+    } 
     else if (argv[v] == stringTriggers) { // set L1 triggers to include/exclude
       genIncludeExcludeVectors(std::string(argv[v+1]),trigIncludeVector,trigExcludeVector);
       v++;
@@ -450,13 +474,16 @@ void initializeHists(TFileDirectory subDir){
   dZvertices_   = subDir.make<TH1F>("dZvertices global","dZvertices (global); #DeltaZ(ele_{1},ele_{2}) [cm]",250,0,25);
   Zvertices_    = subDir.make<TH1F>("Zvertices global","Zvertices (global); z vertex [cm]",250,-25,25);
   nVertices_=subDir.make<TH1F>("num vertices global","num vertices (global); num vertices",41,-0.5,40.5);
-  
+  ebTimes_      = subDir.make<TH1F>("ebTimes","ebTimes (global); EB times [ns]",100,-0.5,0.5);
+  eeTimes_      = subDir.make<TH1F>("eeTimes","eeTimes (global); EE times [ns]",100,-0.5,0.5);
   // initialize TGraphErrors-related stuff
   runCounter = 0;
-  for (int v=0; v<1000; v++){
+  for (int v=0; v<10000; v++){
     ebTimes[v]=0; ebTimeErrs[v]=0;
     eeTimes[v]=0; eeTimeErrs[v]=0;
     runs[v]=0;    runErrs[v]=0;
+    ebWallClock[v]=0; ebRecoTime[v]=0;
+    eeWallClock[v]=0; eeRecoTime[v]=0;
   }
 
 }//end initializeHists
@@ -507,7 +534,10 @@ int main (int argc, char** argv)
   std::cout << "\tmaxRun: "         <<  maxRun_ << std::endl;
   std::cout << "\tminLS: "          <<  minLS_ << std::endl;
   std::cout << "\tmaxLS: "          <<  maxLS_ << std::endl;
-	
+  std::cout << "\tdoAdepCorrections: " <<  doAdepCorrections_ << std::endl;
+  std::cout << "\tdoWallClockStudy: "  <<  doWallClockStudy_ << std::endl;
+
+
   setBranchAddresses (chain, treeVars_);
 
   // set up the corrector: initilized for actual corrections, or for 'dummy' corrections
@@ -720,6 +750,9 @@ int main (int argc, char** argv)
   std::map <int, std::pair<float,float> >::iterator  run_timeSq;
   std::map <int, std::pair<int,int> >::iterator      run_count;
 
+  std::vector < std::pair<float,float> >             hitsVsWatchEB;
+  std::vector < std::pair<float,float> >             hitsVsWatchEE;
+
   for (int entry = 0 ; (entry < nEntries && eventCounter < numEvents_); ++entry)
     {
       chain->GetEntry (entry) ;
@@ -757,7 +790,7 @@ int main (int argc, char** argv)
       speak_=false;
       if (entry<10 || entry%10000==0) speak_=true;
       
-      if (speak_)  std::cout << "\n\n------> PRELIMINARY loop reading entry " << entry << "\tLS: " << treeVars_.lumiSection << " <------\n" ; 
+      if (speak_)  std::cout << "\n\n------> PRELIMINARY loop reading entry " << entry << "\tLS: " << treeVars_.lumiSection<< "\tRUN: " << treeVars_.runId << " <------\n" ; 
       if (speak_)  std::cout << "  found " << treeVars_.nSuperClusters << " superclusters" << std::endl ;
       if (speak_)  std::cout << "  found " << treeVars_.nClusters << " basic clusters" << std::endl ;
       
@@ -862,6 +895,9 @@ int main (int argc, char** argv)
 	    run_time  ->second.first += bcTime2.time;
 	    run_timeSq->second.first += (bcTime1.time)*(bcTime1.time);
 	    run_timeSq->second.first += (bcTime2.time)*(bcTime2.time);
+	    //if(doWallClockStudy_) hitsVsWatchEB.push_back(  std::pair<float,float>( treeVars_.unixTime , (bcTime1.time+bcTime2.time)/2. )  ); 
+	    if(doWallClockStudy_)       hitsVsWatchEB.push_back(  std::pair<float,float>( treeVars_.lumiSection , (bcTime1.time+bcTime2.time)/2. )  ); 
+	    if(0 && doWallClockStudy_) std::cout << "  debug: ls EB " << treeVars_.lumiSection  << " run: " << treeVars_.runId << std::endl;
 	  }
 	  
 	  else if ( fabs(treeVars_.clusterEta[bc1])>1.5    &&  fabs(treeVars_.clusterEta[bc2])>1.5 ){
@@ -871,6 +907,9 @@ int main (int argc, char** argv)
 	    run_time  ->second.second += bcTime2.time;
 	    run_timeSq->second.second += (bcTime1.time)*(bcTime1.time);
 	    run_timeSq->second.second += (bcTime2.time)*(bcTime2.time);
+	    //if(doWallClockStudy_) hitsVsWatchEE.push_back(  std::pair<float,float>( treeVars_.unixTime , (bcTime1.time+bcTime2.time)/2. )  ); 
+	    if(doWallClockStudy_)      hitsVsWatchEE.push_back(  std::pair<float,float>( treeVars_.lumiSection , (bcTime1.time+bcTime2.time)/2. )  ); 
+	    if(0 && doWallClockStudy_) std::cout << "  debug: ls EE " << treeVars_.lumiSection  << " run: " << treeVars_.runId << std::endl;
 	  }
 	  
 	  else if ( (fabs(treeVars_.clusterEta[bc1])<1.4 && fabs(treeVars_.clusterEta[bc2])>1.5) ||
@@ -956,10 +995,76 @@ int main (int argc, char** argv)
   eeTimeVsRun = new TGraphErrors (runCounter, runs, eeTimes, runErrs, eeTimeErrs );
   eeTimeVsRun->SetTitle("EE time VS run");  eeTimeVsRun->GetXaxis()->SetTitle("run number"); eeTimeVsRun->GetYaxis()->SetTitle("EE per-run average time [ns]");
   eeTimeVsRun->SetName("EE time VS run");   eeTimeVsRun->Write();  
-
+  
   eeTimeVSebTime = new TGraphErrors (runCounter, ebTimes, eeTimes, ebTimeErrs, eeTimeErrs );
   eeTimeVSebTime->SetTitle("EE time VS EB time");  eeTimeVSebTime->GetXaxis()->SetTitle("EB per-run avegate time [ns]"); eeTimeVSebTime->GetYaxis()->SetTitle("EE per-run average time [ns]");
   eeTimeVSebTime->SetName("EE time VS EB time");    eeTimeVSebTime->Write();  
+  
+  if(doWallClockStudy_) 
+    {
+      
+      // ordering the events according to unix time / lumiSection
+      int count(0);
+      for( std::vector< std::pair<float,float> >::const_iterator g=hitsVsWatchEB.begin(); g!=hitsVsWatchEB.end() && count<1000; g++){
+	//std::cout << "bef: "<< count << "\t" << (*g).first << "\t" << (*g).second << std::endl;
+	count++;   }
+      std::cout << "++ sorting arrays... ( sizes:  eb " << hitsVsWatchEB.size() << " ee: " << hitsVsWatchEE.size() << " )" << std::endl;
+      sort ( hitsVsWatchEB.begin(), hitsVsWatchEB.end(), timeOrder ); 
+      sort ( hitsVsWatchEE.begin(), hitsVsWatchEE.end(), timeOrder ); 
+      count=0;
+      for( std::vector< std::pair<float,float> >::const_iterator g=hitsVsWatchEB.begin(); g!=hitsVsWatchEB.end() && count<1000; g++){
+	//std::cout << "aft: "<< count << "\t" << (*g).first << "\t" << (*g).second << std::endl;
+	count++;   }
+      
+      count =1;
+      const int intervalSize=100;
+      float averageRecoTime(0.);   float averageWatchTime(0.);   int   arrayCounter(0); 
+      for( std::vector< std::pair<float,float> >::const_iterator g=hitsVsWatchEB.begin(); g!=hitsVsWatchEB.end() && arrayCounter<10000; g++){
+	
+	if(count%intervalSize ==0 ){
+	  // add point to the graph
+	  ebWallClock[arrayCounter]= averageWatchTime/intervalSize;
+	  ebRecoTime [arrayCounter]= averageRecoTime/intervalSize;
+	  ebTimes_ -> Fill(ebRecoTime [arrayCounter]);
+	  std::cout << "EB clock: " << ebWallClock[arrayCounter] << " reco: " << ebRecoTime [arrayCounter] << " (" << arrayCounter << ")" << std::endl;
+	  arrayCounter++;
+	  averageRecoTime=0; averageWatchTime=0;
+	}
+	averageRecoTime  += (*g).second;
+	averageWatchTime += (*g).first;
+	
+	count++;
+      }
+      ebTimeVsWallClock = new TGraph(count, ebWallClock, ebRecoTime );
+      ebTimeVsWallClock = subDirGeneral.make <TGraph> (count, ebWallClock, ebRecoTime );
+      ebTimeVsWallClock->SetTitle("EB time VS 'time'"); ebTimeVsWallClock->GetXaxis()->SetTitle(" 'time [ls]' "); ebTimeVsRun->GetYaxis()->SetTitle("EB average time [ns]");
+      ebTimeVsWallClock->SetName("EB time VS 'time'");   ebTimeVsWallClock->Write();
+      
+      count =1;
+      averageRecoTime=0.;   averageWatchTime=0.;   arrayCounter=0; 
+      for( std::vector< std::pair<float,float> >::const_iterator g=hitsVsWatchEE.begin(); g!=hitsVsWatchEE.end() && arrayCounter<10000; g++){
+	
+	if(count%intervalSize ==0 ){
+	  // add point to the graph
+	  eeWallClock[arrayCounter]= averageWatchTime/intervalSize;
+	  eeRecoTime [arrayCounter]= averageRecoTime/intervalSize;
+	  eeTimes_ -> Fill(eeRecoTime [arrayCounter]);
+	  std::cout << "EE clock: " << eeWallClock[arrayCounter] << " reco: " << eeRecoTime [arrayCounter] << " (" << arrayCounter << ")" << std::endl;
+	  
+	  arrayCounter++;
+	  averageRecoTime=0; averageWatchTime=0;
+	}
+	averageRecoTime  += (*g).second;
+	averageWatchTime += (*g).first;
+	
+	count++;
+      }
+      eeTimeVsWallClock = new TGraph(count, eeWallClock, eeRecoTime );
+      eeTimeVsWallClock = subDirGeneral.make <TGraph> (count, eeWallClock, eeRecoTime );
+      eeTimeVsWallClock->SetTitle("EE time VS 'time'"); eeTimeVsWallClock->GetXaxis()->SetTitle(" 'time [ls]' "); eeTimeVsRun->GetYaxis()->SetTitle("EE average time [ns]");
+      eeTimeVsWallClock->SetName("EE time VS 'time'");   eeTimeVsWallClock->Write();
+      
+    }// if doWallClockStudy_
 
 
   // reset counter
@@ -1022,7 +1127,7 @@ int main (int argc, char** argv)
     speak_=false;
     if (entry<10 || entry%10000==0) speak_=true;
 
-    if (speak_)  std::cout << "\n\n------> reading entry " << entry << "\tLS: " << treeVars_.lumiSection << " <------\n" ; 
+    if (speak_)  std::cout << "\n\n------> MAIN loop reading entry " << entry << "\tLS: " << treeVars_.lumiSection << "\tRUN: " << treeVars_.runId << " <------\n" ; 
     if (speak_)  std::cout << "  found " << treeVars_.nSuperClusters << " superclusters" << std::endl ;
     if (speak_)  std::cout << "  found " << treeVars_.nClusters << " basic clusters" << std::endl ;
 
