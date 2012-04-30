@@ -111,6 +111,10 @@ ClusterTime timeAndUncertSingleCluster(int bClusterIndex, float phase, timeCorre
     numCrystals++;
     float timeOfThis  = treeVars_.xtalInBCTime[bClusterIndex][thisCry] 
       + theCorrector.getCorrection( treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry], treeVars_.xtalInBCEta[bClusterIndex][thisCry] );
+    //std::cout << "DEBUG EcalObjectTime : A " << treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry] << " eta: " << treeVars_.xtalInBCEta[bClusterIndex][thisCry] 
+    //<< " corr: " << theCorrector.getCorrection( treeVars_.xtalInBCAmplitudeADC[bClusterIndex][thisCry], treeVars_.xtalInBCEta[bClusterIndex][thisCry] ) 
+    //<< std::endl;
+
     //    old estimated: fully parameterized
     //    float sigmaOfThis = sqrt(pow(timingResParamN/ampliOverSigOfThis,2)+pow(timingResParamConst,2));
     //    new estimate: error from ratio + constant term  
