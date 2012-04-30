@@ -199,8 +199,8 @@ int HistSet::fill(int sc1, int sc2, int bc1, int bc2, int type, float cut, std::
   HistSet::fillSingle(sc1, bc1,  bcTime1, type, cut, globalPhases, theCorrector);
   HistSet::fillSingle(sc2, bc2,  bcTime2, type, cut, globalPhases, theCorrector);
 
-  float A1 = treeVars_->xtalInBCAmplitudeADC[sc1][bcTime1.seed]; 
-  float A2 = treeVars_->xtalInBCAmplitudeADC[sc2][bcTime2.seed]; 
+  float A1 = treeVars_->xtalInBCAmplitudeADC[bc1][bcTime1.seed]; 
+  float A2 = treeVars_->xtalInBCAmplitudeADC[bc2][bcTime2.seed]; 
   redAmplitudePair_ -> Fill( A1*A2 / sqrt( A1*A1 + A2*A2 ));
 
   TOFcorrections_           -> Fill(extraTravelTime(sc2,(*treeVars_)) - extraTravelTime(sc1,(*treeVars_)) ); // double
