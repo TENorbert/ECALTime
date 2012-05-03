@@ -49,8 +49,8 @@ typedef std::set<std::pair<int,int> > SetOfIntPairs;
 #define BarrelLimit  1.479
 #define EndcapLimit  3.0
 
-#define ADCtoGeVEB   0.039
-#define ADCtoGeVEE   0.063
+#define ADCtoGeVEB   0.03940
+#define ADCtoGeVEE   0.06498
 
 #define numAeffBins     35
 #define numAoSigmaBins  25
@@ -612,7 +612,26 @@ int main (int argc, char** argv)
   TFileDirectory subDirEBEBmod4=fs->mkdir("EBEBmod4");  
   HistSet plotsEBEBmod4;   plotsEBEBmod4.book(subDirEBEBmod4,std::string("EBEBmod4"));
   plotsEBEBmod4.setTree(&treeVars_);
+
+  //EB amplitude scan - E1~E2  
+  TFileDirectory subDirEBEB_7_10=fs->mkdir("EBEB_7_10"); HistSet plotsEBEB_7_10; plotsEBEB_7_10.book(subDirEBEB_7_10,std::string("EBEB_7_10")); plotsEBEB_7_10.setTree(&treeVars_);
+  TFileDirectory subDirEBEB_10_13=fs->mkdir("EBEB_10_13"); HistSet plotsEBEB_10_13; plotsEBEB_10_13.book(subDirEBEB_10_13,std::string("EBEB_10_13")); plotsEBEB_10_13.setTree(&treeVars_);
+  TFileDirectory subDirEBEB_13_18=fs->mkdir("EBEB_13_18"); HistSet plotsEBEB_13_18; plotsEBEB_13_18.book(subDirEBEB_13_18,std::string("EBEB_13_18")); plotsEBEB_13_18.setTree(&treeVars_);
+  TFileDirectory subDirEBEB_18_25=fs->mkdir("EBEB_18_25"); HistSet plotsEBEB_18_25; plotsEBEB_18_25.book(subDirEBEB_18_25,std::string("EBEB_18_25")); plotsEBEB_18_25.setTree(&treeVars_);
+  TFileDirectory subDirEBEB_25_35=fs->mkdir("EBEB_25_35"); HistSet plotsEBEB_25_35; plotsEBEB_25_35.book(subDirEBEB_25_35,std::string("EBEB_25_35")); plotsEBEB_25_35.setTree(&treeVars_);
+  TFileDirectory subDirEBEB_35_50=fs->mkdir("EBEB_35_50"); HistSet plotsEBEB_35_50; plotsEBEB_35_50.book(subDirEBEB_35_50,std::string("EBEB_35_50")); plotsEBEB_35_50.setTree(&treeVars_);
+  TFileDirectory subDirEBEB_50_up=fs->mkdir("EBEB_50_up"); HistSet plotsEBEB_50_up; plotsEBEB_50_up.book(subDirEBEB_50_up,std::string("EBEB_50_up")); plotsEBEB_50_up.setTree(&treeVars_);
+  //EB effective  amplitude scan
+  TFileDirectory subDirEBEB_eff_100=fs->mkdir("EBEB_eff_100"); HistSet plotsEBEB_eff_100; plotsEBEB_eff_100.book(subDirEBEB_eff_100,std::string("EBEB_eff_100")); plotsEBEB_eff_100.setTree(&treeVars_);
+  TFileDirectory subDirEBEB_eff_150=fs->mkdir("EBEB_eff_150"); HistSet plotsEBEB_eff_150; plotsEBEB_eff_150.book(subDirEBEB_eff_150,std::string("EBEB_eff_150")); plotsEBEB_eff_150.setTree(&treeVars_);
+  TFileDirectory subDirEBEB_eff_200=fs->mkdir("EBEB_eff_200"); HistSet plotsEBEB_eff_200; plotsEBEB_eff_200.book(subDirEBEB_eff_200,std::string("EBEB_eff_200")); plotsEBEB_eff_200.setTree(&treeVars_);
+  TFileDirectory subDirEBEB_eff_300=fs->mkdir("EBEB_eff_300"); HistSet plotsEBEB_eff_300; plotsEBEB_eff_300.book(subDirEBEB_eff_300,std::string("EBEB_eff_300")); plotsEBEB_eff_300.setTree(&treeVars_);
+  TFileDirectory subDirEBEB_eff_400=fs->mkdir("EBEB_eff_400"); HistSet plotsEBEB_eff_400; plotsEBEB_eff_400.book(subDirEBEB_eff_400,std::string("EBEB_eff_400")); plotsEBEB_eff_400.setTree(&treeVars_);
+  TFileDirectory subDirEBEB_eff_600=fs->mkdir("EBEB_eff_600"); HistSet plotsEBEB_eff_600; plotsEBEB_eff_600.book(subDirEBEB_eff_600,std::string("EBEB_eff_600")); plotsEBEB_eff_600.setTree(&treeVars_);
+  TFileDirectory subDirEBEB_eff_up=fs->mkdir("EBEB_eff_up"); HistSet plotsEBEB_eff_up; plotsEBEB_eff_up.book(subDirEBEB_eff_up,std::string("EBEB_eff_up")); plotsEBEB_eff_up.setTree(&treeVars_);
+
   
+
   TFileDirectory subDirEEEEnear=fs->mkdir("EEEEnear");  
   HistSet plotsEEEEnear;   plotsEEEEnear.book(subDirEEEEnear,std::string("EEEEnear"));
   plotsEEEEnear.setTree(&treeVars_);
@@ -649,6 +668,23 @@ int main (int argc, char** argv)
   HistSet plotsEBEBzbigN;   plotsEBEBzbigN.book(subDirEBEBzbigN,std::string("EBEBzbigN"));
   plotsEBEBzbigN.setTree(&treeVars_);
   
+  //EE amplitude scan - E1~E2  
+  TFileDirectory subDirEEEE_20_30=fs->mkdir("EEEE_20_30"); HistSet plotsEEEE_20_30; plotsEEEE_20_30.book(subDirEEEE_20_30,std::string("EEEE_20_30")); plotsEEEE_20_30.setTree(&treeVars_);
+  TFileDirectory subDirEEEE_30_45=fs->mkdir("EEEE_30_45"); HistSet plotsEEEE_30_45; plotsEEEE_30_45.book(subDirEEEE_30_45,std::string("EEEE_30_45")); plotsEEEE_30_45.setTree(&treeVars_);
+  TFileDirectory subDirEEEE_45_75=fs->mkdir("EEEE_45_75"); HistSet plotsEEEE_45_75; plotsEEEE_45_75.book(subDirEEEE_45_75,std::string("EEEE_45_75")); plotsEEEE_45_75.setTree(&treeVars_);
+  TFileDirectory subDirEEEE_75_100=fs->mkdir("EEEE_75_100"); HistSet plotsEEEE_75_100; plotsEEEE_75_100.book(subDirEEEE_75_100,std::string("EEEE_75_100")); plotsEEEE_75_100.setTree(&treeVars_);
+  TFileDirectory subDirEEEE_100_up=fs->mkdir("EEEE_100_up"); HistSet plotsEEEE_100_up; plotsEEEE_100_up.book(subDirEEEE_100_up,std::string("EEEE_100_up")); plotsEEEE_100_up.setTree(&treeVars_);
+  //EB effective  amplitude scan
+  TFileDirectory subDirEEEE_eff_200=fs->mkdir("EEEE_eff_200"); HistSet plotsEEEE_eff_200; plotsEEEE_eff_200.book(subDirEEEE_eff_200,std::string("EEEE_eff_200")); plotsEEEE_eff_200.setTree(&treeVars_);
+  TFileDirectory subDirEEEE_eff_300=fs->mkdir("EEEE_eff_300"); HistSet plotsEEEE_eff_300; plotsEEEE_eff_300.book(subDirEEEE_eff_300,std::string("EEEE_eff_300")); plotsEEEE_eff_300.setTree(&treeVars_);
+  TFileDirectory subDirEEEE_eff_350=fs->mkdir("EEEE_eff_350"); HistSet plotsEEEE_eff_350; plotsEEEE_eff_350.book(subDirEEEE_eff_350,std::string("EEEE_eff_350")); plotsEEEE_eff_350.setTree(&treeVars_);
+  TFileDirectory subDirEEEE_eff_450=fs->mkdir("EEEE_eff_450"); HistSet plotsEEEE_eff_450; plotsEEEE_eff_450.book(subDirEEEE_eff_450,std::string("EEEE_eff_450")); plotsEEEE_eff_450.setTree(&treeVars_);
+  TFileDirectory subDirEEEE_eff_650=fs->mkdir("EEEE_eff_650"); HistSet plotsEEEE_eff_650; plotsEEEE_eff_650.book(subDirEEEE_eff_650,std::string("EEEE_eff_650")); plotsEEEE_eff_650.setTree(&treeVars_);
+  TFileDirectory subDirEEEE_eff_900=fs->mkdir("EEEE_eff_900"); HistSet plotsEEEE_eff_900; plotsEEEE_eff_900.book(subDirEEEE_eff_900,std::string("EEEE_eff_900")); plotsEEEE_eff_900.setTree(&treeVars_);
+  TFileDirectory subDirEEEE_eff_1200=fs->mkdir("EEEE_eff_1200"); HistSet plotsEEEE_eff_1200; plotsEEEE_eff_1200.book(subDirEEEE_eff_1200,std::string("EEEE_eff_1200")); plotsEEEE_eff_1200.setTree(&treeVars_);
+  TFileDirectory subDirEEEE_eff_up=fs->mkdir("EEEE_eff_up"); HistSet plotsEEEE_eff_up; plotsEEEE_eff_up.book(subDirEEEE_eff_up,std::string("EEEE_eff_up")); plotsEEEE_eff_up.setTree(&treeVars_);
+
+
   // separate folders for different number of reconstructed vertices
   TFileDirectory subDirEBEBlowPU=fs->mkdir("EBEBlowPU");  
   HistSet plotsEBEBlowPU;   plotsEBEBlowPU.book(subDirEBEBlowPU,std::string("EBEBlowPU"));
@@ -1275,8 +1311,39 @@ int main (int argc, char** argv)
 	  
 	  minRatio = 2; maxRatio = 10;
 	  if(minRatio<energyRatio1 && minRatio<energyRatio2 && energyRatio1<maxRatio && energyRatio2<maxRatio) 	  plotsEBEBunevenShare.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);  
-	  
+
+	  // EB energy scan 
+	  float adc1 = treeVars_.xtalInBCAmplitudeADC[bc1][bcTime1.seed]; float adc2 = treeVars_.xtalInBCAmplitudeADC[bc2][bcTime2.seed];
+	  if     ( adc1 < 7./ADCtoGeVEB || adc2 < 7./ADCtoGeVEB)
+	    {;}    // don't consider below seeds below 7 GeV (noise above 200ps, and very little stats) 
+	  else if( 7./ADCtoGeVEB < adc1 &&  adc1 < 10./ADCtoGeVEB  && 7./ADCtoGeVEB < adc2 && adc2 <10./ADCtoGeVEB ) 
+	    {plotsEBEB_7_10.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);  }
+	  else if( 10./ADCtoGeVEB < adc1 &&  adc1 < 13./ADCtoGeVEB  && 10./ADCtoGeVEB < adc2 && adc2 <13./ADCtoGeVEB ) 
+	    {plotsEBEB_10_13.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);  }
+	  else if( 13./ADCtoGeVEB < adc1 &&  adc1 < 18./ADCtoGeVEB  && 13./ADCtoGeVEB < adc2 && adc2 <18./ADCtoGeVEB ) 
+	    {plotsEBEB_13_18.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);  }
+	  else if( 18./ADCtoGeVEB < adc1 &&  adc1 < 25./ADCtoGeVEB  && 18./ADCtoGeVEB < adc2 && adc2 <25./ADCtoGeVEB ) 
+	    {plotsEBEB_18_25.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);  }
+	  else if( 25./ADCtoGeVEB < adc1 &&  adc1 < 35./ADCtoGeVEB  && 25./ADCtoGeVEB < adc2 && adc2 <35./ADCtoGeVEB ) 
+	    {plotsEBEB_25_35.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);  }
+	  else if( 35./ADCtoGeVEB < adc1 &&  adc1 < 50./ADCtoGeVEB  && 35./ADCtoGeVEB < adc2 && adc2 <50./ADCtoGeVEB ) 
+	    {plotsEBEB_35_50.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);  }
+	  else if( 50./ADCtoGeVEB < adc1  && 50./ADCtoGeVEB < adc2  ) 
+	    {plotsEBEB_50_up.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);  }
+
+	  //EB effective  amplitude scan
+	  float effA = adc1*adc2 / sqrt( adc1*adc1 + adc2*adc2 );
+	  if     ( effA < 75. ) {;}    // don't consider aeff below 75 ADC
+	  else if( effA < 100.) plotsEBEB_eff_100.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);
+	  else if( effA < 150.) plotsEBEB_eff_150.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);
+	  else if( effA < 200.) plotsEBEB_eff_200.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);
+	  else if( effA < 300.) plotsEBEB_eff_300.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);
+	  else if( effA < 400.) plotsEBEB_eff_400.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);
+	  else if( effA < 600.) plotsEBEB_eff_600.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);
+	  else                  plotsEBEB_eff_up.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);
+
 	}// if EBEB, and subcases
+	
 	else if ( fabs(treeVars_.clusterEta[bc1])>1.5    &&  fabs(treeVars_.clusterEta[bc2])>1.5 ) 	  {
 	  plotsEEEE.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);
 	  
@@ -1303,7 +1370,38 @@ int main (int argc, char** argv)
 	    plotsEEPEEM.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector); }
 	  else if(  treeVars_.clusterEta[bc1]<-1.5    &&  treeVars_.clusterEta[bc2]<-1.5   )  {   
 	    plotsEEMEEM.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector); }
-	}
+	  
+	  // EE energy scan 
+	  float adc1 = treeVars_.xtalInBCAmplitudeADC[bc1][bcTime1.seed]; float adc2 = treeVars_.xtalInBCAmplitudeADC[bc2][bcTime2.seed];
+	  if     ( adc1 < 20./ADCtoGeVEE || adc2 < 20./ADCtoGeVEE)
+	    {;}    // don't consider below seeds below 20 GeV
+	  else if( 20./ADCtoGeVEE < adc1 &&  adc1 < 30./ADCtoGeVEE  && 20./ADCtoGeVEE < adc2 && adc2 <30./ADCtoGeVEB ) 
+	    {plotsEEEE_20_30.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);  }
+	  else if( 30./ADCtoGeVEE < adc1 &&  adc1 < 45./ADCtoGeVEE  && 30./ADCtoGeVEE < adc2 && adc2 <45./ADCtoGeVEB ) 
+	    {plotsEEEE_30_45.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);  }
+	  else if( 45./ADCtoGeVEE < adc1 &&  adc1 < 75./ADCtoGeVEE  && 45./ADCtoGeVEE < adc2 && adc2 <75./ADCtoGeVEB ) 
+	    {plotsEEEE_45_75.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);  }
+	  else if( 75./ADCtoGeVEE < adc1 &&  adc1 < 100./ADCtoGeVEE  && 75./ADCtoGeVEE < adc2 && adc2 <100./ADCtoGeVEB ) 
+	    {plotsEEEE_75_100.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);  }
+	  else if( 100./ADCtoGeVEE < adc1 && 100./ADCtoGeVEB < adc2 ) 
+	    {plotsEEEE_100_up.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);  }
+
+	  
+	  //EE effective  amplitude scan
+	  float effA = adc1*adc2 / sqrt( adc1*adc1 + adc2*adc2 );
+	  if     ( effA < 150. ) {;}    // don't consider aeff below 150 ACD
+	  else if( effA < 200.) plotsEEEE_eff_200.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);
+	  else if( effA < 300.) plotsEEEE_eff_300.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);
+	  else if( effA < 350.) plotsEEEE_eff_350.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);
+	  else if( effA < 450.) plotsEEEE_eff_450.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);
+	  else if( effA < 650.) plotsEEEE_eff_650.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);
+	  else if( effA < 900.) plotsEEEE_eff_900.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);
+	  else if( effA < 1200.) plotsEEEE_eff_1200.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);
+	  else                  plotsEEEE_eff_up.fill(sc1,sc2, bc1,bc2, thePhases,theCorrector);
+
+	  
+
+	}// end EEEE
 
 	else if ( (fabs(treeVars_.clusterEta[bc1])<1.4 && fabs(treeVars_.clusterEta[bc2])>1.5) ||
 		  (fabs(treeVars_.clusterEta[bc1])>1.5 && fabs(treeVars_.clusterEta[bc2])<1.4)    ) {
@@ -1328,7 +1426,7 @@ int main (int argc, char** argv)
 	      (treeVars_.clusterEta[bc2]>-1.4 && treeVars_.clusterEta[bc2]<0 && treeVars_.clusterEta[bc1]<-1.5 ) 
 	      ) plotsEBMEEM.fill(sc1,sc2, bc1,bc2, type, cut, thePhases,theCorrector);
 	  
-	}
+	}// end EBEE
 	// if I've found a pair of supercluster, bail out of loop to repeat using twice the same supercluster
 	break;	
 	
