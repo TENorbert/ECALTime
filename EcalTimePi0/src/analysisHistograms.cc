@@ -79,6 +79,29 @@ void HistSet::book(TFileDirectory subDir, const std::string& post) {
   diffSeedSecondOverErr_ =(TH1F*) subDir.make<TH1F>("(t_{seed}-t_{second})/#sigma","(t_{seed}-t_{second})/#sigma; (t_{seed}-t_{second})/#sigma; num./0.05ns",binsTDistro_*5./3,-rangeTDistro_*5./3,rangeTDistro_*5./3);
   seedVSSecond_        =(TH2F*) subDir.make<TH2F>("t_{seed} VS t_{second}","t_{seed} VS t_{second}; t_{seed} [ns]; t_{second} [ns]",75,-1.5,1.5,75,-1.5,1.5);
 
+  // http://cms-project-ecal-p5.web.cern.ch/cms-project-ECAL-P5/images/sm_layout.jpg
+  TFileDirectory subDirSpecifics=subDir.mkdir("supermodules");  
+  for(unsigned int fed=0; fed<36; fed ++)
+    {
+      std::string theName  = std::string("TOF-corr time difference of seeds - fed ") + convertInt( (fed+610) );
+      std::string theTitle = theName + std::string("; (t_{seed1} - t_{seed2}) TOF-corrected   [ns]; num. seed pairs/0.05ns");
+      tofCorrDiEleBySM[fed]    = subDirSpecifics.make<TH1F>(theName.c_str(),theTitle.c_str(),binsTDistro_,-rangeTDistro_,rangeTDistro_);
+      
+      theName  = std::string("time difference of seeds - fed ") + convertInt( (fed+610) );
+      theTitle = theName + std::string("; (t_{seed1} - t_{seed2})  [ns]; num. seed pairs/0.05ns");
+      diEleBySM[fed]    = subDirSpecifics.make<TH1F>(theName.c_str(),theTitle.c_str(),binsTDistro_,-rangeTDistro_,rangeTDistro_);
+      
+      theName  = std::string("TOF-corr seed time - fed ") + convertInt( (fed+610) );
+      theTitle = theName + std::string("; t_{seed} TOF-corr  [ns]; num. seeds/0.05ns");
+      tofCorrEleBySM[fed]    = subDirSpecifics.make<TH1F>(theName.c_str(),theTitle.c_str(),binsTDistro_,-rangeTDistro_,rangeTDistro_);
+      
+      theName  = std::string("seed time - fed ") + convertInt( (fed+610) );
+      theTitle = theName + std::string("; t_{seed}  [ns]; num. seeds/0.05ns");
+      eleBySM[fed]    = subDirSpecifics.make<TH1F>(theName.c_str(),theTitle.c_str(),binsTDistro_,-rangeTDistro_,rangeTDistro_);
+    }
+
+
+
 }
   
 int HistSet::fill(int sc1, int sc2, int bc1, int bc2 ){

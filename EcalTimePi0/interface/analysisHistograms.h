@@ -12,6 +12,8 @@
 #include "TMath.h"
 #include "DataFormats/Math/interface/LorentzVector.h"
 
+#include <sstream>
+
 
 // based on range and bins, the bin width is 50 ps
 float rangeTDistro_ = 3;
@@ -21,7 +23,7 @@ int   binsTDistro_  = 120; // 1-E4/E1
 
 // ---------------------------------------------------------------------------------------
 // -------------------- struct holding sed of  histograms  -------------------------------
-struct HistSet{
+struct HistSet {
 
   // set pointer to the tree which is used to get data from
   void setTree(EcalTimePhyTreeContent * treeVars_);
@@ -87,8 +89,18 @@ struct HistSet{
   TH1F* diffSeedSecond_, *diffSeedSecondOverErr_;
   TH2F* seedVSSecond_;  
 
+  TH1F* tofCorrDiEleBySM[36], *diEleBySM[36], *tofCorrEleBySM[36], *eleBySM[36];
+  
   EcalTimePhyTreeContent * treeVars_;
 
 } theHists;
 // ---------------------------------------------------------------------------------------
 // ------------------ Function to compute time and error for a cluster -------------------
+
+
+std::string convertInt(int number)
+{
+  std::stringstream ss;   //create a stringstream
+  ss << number;      //add number to the stream
+  return ss.str();   //return a string with the contents of the stream
+}
