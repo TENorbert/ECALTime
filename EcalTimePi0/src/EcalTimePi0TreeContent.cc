@@ -1,82 +1,28 @@
-#include "ECALTime/EcalTimePi0/interface/EcalTimePhyTreeContent.h"
+#include "ECALTime/EcalTimePi0/interface/EcalTimePi0TreeContent.h"
 
-bool EcalTimePhyTreeContent::trgVariables = false;
-bool EcalTimePhyTreeContent::muonVariables = false;
-bool EcalTimePhyTreeContent::ecalVariables = true;
-bool EcalTimePhyTreeContent::ecalShapeVariables = false;
-bool EcalTimePhyTreeContent::hcalVariables = false;
-bool EcalTimePhyTreeContent::tkAssVariables = false;
-bool EcalTimePhyTreeContent::tpgVariables = false;
-bool EcalTimePhyTreeContent::l1Variables = false;
-
+bool EcalTimePi0TreeContent::trgVariables = true;
+bool EcalTimePi0TreeContent::muonVariables = false;
+bool EcalTimePi0TreeContent::ecalVariables = true;
+bool EcalTimePi0TreeContent::hcalVariables = false;
+bool EcalTimePi0TreeContent::tkAssVariables = false;
+bool EcalTimePi0TreeContent::tpgVariables = false;
+bool EcalTimePi0TreeContent::l1Variables = true;
 
 
-void setBranchAddresses(TTree* chain, EcalTimePhyTreeContent& treeVars)
+
+void setBranchAddresses(TTree* chain, EcalTimePi0TreeContent& treeVars)
 {
-
-  chain -> SetBranchAddress("runId",       &treeVars.runId);
-  chain -> SetBranchAddress("lumiSection", &treeVars.lumiSection);
-  chain -> SetBranchAddress("orbit",       &treeVars.orbit);
-  chain -> SetBranchAddress("bx",          &treeVars.bx);
-  chain -> SetBranchAddress("trgCut",      &treeVars.trgCut);
-
+  chain -> SetBranchAddress("runId",         &treeVars.runId);
   chain -> SetBranchAddress("eventId",       &treeVars.eventId);
   chain -> SetBranchAddress("eventNaiveId",  &treeVars.eventNaiveId);
   chain -> SetBranchAddress("timeStampLow",  &treeVars.timeStampLow);
   chain -> SetBranchAddress("timeStampHigh", &treeVars.timeStampHigh);
   
-  // PAT VARIABLES
-  chain -> SetBranchAddress("nMuons",      &treeVars.nMuons      );
-  chain -> SetBranchAddress("nElectrons",  &treeVars.nElectrons  );
-  chain -> SetBranchAddress("nJets",       &treeVars.nJets       );
-  chain -> SetBranchAddress("nPhotons",    &treeVars.nPhotons    );
-
-  chain -> SetBranchAddress("metPx",       &treeVars.metPx      );
-  chain -> SetBranchAddress("metPy",       &treeVars.metPy      );
-  chain -> SetBranchAddress("met",         &treeVars.met        );
-
-  chain -> SetBranchAddress("muPx",        treeVars.muPx       );
-  chain -> SetBranchAddress("muPy",        treeVars.muPy       );
-  chain -> SetBranchAddress("muPz",        treeVars.muPz       );
-  chain -> SetBranchAddress("muE",         treeVars.muE        );
-  chain -> SetBranchAddress("muEcalIso",   treeVars.muEcalIso );
-  chain -> SetBranchAddress("muHcalIso",   treeVars.muHcalIso );
-  chain -> SetBranchAddress("muTrkIso",    treeVars.muTrkIso  );
   
-  chain -> SetBranchAddress("elePx",        treeVars.elePx     );
-  chain -> SetBranchAddress("elePy",        treeVars.elePy     );
-  chain -> SetBranchAddress("elePz",        treeVars.elePz     );
-  chain -> SetBranchAddress("eleE",         treeVars.eleE      );
-  chain -> SetBranchAddress("eleEcalIso",   treeVars.eleEcalIso );
-  chain -> SetBranchAddress("eleHcalIso",   treeVars.eleHcalIso );
-  chain -> SetBranchAddress("eleTrkIso",    treeVars.eleTrkIso  );
-  chain -> SetBranchAddress("eleNLostHits", treeVars.eleNLostHits );
-  
-  chain -> SetBranchAddress("jetPx",        treeVars.jetPx     );
-  chain -> SetBranchAddress("jetPy",        treeVars.jetPy     );
-  chain -> SetBranchAddress("jetPz",        treeVars.jetPz     );
-  chain -> SetBranchAddress("jetE",         treeVars.jetE      );
-  chain -> SetBranchAddress("jetNDau",      treeVars.jetNDau   );
-  chain -> SetBranchAddress("jetCM",        treeVars.jetCM    );
-  chain -> SetBranchAddress("jetCEF",       treeVars.jetCEF   );
-  chain -> SetBranchAddress("jetNHF",       treeVars.jetNHF   );
-  chain -> SetBranchAddress("jetNEF",       treeVars.jetNEF   );
-  
-  chain -> SetBranchAddress("phoPx",        treeVars.phoPx     );
-  chain -> SetBranchAddress("phoPy",        treeVars.phoPy     );
-  chain -> SetBranchAddress("phoPz",        treeVars.phoPz     );
-  chain -> SetBranchAddress("phoE",         treeVars.phoE      );
-  chain -> SetBranchAddress("phoEcalIso",   treeVars.phoEcalIso );
-  chain -> SetBranchAddress("phoHcalIso",   treeVars.phoHcalIso );
-  chain -> SetBranchAddress("phoTrkIso",    treeVars.phoTrkIso  );
-  chain -> SetBranchAddress("phoHovE",      treeVars.phoHovE );
-  chain -> SetBranchAddress("phoSmin",      treeVars.phoSmin );
-  chain -> SetBranchAddress("phoSmaj",      treeVars.phoSmaj );
-  chain -> SetBranchAddress("phoTime",      treeVars.phoTime );
 
   ///*  
   // TRG VARIABLES  
-  if(EcalTimePhyTreeContent::trgVariables)
+  if(EcalTimePi0TreeContent::trgVariables)
   {    
     // trigger variables
     chain -> SetBranchAddress("isRPCL1",  &treeVars.isRPCL1);
@@ -97,13 +43,15 @@ void setBranchAddresses(TTree* chain, EcalTimePhyTreeContent& treeVars)
   
   ///*
   // ECAL VARIABLES  
-  if(EcalTimePhyTreeContent::ecalVariables)
+  if(EcalTimePi0TreeContent::ecalVariables)
   {    
     // supercluster variables
     chain -> SetBranchAddress("nSuperClusters",       &treeVars.nSuperClusters);
     chain -> SetBranchAddress("nBarrelSuperClusters", &treeVars.nBarrelSuperClusters);
     chain -> SetBranchAddress("nEndcapSuperClusters", &treeVars.nEndcapSuperClusters);
+    chain -> SetBranchAddress("superClusterType",      treeVars.superClusterType);
     chain -> SetBranchAddress("superClusterRawEnergy", treeVars.superClusterRawEnergy);
+    chain -> SetBranchAddress("superClusterEnergySum", treeVars.superClusterEnergySum);
     chain -> SetBranchAddress("superClusterPhiWidth",  treeVars.superClusterPhiWidth);
     chain -> SetBranchAddress("superClusterEtaWidth",  treeVars.superClusterEtaWidth);
     chain -> SetBranchAddress("superClusterPhi",       treeVars.superClusterPhi);
@@ -111,13 +59,11 @@ void setBranchAddresses(TTree* chain, EcalTimePhyTreeContent& treeVars)
     chain -> SetBranchAddress("superClusterX",         treeVars.superClusterX);
     chain -> SetBranchAddress("superClusterY",         treeVars.superClusterY);
     chain -> SetBranchAddress("superClusterZ",         treeVars.superClusterZ);
-    chain -> SetBranchAddress("superClusterVertexX",   treeVars.superClusterVertexX);
-    chain -> SetBranchAddress("superClusterVertexY",   treeVars.superClusterVertexY);
-    chain -> SetBranchAddress("superClusterVertexZ",   treeVars.superClusterVertexZ);
-    chain -> SetBranchAddress("sMin",                  treeVars.sMin);
-    chain -> SetBranchAddress("sMaj",                  treeVars.sMaj);
+
     chain -> SetBranchAddress("nClustersInSuperCluster",    treeVars.nClustersInSuperCluster);
-    chain -> SetBranchAddress("SCPIdx"              ,  treeVars.SCPIdx);
+    chain -> SetBranchAddress("clusterIndexInSuperCluster", treeVars.clusterIndexInSuperCluster);
+    chain -> SetBranchAddress("nXtalsInSuperCluster",       treeVars.nXtalsInSuperCluster);
+    chain -> SetBranchAddress("xtalIndexInSuperCluster",    treeVars.xtalIndexInSuperCluster);
   
   
     // basic cluster variables
@@ -133,49 +79,11 @@ void setBranchAddresses(TTree* chain, EcalTimePhyTreeContent& treeVars)
     chain -> SetBranchAddress("clusterXtalsAbove3Sigma", treeVars.clusterXtalsAbove3Sigma);
     chain -> SetBranchAddress("clusterMaxId",            treeVars.clusterMaxId);
     chain -> SetBranchAddress("cluster2ndId",            treeVars.cluster2ndId);
+
     chain -> SetBranchAddress("nXtalsInCluster",    treeVars.nXtalsInCluster);
-    chain -> SetBranchAddress("CPIdx",                   treeVars.CPIdx);
-    chain -> SetBranchAddress("clusterMom",              treeVars.clusterMom);
+    chain -> SetBranchAddress("xtalIndexInCluster", treeVars.xtalIndexInCluster);
   
   
-    // vertex variables
-    chain -> SetBranchAddress("nVertices",         &treeVars.nVertices);
-    chain -> SetBranchAddress("vtxNTracks",       treeVars.vtxNTracks);
-    chain -> SetBranchAddress("vtxChi2",          treeVars.vtxChi2);
-    chain -> SetBranchAddress("vtxNdof",          treeVars.vtxNdof);
-    chain -> SetBranchAddress("vtxX",             treeVars.vtxX);
-    chain -> SetBranchAddress("vtxDx",            treeVars.vtxDx);
-    chain -> SetBranchAddress("vtxY",             treeVars.vtxY);
-    chain -> SetBranchAddress("vtxDy",            treeVars.vtxDy);
-    chain -> SetBranchAddress("vtxZ",             treeVars.vtxZ);
-    chain -> SetBranchAddress("vtxDz",            treeVars.vtxDz);
-
-
-    // xtal variables inside a cluster
-    chain -> SetBranchAddress("xtalInBCHashedIndex", treeVars.xtalInBCHashedIndex);
-    chain -> SetBranchAddress("xtalInBCIEta", treeVars.xtalInBCIEta);
-    chain -> SetBranchAddress("xtalInBCIPhi", treeVars.xtalInBCIPhi);
-    chain -> SetBranchAddress("xtalInBCEta", treeVars.xtalInBCEta);
-    chain -> SetBranchAddress("xtalInBCPhi", treeVars.xtalInBCPhi);
-    chain -> SetBranchAddress("xtalInBCIx", treeVars.xtalInBCIx);
-    chain -> SetBranchAddress("xtalInBCIy", treeVars.xtalInBCIy);
-    chain -> SetBranchAddress("xtalInBCFlag", treeVars.xtalInBCFlag);
-    chain -> SetBranchAddress("xtalInBCEnergy", treeVars.xtalInBCEnergy);
-    chain -> SetBranchAddress("xtalInBCTime", treeVars.xtalInBCTime);
-    chain -> SetBranchAddress("xtalInBCTimeErr", treeVars.xtalInBCTimeErr);
-    chain -> SetBranchAddress("xtalInBCAmplitudeADC", treeVars.xtalInBCAmplitudeADC);
-    chain -> SetBranchAddress("xtalInBCChi2", treeVars.xtalInBCChi2);
-    chain -> SetBranchAddress("xtalInBCOutOfTimeChi2", treeVars.xtalInBCOutOfTimeChi2);
-    chain -> SetBranchAddress("xtalInBCSwissCross", treeVars.xtalInBCSwissCross);
-
-  } // ECAL VARIABLES
-  //*/  
-  
-
-  ///*
-  // ECAL VARIABLES  
-  if(EcalTimePhyTreeContent::ecalShapeVariables)
-  {    
     // clustershape variables  
     chain -> SetBranchAddress("clusterE2x2",       treeVars.clusterE2x2);
     chain -> SetBranchAddress("clusterE3x2",       treeVars.clusterE3x2);
@@ -195,14 +103,35 @@ void setBranchAddresses(TTree* chain, EcalTimePhyTreeContent& treeVars)
     chain -> SetBranchAddress("clusterEtaLat",     treeVars.clusterEtaLat);
     chain -> SetBranchAddress("clusterZernike20",  treeVars.clusterZernike20);
     chain -> SetBranchAddress("clusterZernike42",  treeVars.clusterZernike42);
+  
+  
+    // xtal variables
+    chain -> SetBranchAddress("nXtals",            &treeVars.nXtals);
+    chain -> SetBranchAddress("xtalHashedIndex",    treeVars.xtalHashedIndex);
+    chain -> SetBranchAddress("xtalEnergy",         treeVars.xtalEnergy);
+    chain -> SetBranchAddress("xtalTime",           treeVars.xtalTime);
+    chain -> SetBranchAddress("xtalTkLength",       treeVars.xtalTkLength);
+    chain -> SetBranchAddress("xtalTkLengthCurved", treeVars.xtalTkLengthCurved);
+
+
+    // xtal variables inside a cluster
+    chain -> SetBranchAddress("xtalInBCHashedIndex", treeVars.xtalInBCHashedIndex);
+    chain -> SetBranchAddress("xtalInBCIeta", treeVars.xtalInBCIeta);
+    chain -> SetBranchAddress("xtalInBCIphi", treeVars.xtalInBCIphi);
+    chain -> SetBranchAddress("xtalInBCIx", treeVars.xtalInBCIx);
+    chain -> SetBranchAddress("xtalInBCIy", treeVars.xtalInBCIy);
+    chain -> SetBranchAddress("xtalInBCFlag", treeVars.xtalInBCFlag);
+    chain -> SetBranchAddress("xtalInBCEnergy", treeVars.xtalInBCEnergy);
+    chain -> SetBranchAddress("xtalInBCTime", treeVars.xtalInBCTime);
+
   } // ECAL VARIABLES
   //*/  
-
+  
 
 
   ///*
   //HCAL variables
-  if( EcalTimePhyTreeContent::hcalVariables ) 
+  if( EcalTimePi0TreeContent::hcalVariables ) 
   {  
     chain -> SetBranchAddress("hbNRecHits",   &treeVars.hbNRecHits);
     chain -> SetBranchAddress("hbRecHitDetId", treeVars.hbRecHitDetId);
@@ -223,11 +152,10 @@ void setBranchAddresses(TTree* chain, EcalTimePhyTreeContent& treeVars)
   //*/
   
 
-
   
   ///*
   // MUON VARIABLES
-  if(EcalTimePhyTreeContent::muonVariables)
+  if(EcalTimePi0TreeContent::muonVariables)
   {  
     // muon variables
     chain -> SetBranchAddress("nRecoMuons",      &treeVars.nRecoMuons);
@@ -325,6 +253,11 @@ void setBranchAddresses(TTree* chain, EcalTimePhyTreeContent& treeVars)
     chain -> SetBranchAddress("muonTkLengthInEcalDetailCurved_high", treeVars.muonTkLengthInEcalDetailCurved_high);
     chain -> SetBranchAddress("muonTkLengthInEcalDetailCurved_low",  treeVars.muonTkLengthInEcalDetailCurved_low);
     
+    //chain -> SetBranchAddress("muonNecklaceSize", treeVars.muonNecklaceSize);
+    //chain -> SetBranchAddress("muonNecklaceX",    treeVars.muonNecklaceX);
+    //chain -> SetBranchAddress("muonNecklaceY",    treeVars.muonNecklaceY);    
+    //chain -> SetBranchAddress("muonNecklaceZ",    treeVars.muonNecklaceZ);
+    
     chain -> SetBranchAddress("muonTkInternalPointInEcalX", treeVars.muonTkInternalPointInEcalX);
     chain -> SetBranchAddress("muonTkInternalPointInEcalY", treeVars.muonTkInternalPointInEcalY);
     chain -> SetBranchAddress("muonTkInternalPointInEcalZ", treeVars.muonTkInternalPointInEcalZ);
@@ -352,14 +285,47 @@ void setBranchAddresses(TTree* chain, EcalTimePhyTreeContent& treeVars)
     chain -> SetBranchAddress("muonCrossedXtalTkLengthCurved",    treeVars.muonCrossedXtalTkLengthCurved);
   } // MUON VARIABLES
   //*/  
+
+  
+
+  /*  
+  // TRACK ASSOCIATOR VARIABLES
+  if(EcalTimePi0TreeContent::tkAssVariables)
+  {  
+    // trackassociator variables
+    chain -> SetBranchAddress("muonTkAtEcalPhi", treeVars.muonTkAtEcalPhi);
+    chain -> SetBranchAddress("muonTkAtEcalEta", treeVars.muonTkAtEcalEta);
+    chain -> SetBranchAddress("muonTkAtEcalX",   treeVars.muonTkAtEcalX);
+    chain -> SetBranchAddress("muonTkAtEcalY",   treeVars.muonTkAtEcalY);
+    chain -> SetBranchAddress("muonTkAtEcalZ",   treeVars.muonTkAtEcalZ);
+    chain -> SetBranchAddress("muonTkAtHcalPhi", treeVars.muonTkAtHcalPhi);
+    chain -> SetBranchAddress("muonTkAtHcalEta", treeVars.muonTkAtHcalEta);
+    chain -> SetBranchAddress("muonTkAtHcalX",   treeVars.muonTkAtHcalX);
+    chain -> SetBranchAddress("muonTkAtHcalY",   treeVars.muonTkAtHcalY);
+    chain -> SetBranchAddress("muonTkAtHcalZ",   treeVars.muonTkAtHcalZ); 
+    
+    chain -> SetBranchAddress("muonEcalEnergy3x3",          treeVars.muonEcalEnergy3x3);
+    chain -> SetBranchAddress("muonEcalEnergy5x5",          treeVars.muonEcalEnergy5x5);
+    chain -> SetBranchAddress("muonEcalEnergyCrossed",      treeVars.muonEcalEnergyCrossed);
+    chain -> SetBranchAddress("muonHcalEnergy3x3",          treeVars.muonHcalEnergy3x3);
+    chain -> SetBranchAddress("muonHcalEnergyCrossed",      treeVars.muonHcalEnergyCrossed);
+    chain -> SetBranchAddress("muonNCrossedEcalDetId",      treeVars.muonNCrossedEcalDetId);
+    chain -> SetBranchAddress("muonMaxEneEcalDetIdCrossed", treeVars.muonMaxEneEcalDetIdCrossed);
+    
+    chain -> SetBranchAddress("muonTkLengthInEcalApprox_TkAss", treeVars.muonTkLengthInEcalApprox_TkAss);
+    chain -> SetBranchAddress("muonTkLengthInEcalDetail_TkAss", treeVars.muonTkLengthInEcalDetail_TkAss);
+  } // TRACK ASSOCIATOR VARIABLES
+  */  
+  
+
  
   ///* 
   // TPG VARIABLES
-  if(EcalTimePhyTreeContent::tpgVariables)
+  if(EcalTimePi0TreeContent::tpgVariables)
   {
     chain -> SetBranchAddress("tpgNTowers",         &treeVars.tpgNTowers);
-    chain -> SetBranchAddress("tpgIEta",             treeVars.tpgIEta);
-    chain -> SetBranchAddress("tpgIPhi",             treeVars.tpgIPhi);
+    chain -> SetBranchAddress("tpgIeta",             treeVars.tpgIeta);
+    chain -> SetBranchAddress("tpgIphi",             treeVars.tpgIphi);
     chain -> SetBranchAddress("tpgNbOfXtals",        treeVars.tpgNbOfXtals);
     chain -> SetBranchAddress("tpgEnRec",            treeVars.tpgEnRec);
     chain -> SetBranchAddress("tpgADC",              treeVars.tpgADC);
@@ -367,8 +333,8 @@ void setBranchAddresses(TTree* chain, EcalTimePhyTreeContent& treeVars)
     chain -> SetBranchAddress("tpgActiveTriggers",   treeVars.tpgActiveTriggers);
     
     chain -> SetBranchAddress("tpEmulNTowers", &treeVars.tpEmulNTowers);
-    chain -> SetBranchAddress("tpEmulIEta",     treeVars.tpEmulIEta);
-    chain -> SetBranchAddress("tpEmulIPhi",     treeVars.tpEmulIPhi);
+    chain -> SetBranchAddress("tpEmulIeta",     treeVars.tpEmulIeta);
+    chain -> SetBranchAddress("tpEmulIphi",     treeVars.tpEmulIphi);
     chain -> SetBranchAddress("tpEmulADC1",     treeVars.tpEmulADC1);
     chain -> SetBranchAddress("tpEmulADC2",     treeVars.tpEmulADC2);
     chain -> SetBranchAddress("tpEmulADC3",     treeVars.tpEmulADC3);
@@ -381,12 +347,10 @@ void setBranchAddresses(TTree* chain, EcalTimePhyTreeContent& treeVars)
 
   ///*
   // L1 VARIABLES
-  if(EcalTimePhyTreeContent::l1Variables)
+  if(EcalTimePi0TreeContent::l1Variables)
   {
     chain -> SetBranchAddress("l1NActiveTriggers", &treeVars.l1NActiveTriggers);
     chain -> SetBranchAddress("l1ActiveTriggers",   treeVars.l1ActiveTriggers);
-    chain -> SetBranchAddress("l1NActiveTechTriggers", &treeVars.l1NActiveTechTriggers);
-    chain -> SetBranchAddress("l1ActiveTechTriggers", treeVars.l1ActiveTechTriggers);
     
     chain->SetBranchAddress("l1GtNEm",    &treeVars.l1GtNEm);
     chain->SetBranchAddress("l1GtEmBx",   treeVars.l1GtEmBx);
@@ -519,84 +483,32 @@ void setBranchAddresses(TTree* chain, EcalTimePhyTreeContent& treeVars)
 
 
 
-void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
+void setBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
 {
-  chain -> Branch("runId",         &treeVars.runId,                "runId/i");
-  chain -> Branch("lumiSection",   &treeVars.lumiSection,    "lumiSection/i");
-  chain -> Branch("orbit",         &treeVars.orbit,                "orbit/i");
-  chain -> Branch("bx",            &treeVars.bx,                      "bx/i");
-  chain -> Branch("eventId",       &treeVars.eventId,            "eventId/i");
-  chain -> Branch("eventNaiveId",  &treeVars.eventNaiveId,  "eventNaiveId/i");
-  chain -> Branch("timeStampLow",  &treeVars.timeStampLow,  "timeStampLow/i");
+  chain -> Branch("runId",         &treeVars.runId,                 "runId/i");
+  chain -> Branch("eventId",       &treeVars.eventId,             "eventId/i");
+  chain -> Branch("eventNaiveId",  &treeVars.eventNaiveId,   "eventNaiveId/i");
+  chain -> Branch("timeStampLow",  &treeVars.timeStampLow,   "timeStampLow/i");
   chain -> Branch("timeStampHigh", &treeVars.timeStampHigh, "timeStampHigh/i");
-  chain -> Branch("trgCut",        &treeVars.trgCut,              "trgCut/I");
   
   
-  // RECO VARIABLES
-  chain -> Branch("nMuons",      &treeVars.nMuons,               "nMuons/I");
-  chain -> Branch("nElectrons",  &treeVars.nElectrons,           "nElectrons/I");
-  chain -> Branch("nJets",       &treeVars.nJets,                "nJets/I");
-  chain -> Branch("nPhotons",    &treeVars.nPhotons,             "nPhotons/I");
-
-  chain -> Branch("metPx",       &treeVars.metPx,                "metPx/F");
-  chain -> Branch("metPy",       &treeVars.metPy,                "metPy/F");
-  chain -> Branch("met",         &treeVars.met,                  "met/F");
-
-  chain -> Branch("muPx",        treeVars.muPx,                 "muPx[nMuons]/F");
-  chain -> Branch("muPy",        treeVars.muPy,                 "muPy[nMuons]/F");
-  chain -> Branch("muPz",        treeVars.muPz,                 "muPz[nMuons]/F");
-  chain -> Branch("muE",         treeVars.muE,                  "muE[nMuons]/F");
-  chain -> Branch("muEcalIso",   treeVars.muEcalIso,            "muEcalIso[nElectrons]/F");
-  chain -> Branch("muHcalIso",   treeVars.muHcalIso,            "muHcalIso[nElectrons]/F");
-  chain -> Branch("muTrkIso",    treeVars.muTrkIso,             "muTrkIso[nElectrons]/F");
-  
-  chain -> Branch("elePx",        treeVars.elePx,                 "elePx[nElectrons]/F");
-  chain -> Branch("elePy",        treeVars.elePy,                 "elePy[nElectrons]/F");
-  chain -> Branch("elePz",        treeVars.elePz,                 "elePz[nElectrons]/F");
-  chain -> Branch("eleE",         treeVars.eleE,                  "eleE[nElectrons]/F");
-  chain -> Branch("eleEcalIso",   treeVars.eleEcalIso,            "eleEcalIso[nElectrons]/F");
-  chain -> Branch("eleHcalIso",   treeVars.eleHcalIso,            "eleHcalIso[nElectrons]/F");
-  chain -> Branch("eleTrkIso",    treeVars.eleTrkIso,             "eleTrkIso[nElectrons]/F");
-  chain -> Branch("eleNLostHits", treeVars.eleNLostHits,          "eleNLostHits[nElectrons]/I");
-  
-  chain -> Branch("jetPx",        treeVars.jetPx,                 "jetPx[nJets]/F");
-  chain -> Branch("jetPy",        treeVars.jetPy,                 "jetPy[nJets]/F");
-  chain -> Branch("jetPz",        treeVars.jetPz,                 "jetPz[nJets]/F");
-  chain -> Branch("jetE",         treeVars.jetE,                  "jetE[nJets]/F");
-  chain -> Branch("jetNDau",      treeVars.jetNDau,               "jetNDau[nJets]/F");
-  chain -> Branch("jetCM",        treeVars.jetCM,                 "jetCM[nJets]/F");
-  chain -> Branch("jetCEF",       treeVars.jetCEF,                "jetCEF[nJets]/F");
-  chain -> Branch("jetNHF",       treeVars.jetNHF,                "jetNHF[nJets]/F");
-  chain -> Branch("jetNEF",       treeVars.jetNEF,                "jetNEF[nJets]/F");
-  
-  chain -> Branch("phoPx",        treeVars.phoPx,                 "phoPx[nPhotons]/F");
-  chain -> Branch("phoPy",        treeVars.phoPy,                 "phoPy[nPhotons]/F");
-  chain -> Branch("phoPz",        treeVars.phoPz,                 "phoPz[nPhotons]/F");
-  chain -> Branch("phoE",         treeVars.phoE,                  "phoE[nPhotons]/F");
-  chain -> Branch("phoEcalIso",   treeVars.phoEcalIso,            "phoEcalIso[nPhotons]/F");
-  chain -> Branch("phoHcalIso",   treeVars.phoHcalIso,            "phoHcalIso[nPhotons]/F");
-  chain -> Branch("phoTrkIso",    treeVars.phoTrkIso,             "phoTrkIso[nPhotons]/F");
-  chain -> Branch("phoHovE",      treeVars.phoHovE,               "phoHovE[nPhotons]/F");
-  chain -> Branch("phoSmin",      treeVars.phoSmin,               "phoSmin[nPhotons]/F");
-  chain -> Branch("phoSmaj",      treeVars.phoSmaj,               "phoSmaj[nPhotons]/F");
-  chain -> Branch("phoTime",      treeVars.phoTime,               "phoTime[nPhotons]/F");
  
   ///*  
   // TRG VARIABLES  
-  if(EcalTimePhyTreeContent::trgVariables)
+  if(EcalTimePi0TreeContent::trgVariables)
   {    
     // trigger variables
-    chain -> Branch("isRPCL1",  &treeVars.isRPCL1,   "isRPCL1/O");
-    chain -> Branch("isDTL1",   &treeVars.isDTL1,     "isDTL1/O");
-    chain -> Branch("isCSCL1",  &treeVars.isCSCL1,   "isCSCL1/O");
-    chain -> Branch("isECALL1", &treeVars.isECALL1, "isECALL1/O");
-    chain -> Branch("isHCALL1", &treeVars.isHCALL1, "isHCALL1/O");
+    chain -> Branch("isRPCL1",  &treeVars.isRPCL1,   "isRPCL1/b");
+    chain -> Branch("isDTL1",   &treeVars.isDTL1,     "isDTL1/b");
+    chain -> Branch("isCSCL1",  &treeVars.isCSCL1,   "isCSCL1/b");
+    chain -> Branch("isECALL1", &treeVars.isECALL1, "isECALL1/b");
+    chain -> Branch("isHCALL1", &treeVars.isHCALL1, "isHCALL1/b");
   
-    chain -> Branch("isRPCL1Bx",  treeVars.isRPCL1Bx,   "isRPCL1Bx[3]/O");
-    chain -> Branch("isDTL1Bx",   treeVars.isDTL1Bx,     "isDTL1Bx[3]/O");
-    chain -> Branch("isCSCL1Bx",  treeVars.isCSCL1Bx,   "isCSCL1Bx[3]/O");
-    chain -> Branch("isECALL1Bx", treeVars.isECALL1Bx, "isECALL1Bx[3]/O");
-    chain -> Branch("isHCALL1Bx", treeVars.isHCALL1Bx, "isHCALL1Bx[3]/O");
+    chain -> Branch("isRPCL1Bx",  treeVars.isRPCL1Bx,   "isRPCL1Bx[3]/b");
+    chain -> Branch("isDTL1Bx",   treeVars.isDTL1Bx,     "isDTL1Bx[3]/b");
+    chain -> Branch("isCSCL1Bx",  treeVars.isCSCL1Bx,   "isCSCL1Bx[3]/b");
+    chain -> Branch("isECALL1Bx", treeVars.isECALL1Bx, "isECALL1Bx[3]/b");
+    chain -> Branch("isHCALL1Bx", treeVars.isHCALL1Bx, "isHCALL1Bx[3]/b");
   }
   //*/  
   
@@ -604,13 +516,15 @@ void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
 
   ///*
   // ECAL VARIABLES  
-  if(EcalTimePhyTreeContent::ecalVariables)
+  if(EcalTimePi0TreeContent::ecalVariables)
   {    
     // supercluster variables
     chain -> Branch("nSuperClusters",       &treeVars.nSuperClusters,                               "nSuperClusters/I");
     chain -> Branch("nBarrelSuperClusters", &treeVars.nBarrelSuperClusters,                   "nBarrelSuperClusters/I");
     chain -> Branch("nEndcapSuperClusters", &treeVars.nEndcapSuperClusters,                   "nEndcapSuperClusters/I");
+    chain -> Branch("superClusterType",      treeVars.superClusterType,           "superClusterType[nSuperClusters]/I");
     chain -> Branch("superClusterRawEnergy", treeVars.superClusterRawEnergy, "superClusterRawEnergy[nSuperClusters]/F");
+    chain -> Branch("superClusterEnergySum", treeVars.superClusterEnergySum, "superClusterEnergySum[nSuperClusters]/F");
     chain -> Branch("superClusterPhiWidth",  treeVars.superClusterPhiWidth,   "superClusterPhiWidth[nSuperClusters]/F");
     chain -> Branch("superClusterEtaWidth",  treeVars.superClusterEtaWidth,   "superClusterEtaWidth[nSuperClusters]/F");
     chain -> Branch("superClusterPhi",       treeVars.superClusterPhi,             "superClusterPhi[nSuperClusters]/F");
@@ -618,14 +532,12 @@ void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
     chain -> Branch("superClusterX",         treeVars.superClusterX,                 "superClusterX[nSuperClusters]/F");
     chain -> Branch("superClusterY",         treeVars.superClusterY,                 "superClusterY[nSuperClusters]/F");
     chain -> Branch("superClusterZ",         treeVars.superClusterZ,                 "superClusterZ[nSuperClusters]/F");
-    chain -> Branch("superClusterVertexX",   treeVars.superClusterVertexX,           "superClusterVertexX[nSuperClusters]/F");
-    chain -> Branch("superClusterVertexY",   treeVars.superClusterVertexY,           "superClusterVertexY[nSuperClusters]/F");
-    chain -> Branch("superClusterVertexZ",   treeVars.superClusterVertexZ,           "superClusterVertexZ[nSuperClusters]/F");
-    chain -> Branch("sMin",                  treeVars.sMin,                          "sMin[nSuperClusters]/F");
-    chain -> Branch("sMaj",                  treeVars.sMaj,                          "sMaj[nSuperClusters]/F");
 
-    chain -> Branch("nClustersInSuperCluster", treeVars.nClustersInSuperCluster,     "nClustersInSuperCluster[nSuperClusters]/I");
-    chain -> Branch("SCPIdx",                treeVars.SCPIdx,                               "SCPIdx[nSuperClusters]/F");
+    chain -> Branch("nClustersInSuperCluster",    treeVars.nClustersInSuperCluster,       "nClustersInSuperCluster[nSuperClusters]/I");
+    chain -> Branch("clusterIndexInSuperCluster", treeVars.clusterIndexInSuperCluster, "clusterIndexInSuperCluster[nSuperClusters]/I");
+    chain -> Branch("nXtalsInSuperCluster",       treeVars.nXtalsInSuperCluster,             "nXtalsInSuperCluster[nSuperClusters]/I");
+    chain -> Branch("xtalIndexInSuperCluster",    treeVars.xtalIndexInSuperCluster,       "xtalIndexInSuperCluster[nSuperClusters]/I");
+    
     
     // basic cluster variables
     chain -> Branch("nClusters",              &treeVars.nClusters,                                        "nClusters/I");
@@ -640,9 +552,9 @@ void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
     chain -> Branch("clusterXtalsAbove3Sigma", treeVars.clusterXtalsAbove3Sigma, "clusterXtalsAbove3Sigma[nClusters]/I");
     chain -> Branch("clusterMaxId",            treeVars.clusterMaxId,                       "clusterMaxId[nClusters]/i");
     chain -> Branch("cluster2ndId",            treeVars.cluster2ndId,                       "cluster2ndId[nClusters]/i");
+    
+    chain -> Branch("xtalIndexInCluster", treeVars.xtalIndexInCluster, "xtalIndexInCluster[nClusters]/I");
     chain -> Branch("nXtalsInCluster",    treeVars.nXtalsInCluster,       "nXtalsInCluster[nClusters]/I");
-    chain -> Branch("CPIdx",              treeVars.CPIdx,                 "CPIdx[nClusters]/F");
-    chain -> Branch("clusterMom",         treeVars.clusterMom,            "clusterMom[nClusters]/I");
         
     // clustershape variables
     chain -> Branch("clusterE2x2",       treeVars.clusterE2x2,             "clusterE2x2[nClusters]/F");
@@ -665,36 +577,23 @@ void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
     chain -> Branch("clusterZernike42",  treeVars.clusterZernike42,   "clusterZernike42[nClusters]/F");
     
     
-    // vertex variables
-    chain -> Branch("nVertices",         &treeVars.nVertices,   "nVertices/I");
-    chain -> Branch("vtxNTracks",       treeVars.vtxNTracks,   "vtxNTracks[nVertices]/I");
-    chain -> Branch("vtxChi2",          treeVars.vtxChi2,      "vtxChi2[nVertices]/F");
-    chain -> Branch("vtxNdof",          treeVars.vtxNdof,      "vtxNdof[nVertices]/F");
-    chain -> Branch("vtxX",             treeVars.vtxX,         "vtxX[nVertices]/F");
-    chain -> Branch("vtxDx",            treeVars.vtxDx,        "vtxDx[nVertices]/F");
-    chain -> Branch("vtxY",             treeVars.vtxY,         "vtxY[nVertices]/F");
-    chain -> Branch("vtxDy",            treeVars.vtxDy,        "vtxDy[nVertices]/F");
-    chain -> Branch("vtxZ",             treeVars.vtxZ,         "vtxZ[nVertices]/F");
-    chain -> Branch("vtxDz",            treeVars.vtxDz,        "vtxDz[nVertices]/F");
+    // xtal variables
+    chain -> Branch("nXtals",            &treeVars.nXtals,                                 "nXtals/I");
+    chain -> Branch("xtalHashedIndex",    treeVars.xtalHashedIndex,       "xtalHashedIndex[nXtals]/I");
+    chain -> Branch("xtalEnergy",         treeVars.xtalEnergy,                 "xtalEnergy[nXtals]/F");
+    chain -> Branch("xtalTime",           treeVars.xtalTime,                     "xtalTime[nXtals]/F");
+    chain -> Branch("xtalTkLength",       treeVars.xtalTkLength,             "xtalTkLength[nXtals]/F");
+    chain -> Branch("xtalTkLengthCurved", treeVars.xtalTkLengthCurved, "xtalTkLengthCurved[nXtals]/F");
 
-
-    // xtal variables inside a cluster // strange: MAXXTALINC needs be replaced by explicit "9"; not understood gf
-    // using MAXXTALINC, compilation is sucesful BUT the concerned branches don't get filled (Wed Jul 13 20:42:37 CEST 2011)  
-    chain -> Branch("xtalInBCHashedIndex",  treeVars.xtalInBCHashedIndex,  "xtalInBCHashedIndex[nClusters][25]/I");
-    chain -> Branch("xtalInBCIEta",         treeVars.xtalInBCIEta,         "xtalInBCIEta[nClusters][25]/I");
-    chain -> Branch("xtalInBCIPhi",         treeVars.xtalInBCIPhi,         "xtalInBCIPhi[nClusters][25]/I");
-    chain -> Branch("xtalInBCEta",          treeVars.xtalInBCEta,          "xtalInBCEta[nClusters][25]/F");
-    chain -> Branch("xtalInBCPhi",          treeVars.xtalInBCPhi,          "xtalInBCPhi[nClusters][25]/F");
-    chain -> Branch("xtalInBCIx",           treeVars.xtalInBCIx,           "xtalInBCIx[nClusters][25]/I");
-    chain -> Branch("xtalInBCIy",           treeVars.xtalInBCIy,           "xtalInBCIy[nClusters][25]/I");
-    chain -> Branch("xtalInBCFlag",         treeVars.xtalInBCFlag,         "xtalInBCFlag[nClusters][25]/I");
-    chain -> Branch("xtalInBCEnergy",       treeVars.xtalInBCEnergy,       "xtalInBCEnergy[nClusters][25]/F");
-    chain -> Branch("xtalInBCTime",         treeVars.xtalInBCTime,         "xtalInBCTime[nClusters][25]/F");
-    chain -> Branch("xtalInBCTimeErr",      treeVars.xtalInBCTimeErr,      "xtalInBCTimeErr[nClusters][25]/F");
-    chain -> Branch("xtalInBCAmplitudeADC", treeVars.xtalInBCAmplitudeADC, "xtalInBCAmplitudeADC[nClusters][25]/F");
-    chain -> Branch("xtalInBCChi2", treeVars.xtalInBCChi2, "xtalInBCChi2[nClusters][25]/F");
-    chain -> Branch("xtalInBCOutOfTimeChi2", treeVars.xtalInBCOutOfTimeChi2, "xtalInBCOutOfTimeChi2[nClusters][25]/F");
-    chain -> Branch("xtalInBCSwissCross", treeVars.xtalInBCSwissCross, "xtalInBCSwissCross[nClusters][25]/F");
+    // xtal variables inside a cluster
+    chain -> Branch("xtalInBCHashedIndex", treeVars.xtalInBCHashedIndex, "xtalInBCHashedIndex[nClusters][MAXXTALINC]/I");
+    chain -> Branch("xtalInBCIeta",        treeVars.xtalInBCIeta,        "xtalInBCIeta[nClusters][MAXXTALINC]/I");
+    chain -> Branch("xtalInBCIphi",        treeVars.xtalInBCIphi,        "xtalInBCIphi[nClusters][MAXXTALINC]/I");
+    chain -> Branch("xtalInBCIx",          treeVars.xtalInBCIx,          "xtalInBCIx[nClusters][MAXXTALINC]/I");
+    chain -> Branch("xtalInBCIy",          treeVars.xtalInBCIy,          "xtalInBCIy[nClusters][MAXXTALINC]/I");
+    chain -> Branch("xtalInBCFlag",        treeVars.xtalInBCFlag,        "xtalInBCFlag[nClusters][MAXXTALINC]/I");
+    chain -> Branch("xtalInBCEnergy",      treeVars.xtalInBCEnergy,      "xtalInBCEnergy[nClusters][MAXXTALINC]/F");
+    chain -> Branch("xtalInBCTime",        treeVars.xtalInBCTime,        "xtalInBCTime[nClusters][MAXXTALINC]/F");
 
   } // ECAL VARIABLES  
   //*/  
@@ -703,7 +602,7 @@ void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
   
   ///*
   //HCAL VARIABLES
-  if( EcalTimePhyTreeContent::hcalVariables ) 
+  if( EcalTimePi0TreeContent::hcalVariables ) 
   {  
     chain -> Branch("hbNRecHits",   &treeVars.hbNRecHits,                   "hbNRecHits/I");
     chain -> Branch("hbRecHitDetId", treeVars.hbRecHitDetId, "hbRecHitDetId[hbNRecHits]/I");
@@ -727,7 +626,7 @@ void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
   
   ///*
   // MUON VARIABLES  
-  if(EcalTimePhyTreeContent::muonVariables)
+  if(EcalTimePi0TreeContent::muonVariables)
   {    
     // muon variables
     chain -> Branch("nRecoMuons",     &treeVars.nRecoMuons,               "nRecoMuons/I");
@@ -825,6 +724,11 @@ void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
     chain -> Branch("muonTkLengthInEcalDetailCurved_high", treeVars.muonTkLengthInEcalDetailCurved_high, "muonTkLengthInEcalDetailCurved_high[nRecoMuons]/F");
     chain -> Branch("muonTkLengthInEcalDetailCurved_low",  treeVars.muonTkLengthInEcalDetailCurved_low,   "muonTkLengthInEcalDetailCurved_low[nRecoMuons]/F");
     
+    //chain -> Branch("muonNecklaceSize", treeVars.muonNecklaceSize, "muonNecklaceSize[nRecoMuons]/I"); 
+    //chain -> Branch("muonNecklaceX",    treeVars.muonNecklaceX, "muonNecklaceX[nRecoMuons][5000]/F"); 
+    //chain -> Branch("muonNecklaceY",    treeVars.muonNecklaceY, "muonNecklaceY[nRecoMuons][5000]/F"); 
+    //chain -> Branch("muonNecklaceZ",    treeVars.muonNecklaceZ, "muonNecklaceZ[nRecoMuons][5000]/F");     
+    
     chain -> Branch("muonTkInternalPointInEcalX", treeVars.muonTkInternalPointInEcalX, "muonTkInternalPointInEcalX[nRecoMuons]/F");
     chain -> Branch("muonTkInternalPointInEcalY", treeVars.muonTkInternalPointInEcalY, "muonTkInternalPointInEcalY[nRecoMuons]/F");
     chain -> Branch("muonTkInternalPointInEcalZ", treeVars.muonTkInternalPointInEcalZ, "muonTkInternalPointInEcalZ[nRecoMuons]/F");
@@ -853,15 +757,46 @@ void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
   } // MUON VARIABLES
   //*/
   
+  
+ 
+  /* 
+  // TRACK ASSOCIATOR VARIABLES  
+  if(EcalTimePi0TreeContent::tkAssVariables)
+  {    
+    // trackassociator variables
+    chain -> Branch("muonTkAtEcalEta", treeVars.muonTkAtEcalEta, "muonTkAtEcalEta[nRecoMuons]/F");
+    chain -> Branch("muonTkAtEcalPhi", treeVars.muonTkAtEcalPhi, "muonTkAtEcalPhi[nRecoMuons]/F");
+    chain -> Branch("muonTkAtEcalX",   treeVars.muonTkAtEcalX,     "muonTkAtEcalX[nRecoMuons]/F");
+    chain -> Branch("muonTkAtEcalY",   treeVars.muonTkAtEcalY,     "muonTkAtEcalY[nRecoMuons]/F");
+    chain -> Branch("muonTkAtEcalZ",   treeVars.muonTkAtEcalZ,     "muonTkAtEcalZ[nRecoMuons]/F");
+    chain -> Branch("muonTkAtHcalEta", treeVars.muonTkAtHcalEta, "muonTkAtHcalEta[nRecoMuons]/F");
+    chain -> Branch("muonTkAtHcalPhi", treeVars.muonTkAtHcalPhi, "muonTkAtHcalPhi[nRecoMuons]/F");
+    chain -> Branch("muonTkAtHcalX",   treeVars.muonTkAtHcalX,     "muonTkAtHcalX[nRecoMuons]/F");
+    chain -> Branch("muonTkAtHcalY",   treeVars.muonTkAtHcalY,     "muonTkAtHcalY[nRecoMuons]/F");
+    chain -> Branch("muonTkAtHcalZ",   treeVars.muonTkAtHcalZ,     "muonTkAtHcalZ[nRecoMuons]/F");
+    
+    chain -> Branch("muonEcalEnergy3x3",          treeVars.muonEcalEnergy3x3,                   "muonEcalEnergy3x3[nRecoMuons]/F");
+    chain -> Branch("muonEcalEnergy5x5",          treeVars.muonEcalEnergy5x5,                   "muonEcalEnergy5x5[nRecoMuons]/F");
+    chain -> Branch("muonEcalEnergyCrossed",      treeVars.muonEcalEnergyCrossed,           "muonEcalEnergyCrossed[nRecoMuons]/F");
+    chain -> Branch("muonHcalEnergy3x3",          treeVars.muonHcalEnergy3x3,                   "muonHcalEnergy3x3[nRecoMuons]/F");
+    chain -> Branch("muonHcalEnergyCrossed",      treeVars.muonHcalEnergyCrossed,           "muonHcalEnergyCrossed[nRecoMuons]/F");
+    chain -> Branch("muonNCrossedEcalDetId",      treeVars.muonNCrossedEcalDetId,           "muonNCrossedEcalDetId[nRecoMuons]/I");
+    chain -> Branch("muonMaxEneEcalDetIdCrossed", treeVars.muonMaxEneEcalDetIdCrossed, "muonMaxEneEcalDetIdCrossed[nRecoMuons]/i");
+    
+    chain -> Branch("muonTkLengthInEcalApprox_TkAss", treeVars.muonTkLengthInEcalApprox_TkAss, "muonTkLengthInEcalApprox_TkAss[nRecoMuons]/F");
+    chain -> Branch("muonTkLengthInEcalDetail_TkAss", treeVars.muonTkLengthInEcalDetail_TkAss, "muonTkLengthInEcalDetail_TkAss[nRecoMuons]/F");
+  } 
+  */  
+  
 
 
   ///*
   // TPG VARIABLES
-  if(EcalTimePhyTreeContent::tpgVariables)
+  if(EcalTimePi0TreeContent::tpgVariables)
   {
     chain->Branch("tpgNTowers",         &treeVars.tpgNTowers,                                   "tpgNTowers/I");
-    chain->Branch("tpgIEta",             treeVars.tpgIEta,                             "tpgIEta[tpgNTowers]/I");
-    chain->Branch("tpgIPhi",             treeVars.tpgIPhi,                             "tpgIPhi[tpgNTowers]/I");
+    chain->Branch("tpgIeta",             treeVars.tpgIeta,                             "tpgIeta[tpgNTowers]/I");
+    chain->Branch("tpgIphi",             treeVars.tpgIphi,                             "tpgIphi[tpgNTowers]/I");
     chain->Branch("tpgNbOfXtals",        treeVars.tpgNbOfXtals,                   "tpgNbOfXtals[tpgNTowers]/I");
     chain->Branch("tpgEnRec",            treeVars.tpgEnRec,                           "tpgEnRec[tpgNTowers]/F");
     chain->Branch("tpgADC",              treeVars.tpgADC,                               "tpgADC[tpgNTowers]/I");
@@ -869,8 +804,8 @@ void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
     chain->Branch("tpgActiveTriggers",   treeVars.tpgActiveTriggers, "tpgActiveTriggers[tpgNActiveTriggers]/I");
 
     chain->Branch("tpEmulNTowers", &treeVars.tpEmulNTowers,          "tpEmulNTowers/I");
-    chain->Branch("tpEmulIEta",     treeVars.tpEmulIEta, "tpEmulIEta[tpEmulNTowers]/I");
-    chain->Branch("tpEmulIPhi",     treeVars.tpEmulIPhi, "tpEmulIPhi[tpEmulNTowers]/I");
+    chain->Branch("tpEmulIeta",     treeVars.tpEmulIeta, "tpEmulIeta[tpEmulNTowers]/I");
+    chain->Branch("tpEmulIphi",     treeVars.tpEmulIphi, "tpEmulIphi[tpEmulNTowers]/I");
     chain->Branch("tpEmulADC1",     treeVars.tpEmulADC1, "tpEmulADC1[tpEmulNTowers]/I");
     chain->Branch("tpEmulADC2",     treeVars.tpEmulADC2, "tpEmulADC2[tpEmulNTowers]/I");
     chain->Branch("tpEmulADC3",     treeVars.tpEmulADC3, "tpEmulADC3[tpEmulNTowers]/I");
@@ -883,13 +818,11 @@ void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
 
   ///*
   // L1 VARIABLES
-  if(EcalTimePhyTreeContent::l1Variables)    
+  if(EcalTimePi0TreeContent::l1Variables)    
   {
       
     chain->Branch("l1NActiveTriggers", &treeVars.l1NActiveTriggers,                  "l1NActiveTriggers/I");
     chain->Branch("l1ActiveTriggers",   treeVars.l1ActiveTriggers, "l1ActiveTriggers[l1NActiveTriggers]/I");
-    chain->Branch("l1NActiveTechTriggers", &treeVars.l1NActiveTechTriggers,                  "l1NActiveTechTriggers/I");
-    chain->Branch("l1ActiveTechTriggers",   treeVars.l1ActiveTechTriggers, "l1ActiveTechTriggers[l1NActiveTechTriggers]/I");
     
     chain->Branch("l1GtNEm",    &treeVars.l1GtNEm,   "l1GtNEm/I"   );
     chain->Branch("l1GtEmBx",   treeVars.l1GtEmBx,   "l1GtEmBx[l1GtNEm]/I"  );
@@ -933,8 +866,18 @@ void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
     chain->Branch("l1EmPartNonIsoCandIEta",     treeVars.l1EmPartNonIsoCandIEta,         "l1EmPartNonIsoCandIEta[l1NEmPartNonIso]/I");
     chain->Branch("l1EmPartNonIsoCandIPhi",     treeVars.l1EmPartNonIsoCandIPhi,         "l1EmPartNonIsoCandIPhi[l1NEmPartNonIso]/I");
     chain->Branch("l1EmPartNonIsoGctCandIndex",	treeVars.l1EmPartNonIsoGctCandIndex, "l1EmPartNonIsoGctCandIndex[l1NEmPartNonIso]/I");
-  
-    chain->Branch("l1NGctCandIso",           &treeVars.l1NGctCandIso,                                        "l1NGctCandIso/I");
+    
+    // chain->Branch("l1NGctCandIso",           &treeVars.l1NGctCandIso,                                        "l1NGctCandIso");
+    // chain->Branch("l1GctCandIsoIEta",         treeVars.l1GctCandIsoIEta,                 "l1GctCandIsoIEta[l1NGctCandIso]/I");
+    // chain->Branch("l1GctCandIsoIPhi",         treeVars.l1GctCandIsoIPhi,                 "l1GctCandIsoIPhi[l1NGctCandIso]/I");
+    // chain->Branch("l1GctCandIsoRank",         treeVars.l1GctCandIsoRank,                 "l1GctCandIsoRank[l1NGctCandIso]/i");
+    // chain->Branch("l1GctCandIsoIsIsolated",   treeVars.l1GctCandIsoIsIsolated,     "l1GctCandIsoIsIsolated[l1NGctCandIso]/O");
+    // chain->Branch("l1GctCandIsoCapBlock",     treeVars.l1GctCandIsoCapBlock,         "l1GctCandIsoCapBlock[l1NGctCandIso]/i");
+    // chain->Branch("l1GctCandIsoCapIndex",     treeVars.l1GctCandIsoCapIndex,         "l1GctCandIsoCapIndex[l1NGctCandIso]/i");
+    // chain->Branch("l1GctCandIsoBx",           treeVars.l1GctCandIsoBx,                     "l1GctCandIsoBx[l1NGctCandIso]/i");
+    // chain->Branch("l1GctCandIsoCaloRegIndex", treeVars.l1GctCandIsoCaloRegIndex, "l1GctCandIsoCaloRegIndex[l1NGctCandIso]/I");
+    
+    chain->Branch("l1NGctCandIso",           &treeVars.l1NGctCandIso,                                        "l1NGctCandIso");
     chain->Branch("l1GctCandIsoIEta",         treeVars.l1GctCandIsoIEta,                 "l1GctCandIsoIEta[l1NGctCandIso]/I");
     chain->Branch("l1GctCandIsoIPhi",         treeVars.l1GctCandIsoIPhi,                 "l1GctCandIsoIPhi[l1NGctCandIso]/I");
     chain->Branch("l1GctCandIsoRank",         treeVars.l1GctCandIsoRank,                 "l1GctCandIsoRank[l1NGctCandIso]/i");
@@ -944,7 +887,7 @@ void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
     chain->Branch("l1GctCandIsoBx",           treeVars.l1GctCandIsoBx,                     "l1GctCandIsoBx[l1NGctCandIso]/i");	  
     chain->Branch("l1GctCandIsoCaloRegIndex", treeVars.l1GctCandIsoCaloRegIndex, "l1GctCandIsoCaloRegIndex[l1NGctCandIso]/I");
     
-    chain->Branch("l1NGctCandNonIso",           &treeVars.l1NGctCandNonIso,                                           "l1NGctCandNonIso/I");
+    chain->Branch("l1NGctCandNonIso",           &treeVars.l1NGctCandNonIso,                                           "l1NGctCandNonIso");
     chain->Branch("l1GctCandNonIsoIEta",         treeVars.l1GctCandNonIsoIEta,                 "l1GctCandNonIsoIEta[l1NGctCandNonIso]/I");
     chain->Branch("l1GctCandNonIsoIPhi",         treeVars.l1GctCandNonIsoIPhi,                 "l1GctCandNonIsoIPhi[l1NGctCandNonIso]/I");
     chain->Branch("l1GctCandNonIsoRank",         treeVars.l1GctCandNonIsoRank,                 "l1GctCandNonIsoRank[l1NGctCandNonIso]/i");
@@ -954,7 +897,7 @@ void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
     chain->Branch("l1GctCandNonIsoBx",           treeVars.l1GctCandNonIsoBx,                     "l1GctCandNonIsoBx[l1NGctCandNonIso]/i");
     chain->Branch("l1GctCandNonIsoCaloRegIndex", treeVars.l1GctCandNonIsoCaloRegIndex, "l1GctCandNonIsoCaloRegIndex[l1NGctCandNonIso]/I");
     
-    chain->Branch("l1NCaloCand",         &treeVars.l1NCaloCand,                                  "l1NCaloCand/I");
+    chain->Branch("l1NCaloCand",         &treeVars.l1NCaloCand,                                  "l1NCaloCand");
     chain->Branch("l1CaloCandIEta",       treeVars.l1CaloCandIEta,             "l1CaloCandIEta[l1NCaloCand]/I");
     chain->Branch("l1CaloCandIPhi",       treeVars.l1CaloCandIPhi,             "l1CaloCandIPhi[l1NCaloCand]/I");
     chain->Branch("l1CaloCandRctCard",    treeVars.l1CaloCandRctCard,       "l1CaloCandRctCard[l1NCaloCand]/I");
@@ -964,11 +907,11 @@ void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
     chain->Branch("l1CaloCandIsIsolated", treeVars.l1CaloCandIsIsolated, "l1CaloCandIsIsolated[l1NCaloCand]/O");
     chain->Branch("l1CaloCandBx",         treeVars.l1CaloCandBx,                 "l1CaloCandBx[l1NCaloCand]/i");
     
-    chain->Branch("l1NCaloReg",         &treeVars.l1NCaloReg,                                 "l1NCaloReg/I");
+    chain->Branch("l1NCaloReg",         &treeVars.l1NCaloReg,                                 "l1NCaloReg");
     chain->Branch("l1CaloRegIEta",       treeVars.l1CaloRegIEta,             "l1CaloRegIEta[l1NCaloReg]/I");
     chain->Branch("l1CaloRegIPhi",       treeVars.l1CaloRegIPhi,             "l1CaloRegIPhi[l1NCaloReg]/I");
-    chain->Branch("l1CaloRegCapBlock",   treeVars.l1CaloRegCapBlock,     "l1CaloRegCapBlock[l1NCaloReg]/I");
-    chain->Branch("l1CaloRegCapIndex",   treeVars.l1CaloRegCapIndex,     "l1CaloRegCapIndex[l1NCaloReg]/I");
+    chain->Branch("l1CaloRegCapBlock",   treeVars.l1CaloRegCapBlock,     "l1CaloRegCapBlock[l1NCaloReg]/i");
+    chain->Branch("l1CaloRegCapIndex",   treeVars.l1CaloRegCapIndex,     "l1CaloRegCapIndex[l1NCaloReg]/i");
     chain->Branch("l1CaloRegRctCard",    treeVars.l1CaloRegRctCard,       "l1CaloRegRctCard[l1NCaloReg]/I");
     chain->Branch("l1CaloRegRctReg",     treeVars.l1CaloRegRctReg,         "l1CaloRegRctReg[l1NCaloReg]/I");
     chain->Branch("l1CaloRegRctCrate",   treeVars.l1CaloRegRctCrate,     "l1CaloRegRctCrate[l1NCaloReg]/I");
@@ -990,7 +933,7 @@ void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
     chain->Branch("l1MuonPz",         treeVars.l1MuonPz,                 "l1MuonPz[l1NMuons]/F");
     chain->Branch("l1MuonE",          treeVars.l1MuonE,                   "l1MuonE[l1NMuons]/F");
     chain->Branch("l1MuonPt",         treeVars.l1MuonPt,                 "l1MuonPt[l1NMuons]/F");
-    chain->Branch("l1MuonBx",         treeVars.l1MuonBx,                 "l1MuonBx[l1NMuons]/i");
+    chain->Branch("l1MuonBx",         treeVars.l1MuonBx,                 "l1MuonBx[l1NMuons]/F");
     chain->Branch("l1MuonIsIsolated", treeVars.l1MuonIsIsolated, "l1MuonIsIsolated[l1NMuons]/O");
     chain->Branch("l1MuonIsMip",      treeVars.l1MuonIsMip,           "l1MuonIsMip[l1NMuons]/O");
     chain->Branch("l1MuonIsForward",  treeVars.l1MuonIsForward,   "l1MuonIsForward[l1NMuons]/O");
@@ -1025,70 +968,19 @@ void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
 
 
 
-void initializeBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
+void initializeBranches(TTree* chain, EcalTimePi0TreeContent& treeVars)
 {
   treeVars.runId = 0;
-  treeVars.lumiSection = 0;
-  treeVars.orbit = 0;
-  treeVars.bx = 0;
-  treeVars.trgCut = -99;
   treeVars.eventId = 0; 
   treeVars.eventNaiveId = 0; 
   treeVars.timeStampLow = 0;
   treeVars.timeStampHigh = 0;
-  treeVars.nJets = 0 ; 
-  treeVars.nElectrons = 0 ; 
-  treeVars.nMuons = 0 ; 
-  treeVars.nPhotons = 0 ; 
-
-  treeVars.metPx = 0 ;
-  treeVars.metPy = 0 ;
-  treeVars.met = 0 ;
-
-  for ( int i=0; i< 10; i++) {
-      treeVars.jetPx[i] = 0 ;
-      treeVars.jetPy[i] = 0 ;
-      treeVars.jetPz[i] = 0 ;
-      treeVars.jetE[i] = 0 ;
-      treeVars.jetNDau[i] = 0 ;
-      treeVars.jetCM[i]  = -1 ;
-      treeVars.jetCEF[i] = -1 ;
-      treeVars.jetNHF[i] = -1 ;
-      treeVars.jetNEF[i] = -1 ;
-
-      treeVars.elePx[i] = 0 ;
-      treeVars.elePy[i] = 0 ;
-      treeVars.elePz[i] = 0 ;
-      treeVars.eleE[i] = 0 ;
-      treeVars.eleEcalIso[i] = -1 ;
-      treeVars.eleHcalIso[i] = -1 ;
-      treeVars.eleTrkIso[i]  = -1 ;
-      treeVars.eleNLostHits[i]  = -1 ;
-
-      treeVars.phoPx[i] = 0 ;
-      treeVars.phoPy[i] = 0 ;
-      treeVars.phoPz[i] = 0 ;
-      treeVars.phoE[i] = 0 ;
-      treeVars.phoEcalIso[i] = -1 ;
-      treeVars.phoHcalIso[i] = -1 ;
-      treeVars.phoTrkIso[i]  = -1 ;
-      treeVars.phoHovE[i]    = -1 ;
-      treeVars.phoSmin[i]    = -1 ;
-      treeVars.phoSmaj[i]    = -1 ;
-      treeVars.phoTime[i]    = -100 ;
-
-      treeVars.muPx[i] = 0 ;
-      treeVars.muPy[i] = 0 ;
-      treeVars.muPz[i] = 0 ;
-      treeVars.muE[i] = 0 ;
-      treeVars.muEcalIso[i] = -1 ;
-      treeVars.muHcalIso[i] = -1 ;
-      treeVars.muTrkIso[i]  = -1 ;
-  }
+  
+  
 
   ///*  
   // TRG VARIABLES  
-  if(EcalTimePhyTreeContent::trgVariables)
+  if(EcalTimePi0TreeContent::trgVariables)
   {    
     treeVars.isECALL1 = false; 
     treeVars.isRPCL1 = false; 
@@ -1111,15 +1003,17 @@ void initializeBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
   
   ///*
   // ECAL VARIABLES  
-  if(EcalTimePhyTreeContent::ecalVariables)
+  if(EcalTimePi0TreeContent::ecalVariables)
   {    
     //supercluster variables
     treeVars.nSuperClusters = 0;
     treeVars.nBarrelSuperClusters = 0;
     treeVars.nEndcapSuperClusters = 0;
-    for(int i = 0; i < MAXSC; ++i)
+    for(int i = 0; i < 100; ++i)
     {
+    treeVars.superClusterType[i] = 0;
     treeVars.superClusterRawEnergy[i] = 0.;
+    treeVars.superClusterEnergySum[i] = 0.;
     treeVars.superClusterPhiWidth[i] = 0.;
     treeVars.superClusterEtaWidth[i] = 0.;
     treeVars.superClusterEta[i] = 0.;
@@ -1127,20 +1021,17 @@ void initializeBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
     treeVars.superClusterX[i] = 0.;
     treeVars.superClusterY[i] = 0.;
     treeVars.superClusterZ[i] = 0.;
-    treeVars.superClusterVertexX[i] = 0.;
-    treeVars.superClusterVertexY[i] = 0.;
-    treeVars.superClusterVertexZ[i] = 0.;
-    treeVars.sMin[i] = -1 ;
-    treeVars.sMaj[i] = -1 ;
     
     treeVars.nClustersInSuperCluster[i] = 0;
-    treeVars.SCPIdx[i] = -1. ;
+    treeVars.clusterIndexInSuperCluster[i] = 0;
+    treeVars.nXtalsInSuperCluster[i] = 0;
+    treeVars.xtalIndexInSuperCluster[i] = 0;
     }
     
     
     //basic cluster variables	
     treeVars.nClusters = 0;
-    for(int i = 0; i < MAXC; ++i)
+    for(int i = 0; i < 100; ++i)
     {
     treeVars.clusterEnergy[i] = 0.;
     treeVars.clusterTransverseEnergy[i] = 0.;
@@ -1155,13 +1046,12 @@ void initializeBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
     treeVars.cluster2ndId[i] = 0;
 
     treeVars.nXtalsInCluster[i] = 0;
-    treeVars.CPIdx[i] = -1 ;
-    treeVars.clusterMom[i] = -1 ;
+    treeVars.xtalIndexInCluster[i] = 0;
     }
     
     
     //clustershape variables    
-    for(int i = 0; i < MAXC; ++i)
+    for(int i = 0; i < 100; ++i)
     {
     treeVars.clusterE2x2[i] = 0.;
     treeVars.clusterE3x2[i] = 0.;
@@ -1183,42 +1073,32 @@ void initializeBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
     treeVars.clusterZernike42[i] = 0.;
     }
     
-  // it's convenient keeping vertex variables here within the ECAL group
-  // since  each SC is assigned a vertex (which is the electron vertex, in case electrons be used)
-  // vertex variables
-    treeVars.nVertices=0;
-    for(int i=0; i<MAXVTX; i++) {
-      treeVars.vtxIsFake[i]=false;
-      treeVars.vtxNTracks[i]=0;
-      treeVars.vtxChi2[i]=0;
-      treeVars.vtxNdof[i]=0;
-      treeVars.vtxX[i]=0;
-      treeVars.vtxDx[i]=0;
-      treeVars.vtxY[i]=0;
-      treeVars.vtxDy[i]=0;
-      treeVars.vtxZ[i]=0;
-      treeVars.vtxDz[i]=0;
-  }
-  
+    
+    // xtals variables
+    treeVars.nXtals = 0;
+    for(int i = 0; i < 250; ++i)
+    {
+    treeVars.xtalHashedIndex[i] = 0;
+    treeVars.xtalEnergy[i] = 0.;
+    treeVars.xtalTime[i] = 0.; 
+    treeVars.xtalTkLength[i] = 0.;
+    treeVars.xtalTkLengthCurved[i] = 0.;
+    }
+
+
     // xtal variables inside a cluster
     for(int cl=0; cl<MAXC; cl++ ){
       for(int cryInClu=0; cryInClu<MAXXTALINC; cryInClu++){
 	treeVars.xtalInBCHashedIndex[cl][cryInClu]=0;
-	treeVars.xtalInBCIEta[cl][cryInClu]=0;
-	treeVars.xtalInBCIPhi[cl][cryInClu]=0;
-	treeVars.xtalInBCEta[cl][cryInClu]=0;
-	treeVars.xtalInBCPhi[cl][cryInClu]=0;
+	treeVars.xtalInBCIeta[cl][cryInClu]=0;
+	treeVars.xtalInBCIphi[cl][cryInClu]=0;
 	treeVars.xtalInBCIx[cl][cryInClu]=0;
 	treeVars.xtalInBCIy[cl][cryInClu]=0;
 	treeVars.xtalInBCFlag[cl][cryInClu]=0;
 	treeVars.xtalInBCEnergy[cl][cryInClu]=0;
 	treeVars.xtalInBCTime[cl][cryInClu]=0;
-	treeVars.xtalInBCTimeErr[cl][cryInClu]=0;
-	treeVars.xtalInBCAmplitudeADC[cl][cryInClu]=0;
-	treeVars.xtalInBCChi2[cl][cryInClu]=0;
-	treeVars.xtalInBCOutOfTimeChi2[cl][cryInClu]=0;
-        treeVars.xtalInBCSwissCross[cl][cryInClu]=0;
       }}
+
 
   } // ECAL VARIABLES
   //*/  
@@ -1226,10 +1106,10 @@ void initializeBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
 
 
   // HCAL VARIABLES
-  if( EcalTimePhyTreeContent::hcalVariables ) 
+  if( EcalTimePi0TreeContent::hcalVariables ) 
   {  
     treeVars.hbNRecHits = 0;
-    for(int i = 0; i < MAXHCALRECHITS; ++i)
+    for(int i = 0; i < 100; ++i)
     {
       treeVars.hbRecHitDetId[i] = 0;
       treeVars.hbRecHitEta[i] = 0.;
@@ -1240,7 +1120,7 @@ void initializeBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
 
  
     treeVars.nCaloTowers = 0;
-    for(int i = 0; i < MAXCALOTOWERS; ++i)
+    for(int i = 0; i < 100; ++i)
     {
       treeVars.caloTowerEmEnergy[i] = 0.;
       treeVars.caloTowerHadEnergy[i] = 0.;
@@ -1256,7 +1136,7 @@ void initializeBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
   
   ///*
   // MUON VARIABLES  
-  if(EcalTimePhyTreeContent::muonVariables)
+  if(EcalTimePi0TreeContent::muonVariables)
   {    
     // muon variables
     treeVars.nRecoMuons = 0;
@@ -1356,6 +1236,13 @@ void initializeBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
       treeVars.muonTkLengthInEcalDetailCurved_high[i] = 0.;
       treeVars.muonTkLengthInEcalDetailCurved_low[i] = 0.;
       
+      //treeVars.muonNecklaceSize[i] = 0;
+      //for(int j = 0; j < 5000; ++j)
+      //{
+      //  treeVars.muonNecklaceX[i][j] = 0.;
+      //  treeVars.muonNecklaceY[i][j] = 0.;
+      //  treeVars.muonNecklaceZ[i][j] = 0.;
+      //}
       
       treeVars.muonTkInternalPointInEcalX[i] = 0.;
       treeVars.muonTkInternalPointInEcalY[i] = 0.;
@@ -1389,9 +1276,46 @@ void initializeBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
    
   } // MUON VARIABLES 
   //*/
+  
+  
+  
+  /*      
+  // TRACK ASSOCIATOR VARIABLES  
+  if(EcalTimePi0TreeContent::tkAssVariables)
+  {    
+    for(int i = 0; i < 20; ++i)
+    {
+    //trackAssociator variables
+    treeVars.muonTkAtEcalEta[i] = 0.;
+    treeVars.muonTkAtEcalPhi[i] = 0.;
+    treeVars.muonTkAtEcalX[i] = 0.;
+    treeVars.muonTkAtEcalY[i] = 0.;
+    treeVars.muonTkAtEcalZ[i] = 0.;
+    treeVars.muonTkAtHcalEta[i] = 0.;
+    treeVars.muonTkAtHcalPhi[i] = 0.;
+    treeVars.muonTkAtHcalX[i] = 0.;
+    treeVars.muonTkAtHcalY[i] = 0.;
+    treeVars.muonTkAtHcalZ[i] = 0.;
+    
+    treeVars.muonEcalEnergy3x3[i] = 0.;
+    treeVars.muonEcalEnergy5x5[i] = 0.;
+    treeVars.muonEcalEnergyCrossed[i] = 0.;
+    treeVars.muonHcalEnergy3x3[i] = 0.;
+    treeVars.muonHcalEnergyCrossed[i] = 0.;
+    treeVars.muonNCrossedEcalDetId[i] = 0;
+    treeVars.muonMaxEneEcalDetIdCrossed[i] = 0;
+    
+    treeVars.muonTkLengthInEcalApprox_TkAss[i] = 0.;
+    treeVars.muonTkLengthInEcalDetail_TkAss[i] = 0.;
+    }
+    
+  } // TRACK ASSOCIATOR VARIABLES
+  */
+
+
 
   // TPG VARIABLES  
-  if(EcalTimePhyTreeContent::tpgVariables)
+  if(EcalTimePi0TreeContent::tpgVariables)
   {       
     treeVars.tpgNTowers = 0;
     treeVars.tpgNActiveTriggers = 0;
@@ -1401,7 +1325,7 @@ void initializeBranches(TTree* chain, EcalTimePhyTreeContent& treeVars)
 
 
   // L1 VARIABLES
-  if(EcalTimePhyTreeContent::l1Variables)
+  if(EcalTimePi0TreeContent::l1Variables)
   {
     treeVars.l1NActiveTriggers = 0;
     treeVars.l1GtNEm = 0;

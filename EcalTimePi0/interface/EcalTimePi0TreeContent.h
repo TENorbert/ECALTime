@@ -1,31 +1,24 @@
-#ifndef EcalTimePhyTreeContent_h
-#define EcalTimePhyTreeContent_h
+#ifndef EcalTimePi0TreeContent_h
+#define EcalTimePi0TreeContent_h
 
 #include "TChain.h" 
-#include <iostream> // needed only for debug...
 
-#define MAXSC 50
-#define MAXC 200
-#define MAXXTALINC 25 // CAUTION: 
-                      // if you change this, you need to change by hand the hard-coded '25' which is in "chain -> Branch("xtalInBCHashedIndex",..." in EcalTimePhyTreeContent.cc
-#define MAXVTX 40
+#define MAXSC 100
+#define MAXC 100
+#define MAXXTAL 250
+#define MAXXTALINC 9
 #define MAXHCALRECHITS 100
 #define MAXCALOTOWERS 100
 #define MAXMU 20
 #define MAXTOWERSINTPGSUMMARY 100
 #define MAXL1OBJS 100
-#define MAXJET 10
-#define MAXELE 10
-#define MAXPHO 10
-#define MAXOBJ 50
 
 
-struct EcalTimePhyTreeContent
+struct EcalTimePi0TreeContent
 {
   // Flags
   static bool trgVariables;
   static bool ecalVariables;
-  static bool ecalShapeVariables;
   static bool hcalVariables;
   static bool muonVariables;
   static bool tkAssVariables;
@@ -34,15 +27,11 @@ struct EcalTimePhyTreeContent
   
   
   unsigned int runId;
-  unsigned int lumiSection;
-  unsigned int unixTime; /// Time in seconds since January 1, 1970.
-  unsigned int orbit;
-  unsigned int bx;
   unsigned int eventId;
   unsigned int eventNaiveId;
   unsigned int timeStampLow;
   unsigned int timeStampHigh;
-  int          trgCut ;
+  
   
   
   //trigger variables
@@ -64,8 +53,9 @@ struct EcalTimePhyTreeContent
   int nSuperClusters;
   int nBarrelSuperClusters;
   int nEndcapSuperClusters;
-  float SCPIdx[MAXSC] ;
+  int superClusterType[MAXSC];
   float superClusterRawEnergy[MAXSC];
+  float superClusterEnergySum[MAXSC]; // not using intercalibration constants
   float superClusterPhiWidth[MAXSC];
   float superClusterEtaWidth[MAXSC];
   float superClusterPhi[MAXSC];
@@ -73,19 +63,15 @@ struct EcalTimePhyTreeContent
   float superClusterX[MAXSC];
   float superClusterY[MAXSC];
   float superClusterZ[MAXSC];
-  float superClusterVertexX[MAXSC];
-  float superClusterVertexY[MAXSC];
-  float superClusterVertexZ[MAXSC];
-  float sMin[MAXSC];
-  float sMaj[MAXSC];
 
   int nClustersInSuperCluster[MAXSC];  
+  int clusterIndexInSuperCluster[MAXSC];
+  int nXtalsInSuperCluster[MAXSC];
   int xtalIndexInSuperCluster[MAXSC];
-    
-  // basic cluster variables	
+  
+  
+  //cluster variables	
   int nClusters;
-  int   clusterMom[MAXC];
-  float CPIdx[MAXC] ;
   float clusterEnergy[MAXC];
   float clusterTransverseEnergy[MAXC];
   float clusterE1[MAXC];
@@ -98,10 +84,11 @@ struct EcalTimePhyTreeContent
   unsigned int clusterMaxId[MAXC];
   unsigned int cluster2ndId[MAXC];
   
-  int nXtalsInCluster[MAXC];    
+  int nXtalsInCluster[MAXC];
+  int xtalIndexInCluster[MAXC];
   
   
-  // clustershape variables for basic clusters
+  //clustershape variables    
   float clusterE2x2[MAXC];
   float clusterE3x2[MAXC];
   float clusterE3x3[MAXC];
@@ -120,37 +107,27 @@ struct EcalTimePhyTreeContent
   float clusterEtaLat[MAXC];
   float clusterZernike20[MAXC];
   float clusterZernike42[MAXC];
-
-  // xtal variables inside a basic cluster
+  
+  
+  // xtal variables
+  int nXtals;
+  int xtalHashedIndex[MAXXTAL];
+  float xtalEnergy[MAXXTAL];
+  float xtalTime[MAXXTAL];
+  float xtalTkLength[MAXXTAL];
+  float xtalTkLengthCurved[MAXXTAL];
+  
+ 
+  // xtal variables inside a cluster
   int   xtalInBCHashedIndex[MAXC][MAXXTALINC];
-  int   xtalInBCIEta[MAXC][MAXXTALINC];
-  int   xtalInBCIPhi[MAXC][MAXXTALINC];
-  float xtalInBCEta[MAXC][MAXXTALINC];
-  float xtalInBCPhi[MAXC][MAXXTALINC];
+  int   xtalInBCIeta[MAXC][MAXXTALINC];
+  int   xtalInBCIphi[MAXC][MAXXTALINC];
   int   xtalInBCIx[MAXC][MAXXTALINC];
   int   xtalInBCIy[MAXC][MAXXTALINC];
   int   xtalInBCFlag[MAXC][MAXXTALINC];
   float xtalInBCEnergy[MAXC][MAXXTALINC];
   float xtalInBCTime[MAXC][MAXXTALINC];
-  float xtalInBCTimeErr[MAXC][MAXXTALINC];
-  float xtalInBCAmplitudeADC[MAXC][MAXXTALINC];
-  float xtalInBCChi2[MAXC][MAXXTALINC];
-  float xtalInBCOutOfTimeChi2[MAXC][MAXXTALINC];
-  float xtalInBCSwissCross[MAXC][MAXXTALINC];
     
-  // vertex variables
-  int   nVertices;
-  bool  vtxIsFake[MAXVTX];
-  int   vtxNTracks[MAXVTX];
-  float vtxChi2[MAXVTX];
-  float vtxNdof[MAXVTX];
-  float vtxX[MAXVTX];
-  float vtxDx[MAXVTX];
-  float vtxY[MAXVTX];
-  float vtxDy[MAXVTX];
-  float vtxZ[MAXVTX];
-  float vtxDz[MAXVTX];
-
   
   // hcal variables
   int   hbNRecHits;
@@ -169,55 +146,8 @@ struct EcalTimePhyTreeContent
   float caloTowerHadEta[MAXCALOTOWERS];
   float caloTowerHadPhi[MAXCALOTOWERS];
   
-  // reco variables
-
-  int   nJets ;
-  float jetPx[MAXJET];
-  float jetPy[MAXJET];
-  float jetPz[MAXJET];
-  float jetE[MAXJET];
-  float jetNDau[MAXJET] ;
-  float jetCM[MAXJET] ;
-  float jetCEF[MAXJET] ;
-  float jetNHF[MAXJET] ;
-  float jetNEF[MAXJET] ;
   
-  float metPx;
-  float metPy;
-  float met;
-
-  int   nElectrons ;
-  float elePx[MAXELE];
-  float elePy[MAXELE];
-  float elePz[MAXELE];
-  float eleE[MAXELE];
-  float eleEcalIso[MAXELE];
-  float eleHcalIso[MAXELE];
-  float eleTrkIso[MAXELE];
-  float eleNLostHits[MAXELE];
-
-  int   nMuons ;
-  float muPx[MAXMU];
-  float muPy[MAXMU];
-  float muPz[MAXMU];
-  float muE[MAXMU];
-  float muEcalIso[MAXMU];
-  float muHcalIso[MAXMU];
-  float muTrkIso[MAXMU];
-
-  int   nPhotons ;
-  float phoPx[MAXPHO];
-  float phoPy[MAXPHO];
-  float phoPz[MAXPHO];
-  float phoE[MAXPHO];
-  float phoEcalIso[MAXPHO];
-  float phoHcalIso[MAXPHO];
-  float phoTrkIso[MAXPHO];
-  float phoHovE[MAXPHO];
-  float phoSmin[MAXPHO];
-  float phoSmaj[MAXPHO];
-  float phoTime[MAXPHO];
-
+  
   // muon variables
   int nRecoMuons;
   float muonX[MAXMU];
@@ -313,6 +243,11 @@ struct EcalTimePhyTreeContent
   float muonTkLengthInEcalDetailCurved[MAXMU];
   float muonTkLengthInEcalDetailCurved_high[MAXMU];
   float muonTkLengthInEcalDetailCurved_low[MAXMU];
+
+  //float muonNecklaceSize[MAXMU];
+  //float muonNecklaceX[MAXMU][5000];
+  //float muonNecklaceY[MAXMU][5000];
+  //float muonNecklaceZ[MAXMU][5000];
   
   float muonTkInternalPointInEcalX[MAXMU];
   float muonTkInternalPointInEcalY[MAXMU];
@@ -369,8 +304,8 @@ struct EcalTimePhyTreeContent
   
   // TPG variables
   int   tpgNTowers;
-  int   tpgIEta[MAXTOWERSINTPGSUMMARY];
-  int   tpgIPhi[MAXTOWERSINTPGSUMMARY];
+  int   tpgIeta[MAXTOWERSINTPGSUMMARY];
+  int   tpgIphi[MAXTOWERSINTPGSUMMARY];
   int   tpgNbOfXtals[MAXTOWERSINTPGSUMMARY];
   float tpgEnRec[MAXTOWERSINTPGSUMMARY];
   int   tpgADC[MAXTOWERSINTPGSUMMARY];
@@ -378,8 +313,8 @@ struct EcalTimePhyTreeContent
   int   tpgActiveTriggers[128];
 
   int tpEmulNTowers;
-  int tpEmulIEta[MAXTOWERSINTPGSUMMARY];
-  int tpEmulIPhi[MAXTOWERSINTPGSUMMARY];
+  int tpEmulIeta[MAXTOWERSINTPGSUMMARY];
+  int tpEmulIphi[MAXTOWERSINTPGSUMMARY];
   int tpEmulADC1[MAXTOWERSINTPGSUMMARY];
   int tpEmulADC2[MAXTOWERSINTPGSUMMARY];
   int tpEmulADC3[MAXTOWERSINTPGSUMMARY];
@@ -389,8 +324,6 @@ struct EcalTimePhyTreeContent
   // l1Variables
   int l1NActiveTriggers;
   int l1ActiveTriggers[128];
-  int l1NActiveTechTriggers;
-  int l1ActiveTechTriggers[128];
   
   //GT +-1BX
   int l1GtNEm;
@@ -518,13 +451,15 @@ struct EcalTimePhyTreeContent
 };
 
 
-//typedef EcalTimePhyTreeContent EcalTimeTreeContent;
+
+
+
 
 
 // ------------------------------------------------------------------------
 //! branch addresses settings
 
-void setBranchAddresses(TTree* chain, EcalTimePhyTreeContent& treeVars);
+void setBranchAddresses(TTree* chain, EcalTimePi0TreeContent& treeVars);
 
 
 
@@ -534,7 +469,7 @@ void setBranchAddresses(TTree* chain, EcalTimePhyTreeContent& treeVars);
 // ------------------------------------------------------------------------
 //! create branches for a tree
 
-void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars);
+void setBranches(TTree* chain, EcalTimePi0TreeContent& treeVars);
 
 
 
@@ -544,7 +479,7 @@ void setBranches(TTree* chain, EcalTimePhyTreeContent& treeVars);
 // ------------------------------------------------------------------------
 //! initialize branches
 
-void initializeBranches(TTree* chain, EcalTimePhyTreeContent& treeVars);
+void initializeBranches(TTree* chain, EcalTimePi0TreeContent& treeVars);
 
 
 
