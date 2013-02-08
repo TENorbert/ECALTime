@@ -146,7 +146,7 @@ double AoSigmaBins_[33] = {0,  10,  18,
                            92, 102, 116, 144, 172,
                            240,320, 400, 480, 560, 
 			   650, 800, 1000, 1200, 1500,
-                           1900, 2400, 3000, 3700, 4000}; //25 bins in total
+                           1900, 2400, 3000, 3700, 4000}; //32 bins in total
 int    AoSigmaNBins_     = 32;    // (counting to be updated) 300 combinations between different bins; + 25 self-combinations =-> 325 in total
                                   // check above that numAeffBins is set to a value equal or larger than this (==325)
 int    AoSigmaNPairs_    = (AoSigmaNBins_)*(AoSigmaNBins_-1)/2 + AoSigmaNBins_;
@@ -2071,7 +2071,7 @@ void doSingleClusterResolutionPlots(std::set<int> bcIndicies, bool isAfterPi0Sel
   	    int v = bin%(AoSigmaNBins_+2) -1;
   	    int u = bin/(AoSigmaNBins_+2) -1;
 	    
-  	    if(u<AoSigmaNBins_ && v<AoSigmaNBins_){
+  	    if(u<numAoSigmaBins && v<numAoSigmaBins){
  	      dtSliceVSAoSigmaEB_[v][u][0]->Fill(dtSyst); // here add topological selection for other values of k 
  	      dtSliceVSAoSigmaEB_[v][u][1]->Fill(dtSyst); // here add topological selection for other values of k 
  	      dtSliceVSAoSigmaEB_[v][u][2]->Fill(dtSyst); // here add topological selection for other values of k 
@@ -3047,11 +3047,14 @@ std::set<int> makeUniqueList1D(SetOfIntPairs myPairs)
 
 
 // ---------------------------------------------------------------------------------------
-//! main program
 int main (int argc, char** argv)
 {
   // First parse arguments
   parseArguments(argc, argv);
+  
+  if(numAeffBins<=AoSigmaNBins_) std::cout << "\tit must be: numAeffBins>=AoSigmaNBins_ but the values are: " << numAeffBins<<" "<< AoSigmaNBins_ << " you'll crash/bail out\n\n\n" << std::endl;
+  else std::cout << "\tit must be: numAeffBins=>AoSigmaNBins_ ;  values are: " << numAeffBins <<" " <<  AoSigmaNBins_ << " you're fine\n\n" << std::endl;
+  assert( numAeffBins>=AoSigmaNBins_ );
 
   if (listOfFiles_.size()==0){
     std::cout << "\tno input file found" << std::endl;
