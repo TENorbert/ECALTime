@@ -13,7 +13,7 @@ Implementation:
 //
 // Authors:                   Shih-Chuan Kao, Giovanni Franzoni (UMN)
 //         Created:  Mo Jul 14 5:46:22 CEST 2008
-// $Id: EcalTimePhyTreeMaker.cc,v 1.3 2011/10/31 14:07:00 sckao Exp $
+// $Id: EcalTimePhyTreeMaker.cc,v 1.12 2012/01/24 17:17:37 sckao Exp $
 //
 //
 
@@ -62,7 +62,7 @@ using namespace std ;
 EcalTimePhyTreeMaker::EcalTimePhyTreeMaker (const edm::ParameterSet& iConfig) :
   barrelEcalRecHitCollection_              (iConfig.getParameter<edm::InputTag> ("barrelEcalRecHitCollection")),
   endcapEcalRecHitCollection_              (iConfig.getParameter<edm::InputTag> ("endcapEcalRecHitCollection")),
-  barrelBasicClusterCollection_            (iConfig.getParameter<edm::InputTag> ("barrelBasicClusterCollection")),
+  barrelBasicClusterCollection_            (iConfig.getParameter<edm::InputTag> ("barrelBasicClusterCollection")),//GF
   endcapBasicClusterCollection_            (iConfig.getParameter<edm::InputTag> ("endcapBasicClusterCollection")),
   barrelSuperClusterCollection_            (iConfig.getParameter<edm::InputTag> ("barrelSuperClusterCollection")),
   endcapSuperClusterCollection_            (iConfig.getParameter<edm::InputTag> ("endcapSuperClusterCollection")),
@@ -72,24 +72,24 @@ EcalTimePhyTreeMaker::EcalTimePhyTreeMaker (const edm::ParameterSet& iConfig) :
   MuonSource_                           (iConfig.getParameter<edm::InputTag> ("MuonSource")),
   ElectronSource_                       (iConfig.getParameter<edm::InputTag> ("ElectronSource")),
   PhotonSource_                         (iConfig.getParameter<edm::InputTag> ("PhotonSource")),
-  vertexCollection_                        (iConfig.getParameter<edm::InputTag> ("vertexCollection")),
-  l1GMTReadoutRecTag_   (iConfig.getUntrackedParameter<std::string> ("L1GlobalReadoutRecord","gtDigis")),
-  gtRecordCollectionTag_ (iConfig.getUntrackedParameter<std::string> ("GTRecordCollection","")),
+  triggerSource_                        (iConfig.getParameter<edm::InputTag> ("triggerSource")),
+  vertexCollection_                     (iConfig.getParameter<edm::InputTag> ("vertexCollection")),
+  l1GMTReadoutRecTag_   (iConfig.getParameter<std::string> ("L1GlobalReadoutRecord")),
+  gtRecordCollectionTag_ (iConfig.getParameter<std::string> ("GTRecordCollection")),
   runNum_               (iConfig.getParameter<int> ("runNum")),
   minEtEB_              (iConfig.getParameter<double> ("minEtEB")),
   minEtEE_              (iConfig.getParameter<double> ("minEtEE")),
   jetCuts_              (iConfig.getParameter<std::vector<double> >("jetCuts")),
-  metCuts_              (iConfig.getParameter<std::vector<double> >("metCuts")),
   photonCuts_           (iConfig.getParameter<std::vector<double> >("photonCuts")),
+  photonIso_            (iConfig.getParameter<std::vector<double> >("photonIso")),
   electronCuts_         (iConfig.getParameter<std::vector<double> >("electronCuts")),
   muonCuts_             (iConfig.getParameter<std::vector<double> >("muonCuts")),
-  fileName_             (iConfig.getUntrackedParameter<std::string> ("fileName", std::string ("EcalTimePhyTreeMaker"))),
+  fileName_             (iConfig.getParameter<std::string> ("fileName")),
+  trgheader_            (iConfig.getUntrackedParameter<std::string>("triggerHeader")),
+  trgbody_              (iConfig.getUntrackedParameter<std::string> ("triggerBody")),
+  doTimeVSAmpliCorrection_(iConfig.getParameter<bool> ("doTimeVSAmpliCorrection")),
   naiveId_ (0)              
-
 {
-  // TrackAssociator parameters // gfwork: can we remove this? 
-  edm::ParameterSet trkParameters = iConfig.getParameter<edm::ParameterSet> ("TrackAssociatorParameters") ;
-  trackParameters_.loadParameters ( trkParameters ) ;
 
   // Create File
   fileName_ += "_"+intToString (runNum_)+".root" ;
@@ -99,6 +99,10 @@ EcalTimePhyTreeMaker::EcalTimePhyTreeMaker (const edm::ParameterSet& iConfig) :
   // Initialize Tree
   tree_ = new TTree ( "EcalTimeAnalysis","EcalTimeAnalysis" ) ;
   setBranches (tree_, myTreeVariables_) ;
+  
+  // initialize the time corrector
+  theTimeCorrector_.initEB("EB");
+  theTimeCorrector_.initEE("EElow");
 
 }
 
@@ -169,7 +173,9 @@ void EcalTimePhyTreeMaker::analyze (const edm::Event& iEvent, const edm::EventSe
       LogWarning ("EcalTimePhyTreeMaker") << barrelSuperClusterCollection_ 
                                      << " not available" ;
       return ;
-    }
+    } else {
+    //std::cout << "EB superclusters: " << barrelSuperClusterCollection_ << std::endl; 
+  }
   
   // Endcap SuperClusters
   edm::Handle<reco::SuperClusterCollection> pEndcapSuperClusters ;
@@ -187,14 +193,16 @@ void EcalTimePhyTreeMaker::analyze (const edm::Event& iEvent, const edm::EventSe
   // Barrel BasicClusters
   edm::Handle<reco::BasicClusterCollection> pBarrelBasicClusters ;
   iEvent.getByLabel (barrelBasicClusterCollection_, pBarrelBasicClusters) ;
-  const reco::BasicClusterCollection* theBarrelBasicClusters = pBarrelBasicClusters.product () ;
+  const reco::BasicClusterCollection* theBarrelBasicClusters = pBarrelBasicClusters.product () ;//GF
 
   if (! (pBarrelBasicClusters.isValid ()) )
     {
       LogWarning ("EcalTimePhyTreeMaker") << barrelBasicClusterCollection_ 
                                      << " not available" ;
       return ;
-    }
+    }else {
+    //std::cout << "EB basiclusters: " << barrelBasicClusterCollection_ << std::endl; 
+  }
 
   // Endcap BasicClusters
   edm::Handle<reco::BasicClusterCollection> pEndcapBasicClusters ;
@@ -208,6 +216,10 @@ void EcalTimePhyTreeMaker::analyze (const edm::Event& iEvent, const edm::EventSe
       return ;
     }
  
+  Handle<reco::VertexCollection> recVtxs;
+  iEvent.getByLabel(vertexCollection_, recVtxs);
+  const reco::VertexCollection * theRecVtxs = recVtxs.product();
+
   // ClusterShapes
   EcalClusterLazyTools* lazyTools = new EcalClusterLazyTools(iEvent, iSetup, barrelEcalRecHitCollection_, endcapEcalRecHitCollection_);
 
@@ -217,50 +229,57 @@ void EcalTimePhyTreeMaker::analyze (const edm::Event& iEvent, const edm::EventSe
   std::map<int,float> XtalMapCurved_high ;
   std::map<int,float> XtalMapCurved_low ;
 
-  // GFdoc initialize variables to 0/false
-  initializeBranches(tree_, myTreeVariables_);
+  // Trigger Selection
+  //  int HLTCut = HLTSelection( iEvent, 75, "HLT_Photon", "_CaloIdVL_IsoL" ) ;
+  int HLTCut = HLTSelection( iEvent, 75, trgheader_, trgbody_ ) ;
+
+
+  if ( HLTCut >= 75 ) {
+
+     // GFdoc initialize variables to 0/false
+     initializeBranches(tree_, myTreeVariables_);
   
-  myTreeVariables_.bx          = iEvent.bunchCrossing();
-  myTreeVariables_.lumiSection = iEvent.id().luminosityBlock();
-  myTreeVariables_.unixTime    = iEvent.eventAuxiliary().time().unixTime();
-  myTreeVariables_.orbit       = iEvent.orbitNumber();
+     // Initialize Counter for SCluster and Cluster
+     numberOfSuperClusters = 0;
+     numberOfClusters = 0;
+     sclist.clear() ;
+
+     bool passed = dumpEvtObjectInfo( iEvent ) ;
+     if ( passed ) {
+
+        myTreeVariables_.bx          = iEvent.bunchCrossing();
+	myTreeVariables_.lumiSection = iEvent.id().luminosityBlock();
+	myTreeVariables_.unixTime    = iEvent.eventAuxiliary().time().unixTime();
+	myTreeVariables_.orbit       = iEvent.orbitNumber();
+
+	myTreeVariables_.runId         = iEvent.id ().run () ;
+	myTreeVariables_.eventId       = iEvent.id ().event () ;
+	myTreeVariables_.eventNaiveId  = naiveId_ ;
+	myTreeVariables_.timeStampLow  = ( 0xFFFFFFFF & iEvent.time ().value () ) ;
+	myTreeVariables_.timeStampHigh = ( iEvent.time ().value () >> 32 ) ;
+	myTreeVariables_.trgCut        = HLTCut ;
+
+        dump3Ginfo(iEvent, iSetup, myTreeVariables_) ;
   
-  myTreeVariables_.runId         = iEvent.id ().run () ;
-  myTreeVariables_.eventId       = iEvent.id ().event () ;
-  myTreeVariables_.eventNaiveId  = naiveId_ ;
-  myTreeVariables_.timeStampLow  = ( 0xFFFFFFFF & iEvent.time ().value () ) ;
-  myTreeVariables_.timeStampHigh = ( iEvent.time ().value () >> 32 ) ;
-
-  Handle<reco::VertexCollection> recVtxs;
-  iEvent.getByLabel(vertexCollection_, recVtxs);
-  const reco::VertexCollection * theRecVtxs = recVtxs.product();
-
-  // Initialize Counter for SCluster and Cluster
-  numberOfSuperClusters = 0;
-  numberOfClusters = 0;
-  sclist.clear() ;
-
-  bool passed = dumpEvtObjectInfo( iEvent ) ;
-
-  if ( passed ) {
-     dump3Ginfo(iEvent, iSetup, myTreeVariables_) ;
-  
-     dumpBarrelClusterInfo(iEvent, theGeometry, theCaloTopology,
+	dumpBarrelClusterInfo(iEvent, theGeometry, theCaloTopology,
 			theBarrelEcalRecHits, 
 			theBarrelBasicClusters, theBarrelSuperClusters, lazyTools, XtalMap, XtalMapCurved, myTreeVariables_) ;
-     dumpEndcapClusterInfo(iEvent, theGeometry, theCaloTopology,
+	dumpEndcapClusterInfo(iEvent, theGeometry, theCaloTopology,
 			theEndcapEcalRecHits, 
 			theEndcapBasicClusters, theEndcapSuperClusters, lazyTools, XtalMap, XtalMapCurved, myTreeVariables_) ;
 
-     dumpJetBarrelClusterInfo(iEvent, theGeometry, theCaloTopology, theBarrelEcalRecHits, 
-                           theBarrelBasicClusters, lazyTools, XtalMap, XtalMapCurved ) ;
-     dumpJetEndcapClusterInfo(iEvent, theGeometry, theCaloTopology, theEndcapEcalRecHits, 
-                           theEndcapBasicClusters, lazyTools, XtalMap, XtalMapCurved ) ;
+	dumpJetBarrelClusterInfo(iEvent, theGeometry, theCaloTopology, theBarrelEcalRecHits, 
+			theBarrelBasicClusters, lazyTools, XtalMap, XtalMapCurved ) ;
+	dumpJetEndcapClusterInfo(iEvent, theGeometry, theCaloTopology, theEndcapEcalRecHits, 
+                        theEndcapBasicClusters, lazyTools, XtalMap, XtalMapCurved ) ;
   
-     dumpVertexInfo(theRecVtxs, myTreeVariables_);
+	dumpVertexInfo(theRecVtxs, myTreeVariables_);
 
-     tree_ -> Fill();
+        tree_ -> Fill();
+     }
   }
+  delete lazyTools;
+
 }
 
 
@@ -306,8 +325,45 @@ std::string EcalTimePhyTreeMaker::intToString (int num)
 
 
 // -----------------------------------------------------------------------------------------
+int EcalTimePhyTreeMaker::HLTSelection( const edm::Event& iEvent, int cutVal, string str_head, string str_body ) {
+
+   Handle<edm::TriggerResults> triggers;
+   iEvent.getByLabel( triggerSource_, triggers );
+
+   //cout<<" ** Trigger size = "<< triggers->size() <<endl;
+   const edm::TriggerNames& trgNames = iEvent.triggerNames( *triggers );
+   
+   int cutSize = ( cutVal > 99 ) ? 3 : 2 ;
+   int trgWordSize = str_head.size() + str_body.size() + cutSize + 3 ; //  3 -> _vX
+
+   int trgResult = 0 ;
+   for ( size_t i =0 ; i < trgNames.size(); i++ ) {
+       string tName  = trgNames.triggerName( i );
+       if  ( (int) tName.size() < trgWordSize ) continue ;
+       string strhead = tName.substr(0, str_head.size() ) ;
+       string strPt   = tName.substr( str_head.size() , cutSize ) ;
+       int cutPt      =  atoi ( strPt.c_str() ) ;
+       string strbody = tName.substr( str_head.size() + cutSize , str_body.size() ) ;
+       //string strend = tName.substr( trgWordSize-3 ,3) ;
+       if ( strhead == str_head && strbody == str_body && cutPt >= cutVal) {
+          int trgIndex  = trgNames.triggerIndex(tName);
+          int accept    = triggers->accept(trgIndex);
+          if ( accept == 1 ) trgResult += cutPt ;
+          //if ( accept == 0 ) trgResult = 0 ;
+          //cout<<" -> "<< strhead << cutPt << strbody << strend <<" = "<< trgResult <<endl;
+       }
+   }
+   return trgResult ;
+
+}
+
+
 bool EcalTimePhyTreeMaker::dumpEvtObjectInfo (const edm::Event& iEvent )
 {
+  // applies selection to physics objects and store them (for possible later usage)
+  // with thos objects, applies event-based selection
+  // if event passes selection, store objects into ntuple
+
    edm::Handle<reco::PhotonCollection> photons; 
    edm::Handle<reco::GsfElectronCollection> electrons; 
    edm::Handle<reco::MuonCollection> muons; 
@@ -320,8 +376,17 @@ bool EcalTimePhyTreeMaker::dumpEvtObjectInfo (const edm::Event& iEvent )
    iEvent.getByLabel(JetSource_, jets);
    iEvent.getByLabel(METSource_, mets);
    
+   // Ecal barrel RecHits 
+   edm::Handle<EcalRecHitCollection> pBarrelEcalRecHits ;
+   iEvent.getByLabel (barrelEcalRecHitCollection_, pBarrelEcalRecHits) ;
+  
+   // Ecal endcap RecHits
+   edm::Handle<EcalRecHitCollection> pEndcapEcalRecHits ;
+   iEvent.getByLabel (endcapEcalRecHitCollection_, pEndcapEcalRecHits) ;
+
+  
    for(reco::PFMETCollection::const_iterator it = mets->begin(); it != mets->end(); it++) {
-       if ( it->pt() < metCuts_[0]  ) continue ;
+       if ( it->pt() < jetCuts_[4]  ) continue ;
        myTreeVariables_.met = it->et() ;
        myTreeVariables_.metPx = it->px() ;
        myTreeVariables_.metPy = it->py() ;
@@ -331,12 +396,14 @@ bool EcalTimePhyTreeMaker::dumpEvtObjectInfo (const edm::Event& iEvent )
    for(reco::PFJetCollection::const_iterator it = jets->begin(); it != jets->end(); it++) {
        if ( it->pt() < jetCuts_[0] || fabs( it->eta() ) > jetCuts_[1] ) continue ;
        // Jet ID cuts
+       /*
        if ( it->numberOfDaughters() < 2 )               continue ;
        if ( it->chargedEmEnergyFraction() >= 0.99 )     continue ;
        if ( it->neutralHadronEnergyFraction() >= 0.99 ) continue ;
        if ( it->neutralEmEnergyFraction() >= 0.99 )     continue ;
        if ( fabs( it->eta() ) < 2.4 && it->chargedHadronEnergyFraction() <=0 ) continue ;
        if ( fabs( it->eta() ) < 2.4 && it->chargedMultiplicity() <=0 ) continue ;
+       */
        selectedJets.push_back( &(*it) ) ;
    }
 
@@ -345,14 +412,20 @@ bool EcalTimePhyTreeMaker::dumpEvtObjectInfo (const edm::Event& iEvent )
    for(reco::GsfElectronCollection::const_iterator it = electrons->begin(); it != electrons->end(); it++) {
        if ( it->pt() < electronCuts_[0] || fabs( it->eta() ) > electronCuts_[1] ) continue ;
        //double relIso =  ( it->chargedHadronIso()+ it->neutralHadronIso() + it->photonIso () ) / it->pt();
-       double relIso = 0. ;
+       // Isolation Cuts
+       float ecalSumEt = ( it->isEB() ) ? max(0., it->dr03EcalRecHitSumEt() - 1. ) : it->dr03EcalRecHitSumEt();
+       float hcalSumEt = it->dr03HcalTowerSumEt();
+       float trkSumPt  = it->dr03TkSumPt();
+       double relIso   = (ecalSumEt + hcalSumEt + trkSumPt) / it->pt() ;
        if ( relIso > electronCuts_[2] ) continue ;
+
        double dR = 999. ;
        for (size_t j=0; j < selectedJets.size(); j++ ) {
            double dR_ =  ROOT::Math::VectorUtil::DeltaR( it->p4(), selectedJets[j]->p4() ) ;
            if ( dR_ < dR ) dR = dR_ ;
        }
        if ( dR <= electronCuts_[3] ) continue ;
+
        double nLost = it->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() ;
        if ( nLost >= 2 ) continue ;
        eidx += 0.1 ;
@@ -387,12 +460,34 @@ bool EcalTimePhyTreeMaker::dumpEvtObjectInfo (const edm::Event& iEvent )
    float gidx = 22.0 ;
    for(reco::PhotonCollection::const_iterator it = photons->begin(); it != photons->end(); it++) {
        if ( it->pt() < photonCuts_[0] || fabs( it->eta() ) > photonCuts_[1] ) continue ;
+
+       //float hcalIsoRatio = it->hcalTowerSumEtConeDR04() / it->pt() ;
+       //if  ( ( hcalIsoRatio + it->hadronicOverEm() )*it->energy() >=  photonCuts_[2] ) continue ;
+
+       // S_Minor Cuts from the seed cluster
+       reco::CaloClusterPtr SCseed = it->superCluster()->seed() ;
+       const EcalRecHitCollection* rechits = ( it->isEB()) ? pBarrelEcalRecHits.product () : pEndcapEcalRecHits.product() ;
+       Cluster2ndMoments moments = EcalClusterTools::cluster2ndMoments(*SCseed, *rechits);
+       float sMin =  moments.sMin  ;
+       if ( sMin <= photonCuts_[5] || sMin >= photonCuts_[6] ) continue ;
+
+       // Isolation cuts 
+       /* 
+       float ecalSumEt = it->ecalRecHitSumEtConeDR04();
+       float hcalSumEt = it->hcalTowerSumEtConeDR04();
+       float trkSumPt  = it->trkSumPtSolidConeDR04();
+       
+       bool trkIso  = ( ( trkSumPt / it->pt())     < photonIso_[0] ) ; 
+       bool ecalIso = ( (ecalSumEt / it->energy()) < photonIso_[2] && ecalSumEt < photonIso_[1] ) ; 
+       bool hcalIso = ( (hcalSumEt / it->energy()) < photonIso_[4] && hcalSumEt < photonIso_[3] ) ; 
+       if ( !trkIso || !ecalIso || !hcalIso ) continue ;
        double dR = 999 ;
        for (size_t j=0; j < selectedJets.size(); j++ ) {
            double dR_ =  ROOT::Math::VectorUtil::DeltaR( it->p4(), selectedJets[j]->p4() ) ;
            if ( dR_ < dR ) dR = dR_ ;
        }
-       if ( dR <= photonCuts_[2] ) continue ;
+       if ( dR <= photonCuts_[3] ) continue ;
+       */ 
        gidx += 0.1 ;
        if ( !it->superCluster().isNull() ) sclist.push_back( make_pair(it->superCluster(), gidx ) );
        selectedPhotons.push_back( &(*it) ) ;
@@ -403,11 +498,13 @@ bool EcalTimePhyTreeMaker::dumpEvtObjectInfo (const edm::Event& iEvent )
    int nPho   = static_cast<int> ( selectedPhotons.size() ) ;
    int nMuon  = static_cast<int> ( selectedMuons.size() ) ;
 
+   // apply event-based selection
    bool pass = true ;
-   if ( nPho< photonCuts_[3] ) pass = false ;
-   if ( nJet < jetCuts_[3] ) pass = false ;
+   if ( nPho< photonCuts_[4] ) pass = false ;
+   if ( nJet < jetCuts_[2] )   pass = false ;
 
-   // fill out the information
+   // fill out the information for:
+   //%%%%%%% Jets 
    if ( pass ) {
       for ( size_t k=0; k< selectedJets.size(); k++ ) {
           if ( k >= 10 ) break ;
@@ -415,56 +512,76 @@ bool EcalTimePhyTreeMaker::dumpEvtObjectInfo (const edm::Event& iEvent )
 	  myTreeVariables_.jetPy[k] = selectedJets[k]->p4().Py() ;
 	  myTreeVariables_.jetPz[k] = selectedJets[k]->p4().Pz() ;
 	  myTreeVariables_.jetE[k]  = selectedJets[k]->p4().E()  ;
-       /*
-       const std::vector< reco::PFCandidatePtr > pfCands = selectedJets[k]->getPFConstituents() ;
-       cout<<" pfcand size = "<< pfCands.size() << endl;
-       for (size_t j=0; j< pfCands.size(); j++ ) {
-           const reco::PFCandidate::ElementsInBlocks pfElements = pfCands[j]->elementsInBlocks() ;
-           cout<<" Cand"<<j<<" have : "<<endl;
-           for ( size_t i=0; i< pfElements.size(); i++) {
-               reco::PFBlockRef blockRef = pfElements[i].first ;
-               unsigned idx        = pfElements[i].second ;
-               const edm::OwnVector< reco::PFBlockElement > &elements = blockRef.get()->elements() ;
-               cout<<"     element idx = "<< idx  << endl ;
-               //const reco::PFBlockElementCluster * pfClust =  
-               //      dynamic_cast<const reco::PFBlockElementCluster*>( *(&elements[idx]) ); 
-               //float eneclust  = pfClust->clusterRef()->energy();
-           }
-           //reco::SuperClusterRef scRefs = pfCands[j]->superClusterRef() ;
-           //if ( !scRefs.isNull() ) cout<<" raw E from Jet "<< scRefs.get()->rawEnergy() << endl;
-       }*/
+	  myTreeVariables_.jetNDau[k] = selectedJets[k]->numberOfDaughters() ;
+	  myTreeVariables_.jetCM[k]   = selectedJets[k]->chargedMultiplicity() ;
+	  myTreeVariables_.jetCEF[k]  = selectedJets[k]->chargedEmEnergyFraction() ;
+	  myTreeVariables_.jetNHF[k]  = selectedJets[k]->neutralHadronEnergyFraction() ;
+	  myTreeVariables_.jetNEF[k]  = selectedJets[k]->neutralEmEnergyFraction() ;
       }
       //cout<<" sc collection = "<< sclist.size() ; 
       //cout<<" N_e: "<< selectedElectrons.size() <<" N g: "<< selectedPhotons.size() ;
       //cout<<" N_m: "<< selectedMuons.size() <<" N_J:" << selectedJets.size() << endl;
       myTreeVariables_.nJets = nJet ;
 
-      for ( size_t k=0; k< selectedMuons.size(); k++ ) {
-          if ( k >= 10 ) break ;
-	  myTreeVariables_.muPx[k] = selectedMuons[k]->p4().Px() ;
-	  myTreeVariables_.muPy[k] = selectedMuons[k]->p4().Py() ;
-	  myTreeVariables_.muPz[k] = selectedMuons[k]->p4().Pz() ;
-	  myTreeVariables_.muE[k] = selectedMuons[k]->p4().E() ;
-      }
-      myTreeVariables_.nMuons = nMuon ;
-
+      //%%%%%%% Electrons 
       for ( size_t k=0; k< selectedElectrons.size(); k++ ) {
           if ( k >= 10 ) break ;
 	  myTreeVariables_.elePx[k] = selectedElectrons[k]->p4().Px() ;
 	  myTreeVariables_.elePy[k] = selectedElectrons[k]->p4().Py() ;
 	  myTreeVariables_.elePz[k] = selectedElectrons[k]->p4().Pz() ;
 	  myTreeVariables_.eleE[k] = selectedElectrons[k]->p4().E() ;
+          myTreeVariables_.eleEcalIso[k] = ( selectedElectrons[k]->isEB() ) ? 
+                                        max(0., selectedElectrons[k]->dr03EcalRecHitSumEt() - 1. ) : selectedElectrons[k]->dr03EcalRecHitSumEt();
+          myTreeVariables_.eleHcalIso[k] = selectedElectrons[k]->dr03HcalTowerSumEt() ;
+          myTreeVariables_.eleTrkIso[k]  = selectedElectrons[k]->dr03TkSumPt() ;
+          myTreeVariables_.eleNLostHits[k]  = selectedElectrons[k]->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() ;
       }
       myTreeVariables_.nElectrons = nEle ;
 
+      //%%%%%%% Photons 
       for ( size_t k=0; k< selectedPhotons.size(); k++ ) {
           if ( k >= 10 ) break ;
 	  myTreeVariables_.phoPx[k] = selectedPhotons[k]->p4().Px() ;
 	  myTreeVariables_.phoPy[k] = selectedPhotons[k]->p4().Py() ;
 	  myTreeVariables_.phoPz[k] = selectedPhotons[k]->p4().Pz() ;
 	  myTreeVariables_.phoE[k] = selectedPhotons[k]->p4().E() ;
+          myTreeVariables_.phoEcalIso[k] = selectedPhotons[k]->ecalRecHitSumEtConeDR04();
+          myTreeVariables_.phoHcalIso[k] = selectedPhotons[k]->hcalTowerSumEtConeDR04();
+          myTreeVariables_.phoTrkIso[k]  = selectedPhotons[k]->trkSumPtSolidConeDR04();
+          myTreeVariables_.phoHovE[k]  = selectedPhotons[k]->hadronicOverEm();
+
+          // S_Minor Cuts from the seed cluster
+	  reco::CaloClusterPtr SCseed = selectedPhotons[k]->superCluster()->seed() ;
+	  const EcalRecHitCollection* rechits = ( selectedPhotons[k]->isEB()) ? pBarrelEcalRecHits.product () : pEndcapEcalRecHits.product() ;
+	  Cluster2ndMoments moments = EcalClusterTools::cluster2ndMoments(*SCseed, *rechits);
+	  float sMin =  moments.sMin  ;
+	  float sMaj =  moments.sMaj  ;
+	  // seed Time 
+	  pair<DetId, float> maxRH = EcalClusterTools::getMaximum( *SCseed, rechits );
+	  DetId seedCrystalId = maxRH.first;
+	  EcalRecHitCollection::const_iterator seedRH = rechits->find(seedCrystalId);
+	  float seedTime = (float)seedRH->time();
+
+          myTreeVariables_.phoSmin[k] = sMin ;
+          myTreeVariables_.phoSmaj[k] = sMaj ;
+          myTreeVariables_.phoTime[k] = seedTime ;
+
       }
       myTreeVariables_.nPhotons = nPho ;
+
+      //%%%%%%% Muons 
+      for ( size_t k=0; k< selectedMuons.size(); k++ ) {
+          if ( k >= 10 ) break ;
+	  myTreeVariables_.muPx[k] = selectedMuons[k]->p4().Px() ;
+	  myTreeVariables_.muPy[k] = selectedMuons[k]->p4().Py() ;
+	  myTreeVariables_.muPz[k] = selectedMuons[k]->p4().Pz() ;
+	  myTreeVariables_.muE[k] = selectedMuons[k]->p4().E() ;
+          myTreeVariables_.muEcalIso[k] = selectedMuons[k]->isolationR05().emEt ;
+          myTreeVariables_.muHcalIso[k] = selectedMuons[k]->isolationR05().hadEt ;
+          myTreeVariables_.muTrkIso[k]  = selectedMuons[k]->isolationR05().sumPt ;
+      }
+      myTreeVariables_.nMuons = nMuon ;
+
    }
    return pass ;
 
@@ -484,7 +601,7 @@ void EcalTimePhyTreeMaker::dumpBarrelClusterInfo (const edm::Event& iEvent,
   // get number of of objects already present in the tree (none if dumpBarrelClusterInfo is called first)
   // this will be the index looping over the SC collection;
   //numberOfSuperClusters = myTreeVariables_.nSuperClusters;
-  // this will be the index looping over the BC collection;
+  //this will be the index looping over the BC collection;
   //numberOfClusters      = myTreeVariables_.nClusters;
 
   const EcalIntercalibConstantMap& icalMap = ical->getMap();
@@ -501,6 +618,7 @@ void EcalTimePhyTreeMaker::dumpBarrelClusterInfo (const edm::Event& iEvent,
        // matching SC from e, photon, mu
        bool getSC = false ;
        float objMatchId = -1 ;
+       // sclist holds list of SC's matched to any of the selected objects
        for ( size_t i=0; i< sclist.size(); i++) {
            if ( sclist[i].first.isNull() )     continue; 
            if ( sclist[i].first.get()->eta() == sclus->eta() && sclist[i].first.get()->phi() == sclus->phi() ) {
@@ -508,9 +626,17 @@ void EcalTimePhyTreeMaker::dumpBarrelClusterInfo (const edm::Event& iEvent,
               getSC = true ;
               objMatchId = sclist[i].second ;
               break ;
-           }
-       }
+           } // loop over SC's matched to object
+       }// loop over all SC's
        if ( !getSC ) continue ;
+
+       // sMin or sMaj cuts
+       reco::CaloClusterPtr SCseed = sclus->seed() ;
+       Cluster2ndMoments moments = EcalClusterTools::cluster2ndMoments(*SCseed, *theBarrelEcalRecHits );
+       float sMin =  moments.sMin  ;
+       float sMaj =  moments.sMaj  ;
+       myTreeVariables_.sMin[numberOfSuperClusters] = sMin ;
+       myTreeVariables_.sMaj[numberOfSuperClusters] = sMaj ;
 
        //    int numberOfXtalsInSuperCluster = 0 ;//counter for all xtals in supercluster 
        myTreeVariables_.SCPIdx[numberOfSuperClusters] = objMatchId ;
@@ -527,15 +653,12 @@ void EcalTimePhyTreeMaker::dumpBarrelClusterInfo (const edm::Event& iEvent,
        myTreeVariables_.superClusterPhiWidth[numberOfSuperClusters] = sclus -> phiWidth () ;
        myTreeVariables_.superClusterEtaWidth[numberOfSuperClusters] = sclus -> etaWidth () ;
 
-      
- // GF - FIXME : at some point we may want to loop only over BC's which are included inside a give SC
- // more natural. But even what we have (i.e. two separate loops) should not generate inconsistencies
-
-      ///////////////////////////////////////////////////////////////////////////////////////
-      // loop on barrel basic clusters from SC
+       
+       ///////////////////////////////////////////////////////////////////////////////////////
+       // loop on barrel basic clusters from SC
 
       for ( reco::CaloCluster_iterator  clus =  sclus->clustersBegin()  ;
-            clus != sclus->clustersEnd()  && numberOfClusters<MAXC;   ++clus) // loop on barrel Bclusters
+            clus != sclus->clustersEnd()  && numberOfClusters<MAXC;   ++clus) // loop on barrel Sclusters
           {
 
           double energy = (*clus)->energy () ;
@@ -562,8 +685,7 @@ void EcalTimePhyTreeMaker::dumpBarrelClusterInfo (const edm::Event& iEvent,
 	      detitr != clusterDetIds.end ()  && numberOfXtalsInCluster<MAXXTALINC; // && numberOfXtals<MAXXTAL ; 
 	      ++detitr)// loop on rechics of barrel basic clusters
 	   {
-
-	      // Here I use the "find" on a digi collection... I have been warned...   (GFdoc: ??)
+	      // Here I use the "find" on a recHit collection... I have been warned...   (GFdoc: ??)
    	      // GFdoc: check if DetId belongs to ECAL; if so, find it among those if this basic cluster
     	     if ( (detitr -> first).det () != DetId::Ecal) 
 	        { 
@@ -589,17 +711,17 @@ void EcalTimePhyTreeMaker::dumpBarrelClusterInfo (const edm::Event& iEvent,
 	     EcalRecHit myhit = (*thishit) ;
 	   
              // SIC Feb 14 2011 -- Add check on RecHit flags (takes care of spike cleaning in 42X)
-             uint32_t rhFlag = myhit.recoFlag();
-             if( !(rhFlag == EcalRecHit::kGood || rhFlag == EcalRecHit::kOutOfTime ||
-                 rhFlag == EcalRecHit::kPoorCalib) )
+             if( !( myhit.checkFlag(EcalRecHit::kGood) ||
+                    myhit.checkFlag(EcalRecHit::kOutOfTime) ||
+                    myhit.checkFlag(EcalRecHit::kPoorCalib) 
+		    ) 
+		 )
                  continue;
-	   
-	     // thisamp is the EB amplitude of the current rechit
+
+             // thisamp is the EB amplitude of the current rechit
 	     double thisamp  = myhit.energy () ;
-	     double thistime = myhit.time ();
 	     double thisChi2 = myhit.chi2 ();
 	     double thisOutOfTimeChi2 = myhit.outOfTimeChi2 ();
-
 	   
 	     EcalIntercalibConstantMap::const_iterator icalit = icalMap.find(detitr->first);
 	     EcalIntercalibConstant icalconst = 1;
@@ -634,7 +756,17 @@ void EcalTimePhyTreeMaker::dumpBarrelClusterInfo (const edm::Event& iEvent,
 	        std::swap (time, secondTime) ; 
 	        std::swap (maxDet, secDet) ;
 	     }
-
+	     
+	     GlobalPoint pos = theGeometry->getPosition((myhit).detid());
+	     myTreeVariables_.xtalInBCEta[numberOfClusters][numberOfXtalsInCluster]=      pos.eta();
+	     myTreeVariables_.xtalInBCPhi[numberOfClusters][numberOfXtalsInCluster]=      pos.phi();
+	     double thistime = myhit.time();
+	     if(doTimeVSAmpliCorrection_)  {
+	       thistime += theTimeCorrector_.getCorrection((float) thisamp/(icalconst*lasercalib*adcToGeV), pos.eta()  );
+	       //std::cout << "EB: " << thisamp << "\t" << ((float) thisamp/(icalconst*lasercalib*adcToGeV)) << "\t" << pos.eta() 
+	       //<< "\t\t" << theTimeCorrector_.getCorrection((float) thisamp/(icalconst*lasercalib*adcToGeV), pos.eta()  ) 
+	       //<< std::endl;
+	     } else { /* std::cout << "not doing correction " << std::endl;*/ }
 	   
 	    if(myhit.isTimeErrorValid())
               myTreeVariables_.xtalInBCTimeErr[numberOfClusters][numberOfXtalsInCluster]= myhit.timeError();
@@ -657,10 +789,6 @@ void EcalTimePhyTreeMaker::dumpBarrelClusterInfo (const edm::Event& iEvent,
             myTreeVariables_.xtalInBCSwissCross[numberOfClusters][numberOfXtalsInCluster] =
              EcalTools::swissCross(detitr->first,*theBarrelEcalRecHits,0.5);
 
-  
-	    GlobalPoint pos = theGeometry->getPosition((myhit).detid());
-	    myTreeVariables_.xtalInBCEta[numberOfClusters][numberOfXtalsInCluster]=      pos.eta();
-	    myTreeVariables_.xtalInBCPhi[numberOfClusters][numberOfXtalsInCluster]=      pos.phi();
 	   
 	    numberOfXtalsInCluster++ ; // increment number of crystals in basic cluster
 	   
@@ -770,6 +898,14 @@ void EcalTimePhyTreeMaker::dumpEndcapClusterInfo (const edm::Event& iEvent,
 
       if ( !getSC ) continue ;
 
+      // sMin or sMaj cuts
+      reco::CaloClusterPtr SCseed = sclus->seed() ;
+      Cluster2ndMoments moments = EcalClusterTools::cluster2ndMoments(*SCseed, *theEndcapEcalRecHits );
+      float sMin =  moments.sMin  ;
+      float sMaj =  moments.sMaj  ;
+      myTreeVariables_.sMin[numberOfSuperClusters] = sMin ;
+      myTreeVariables_.sMaj[numberOfSuperClusters] = sMaj ;
+
       myTreeVariables_.SCPIdx[numberOfSuperClusters] = objMatchId ;
       //cout<<" EE SC "<<numberOfSuperClusters<<"  objId: "<<objMatchId <<" ->"<< myTreeVariables_.SCPIdx[numberOfSuperClusters]<<endl;
       myTreeVariables_.nClustersInSuperCluster[numberOfSuperClusters] = sclus -> clustersSize () ;
@@ -787,7 +923,7 @@ void EcalTimePhyTreeMaker::dumpEndcapClusterInfo (const edm::Event& iEvent,
 
   ///////////////////////////////////////////////////////////////////////////////////////
    for ( reco::CaloCluster_iterator  clus =  sclus->clustersBegin()  ;
-         clus != sclus->clustersEnd()  && numberOfClusters<MAXC;   ++clus) // loop on barrel Bclusters
+         clus != sclus->clustersEnd()  && numberOfClusters<MAXC;   ++clus) // loop on barrel Sclusters
        {
 
          double energy = (*clus)->energy () ;
@@ -834,14 +970,15 @@ void EcalTimePhyTreeMaker::dumpEndcapClusterInfo (const edm::Event& iEvent,
              EcalRecHit myhit = (*thishit) ;
              
              // SIC Feb 14 2011 -- Add check on RecHit flags (takes care of spike cleaning in 42X)
-             uint32_t rhFlag = myhit.recoFlag();
-             if( !(rhFlag == EcalRecHit::kGood || rhFlag == EcalRecHit::kOutOfTime ||
-                   rhFlag == EcalRecHit::kPoorCalib) )
-               continue;
+             if( !( myhit.checkFlag(EcalRecHit::kGood) ||
+                    myhit.checkFlag(EcalRecHit::kOutOfTime) ||
+                    myhit.checkFlag(EcalRecHit::kPoorCalib) 
+		    ) 
+		 )
+                 continue;
 
 	     // thisamp is the EE amplitude of the current rechit
 	     double thisamp  = myhit.energy () ;
-	     double thistime = myhit.time ();
 	     double thisChi2 = myhit.chi2 ();
 	     double thisOutOfTimeChi2 = myhit.outOfTimeChi2 ();
 
@@ -881,7 +1018,21 @@ void EcalTimePhyTreeMaker::dumpEndcapClusterInfo (const edm::Event& iEvent,
                  std::swap (maxDet, secDet) ;
                }
 
-	      // xtal variables inside an endcap basic cluster 
+	     
+	     
+	     GlobalPoint pos = theGeometry->getPosition((myhit).detid());
+	     myTreeVariables_.xtalInBCEta[numberOfClusters][numberOfXtalsInCluster]=      pos.eta();
+	     myTreeVariables_.xtalInBCPhi[numberOfClusters][numberOfXtalsInCluster]=      pos.phi();
+	     
+	     double thistime = myhit.time ();
+	     if(doTimeVSAmpliCorrection_)  {
+	       thistime += theTimeCorrector_.getCorrection((float) thisamp/(icalconst*lasercalib*adcToGeV), pos.eta()  );
+	       //std::cout << "EE: " << thisamp << "\t" << ((float) thisamp/(icalconst*lasercalib*adcToGeV)) << "\t" << pos.eta() 
+	       // << "\t\t" << theTimeCorrector_.getCorrection((float) thisamp/(icalconst*lasercalib*adcToGeV), pos.eta()  ) 
+	       //<< std::endl;
+	     } else { /*std::cout << "not doing correction " << std::endl; */}
+
+	     // xtal variables inside an endcap basic cluster 
 	      myTreeVariables_.xtalInBCEnergy[numberOfClusters][numberOfXtalsInCluster]=      (float) thisamp;
 	      myTreeVariables_.xtalInBCTime[numberOfClusters][numberOfXtalsInCluster]=        (float) thistime;
 	      myTreeVariables_.xtalInBCHashedIndex[numberOfClusters][numberOfXtalsInCluster]= EEDetId (detitr -> first).hashedIndex () ; 
@@ -895,10 +1046,6 @@ void EcalTimePhyTreeMaker::dumpEndcapClusterInfo (const edm::Event& iEvent,
               myTreeVariables_.xtalInBCOutOfTimeChi2[numberOfClusters][numberOfXtalsInCluster]=thisOutOfTimeChi2;
               myTreeVariables_.xtalInBCSwissCross[numberOfClusters][numberOfXtalsInCluster] =
                 EcalTools::swissCross(detitr->first,*theEndcapEcalRecHits,0.5);
-
-              GlobalPoint pos = theGeometry->getPosition((myhit).detid());
-              myTreeVariables_.xtalInBCEta[numberOfClusters][numberOfXtalsInCluster]=      pos.eta();
-              myTreeVariables_.xtalInBCPhi[numberOfClusters][numberOfXtalsInCluster]=      pos.phi();
 
               numberOfXtalsInCluster++ ; // increment number of crystals in basic cluster
 	     
@@ -978,8 +1125,8 @@ void EcalTimePhyTreeMaker::dumpJetBarrelClusterInfo (const edm::Event& iEvent,
   const EcalIntercalibConstantMap& icalMap = ical->getMap();
   float adcToGeV = float(agc->getEBValue());
   
-      ///////////////////////////////////////////////////////////////////////////////////////
-      // loop on barrel basic clusters 
+  ///////////////////////////////////////////////////////////////////////////////////////
+  // loop on barrel basic clusters 
    bool getC = false;
    for (reco::BasicClusterCollection::const_iterator clus = theBarrelBasicClusters->begin () ;
         clus != theBarrelBasicClusters->end ()  && numberOfClusters<MAXC;  ++clus) {   
@@ -1013,6 +1160,7 @@ void EcalTimePhyTreeMaker::dumpJetBarrelClusterInfo (const edm::Event& iEvent,
           }
           if ( !getC ) continue ;
 
+
           //number of superClusters in event (collection = vector!)
           myTreeVariables_.SCPIdx[numberOfSuperClusters] = jidx ;
           //cout<<" BJ Cl "<<numberOfClusters<<"  objId: "<< jidx <<" ->"<< myTreeVariables_.SCPIdx[numberOfSuperClusters]<<endl;
@@ -1024,6 +1172,8 @@ void EcalTimePhyTreeMaker::dumpJetBarrelClusterInfo (const edm::Event& iEvent,
 	  myTreeVariables_.superClusterRawEnergy[numberOfSuperClusters] = -999999 ;
 	  myTreeVariables_.superClusterPhiWidth[numberOfSuperClusters]  = -999999 ;
 	  myTreeVariables_.superClusterEtaWidth[numberOfSuperClusters]  = -999999 ; 
+          myTreeVariables_.sMin[numberOfSuperClusters] = -1 ;
+          myTreeVariables_.sMaj[numberOfSuperClusters] = -1 ;
 
           // GFdoc clusterDetIds holds crystals that participate to this basic cluster 
           std::vector<std::pair<DetId, float> > clusterDetIds = clus->hitsAndFractions() ; //get these from the cluster
@@ -1061,9 +1211,11 @@ void EcalTimePhyTreeMaker::dumpJetBarrelClusterInfo (const edm::Event& iEvent,
 	     EcalRecHit myhit = (*thishit) ;
 	   
              // SIC Feb 14 2011 -- Add check on RecHit flags (takes care of spike cleaning in 42X)
-             uint32_t rhFlag = myhit.recoFlag();
-             if( !(rhFlag == EcalRecHit::kGood || rhFlag == EcalRecHit::kOutOfTime ||
-                 rhFlag == EcalRecHit::kPoorCalib) )
+             if( !( myhit.checkFlag(EcalRecHit::kGood) ||
+                    myhit.checkFlag(EcalRecHit::kOutOfTime) ||
+                    myhit.checkFlag(EcalRecHit::kPoorCalib) 
+		    ) 
+		 )
                  continue;
 	   
 	     // thisamp is the EB amplitude of the current rechit
@@ -1265,6 +1417,8 @@ void EcalTimePhyTreeMaker::dumpJetEndcapClusterInfo (const edm::Event& iEvent,
 	  myTreeVariables_.superClusterRawEnergy[numberOfSuperClusters] = -999999 ;
 	  myTreeVariables_.superClusterPhiWidth[numberOfSuperClusters]  = -999999 ;
 	  myTreeVariables_.superClusterEtaWidth[numberOfSuperClusters]  = -999999 ; 
+          myTreeVariables_.sMin[numberOfSuperClusters] = -1 ;
+          myTreeVariables_.sMaj[numberOfSuperClusters] = -1 ;
           // GFdoc clusterDetIds holds crystals that participate to this basic cluster 
           std::vector<std::pair<DetId, float> > clusterDetIds = clus->hitsAndFractions() ; //get these from the cluster
        
@@ -1301,11 +1455,13 @@ void EcalTimePhyTreeMaker::dumpJetEndcapClusterInfo (const edm::Event& iEvent,
 	     EcalRecHit myhit = (*thishit) ;
 	   
              // SIC Feb 14 2011 -- Add check on RecHit flags (takes care of spike cleaning in 42X)
-             uint32_t rhFlag = myhit.recoFlag();
-             if( !(rhFlag == EcalRecHit::kGood || rhFlag == EcalRecHit::kOutOfTime ||
-                 rhFlag == EcalRecHit::kPoorCalib) )
+             if( !( myhit.checkFlag(EcalRecHit::kGood) ||
+                    myhit.checkFlag(EcalRecHit::kOutOfTime) ||
+                    myhit.checkFlag(EcalRecHit::kPoorCalib) 
+		    ) 
+		 )
                  continue;
-	   
+
 	     // thisamp is the EE amplitude of the current rechit
 	     double thisamp  = myhit.energy () ;
 	     double thistime = myhit.time ();

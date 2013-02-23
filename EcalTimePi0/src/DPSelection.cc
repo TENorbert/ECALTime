@@ -39,6 +39,9 @@ void DPSelection::Init( TTree* tr ) {
    tr->SetBranchAddress("nPhotons",   &nPhotons);
    tr->SetBranchAddress("nElectrons", &nElectrons);
    tr->SetBranchAddress("nVertices",  &nVertices );
+   tr->SetBranchAddress("nSuperClusters", &nSuperClusters);
+   tr->SetBranchAddress("nClusters",  &nClusters);
+
    tr->SetBranchAddress("metPx",      &metPx );
    tr->SetBranchAddress("metPy",      &metPy );
    tr->SetBranchAddress("met",        &metE );
@@ -87,15 +90,15 @@ void DPSelection::Init( TTree* tr ) {
    tr->SetBranchAddress("vtxZ",       vtxZ );
    tr->SetBranchAddress("vtxChi2",    vtxChi2 );
    tr->SetBranchAddress("vtxNdof",    vtxNdof );
-
 }
 
 // analysis template
 bool DPSelection::HLTFilter( ) { 
     
-     bool pass = false ;
+     bool pass = true  ; // temporarily turn off the HLT selection
      if ( trgCut ==  75 ) pass = true ; 
      if ( trgCut ==  90 ) pass = true ; 
+     if ( trgCut ==  165 ) pass = true ; 
      return pass ;
 }
 
@@ -108,20 +111,18 @@ bool DPSelection::PhotonFilter( bool doIso ) {
        phoV.clear() ;
        for ( int j=0 ; j< nPhotons; j++ ) {
            TLorentzVector phoP4( phoPx[j], phoPy[j], phoPz[j], phoE[j] ) ;
-
            if (        phoP4.Pt() < photonCuts[0] )          continue ;
            if ( fabs(phoP4.Eta()) > photonCuts[1] )          continue ;
 
            if ( ( phoHcalIso[j]/phoP4.Pt() + phoHovE[j] ) * phoE[j] >= photonCuts[2] )      continue ;
-	   /* DEBUG */ //std::cout << "DBB photonCuts[4]: " << photonCuts[4] << " nPhotons: " << nPhotons << std::endl; /* DEBUG */
            if ( phoSmin[j] <= photonCuts[5] || phoSmin[j] >= photonCuts[6] )                continue ;
-	   /* DEBUG */ //std::cout << "DBA photonCuts[4]: " << photonCuts[4] << " nPhotons: " << nPhotons << std::endl; /* DEBUG */
-              
+ 
+           if ( phoTime[j] < photonCuts[7] ) continue ; 
            // Isolation
            if ( doIso ) {
-	     if ( phoTrkIso[j] / phoP4.Pt()  >= photonIso[0] )                                continue ;
-	     if ( phoEcalIso[j] >= photonIso[1] || phoEcalIso[j] / phoE[j] >= photonIso[2] )  continue ;
-	     if ( phoHcalIso[j] >= photonIso[3] || phoHcalIso[j] / phoE[j] >= photonIso[4] )  continue ;
+              if ( phoTrkIso[j] / phoP4.Pt()  >= photonIso[0] )                                continue ;
+              if ( phoEcalIso[j] >= photonIso[1] || phoEcalIso[j] / phoE[j] >= photonIso[2] )  continue ;
+              if ( phoHcalIso[j] >= photonIso[3] || phoHcalIso[j] / phoE[j] >= photonIso[4] )  continue ;
            }
 
            // check the isolation -- using dR_gj
@@ -135,6 +136,7 @@ bool DPSelection::PhotonFilter( bool doIso ) {
            phoV.push_back( make_pair( j , phoP4) );
        }
        if ( (int)phoV.size() < photonCuts[4] ) pass = false ;
+
        return pass ;
 }
 
@@ -144,6 +146,7 @@ bool DPSelection::VertexFilter() {
      // 1. vertex cuts
      int nVtx = 0 ;
      for ( int j=0 ; j< nVertices; j++ ) {
+
          double vtxRho = sqrt( (vtxX[j]*vtxX[j]) + (vtxY[j]*vtxY[j]) ); 
 	 if ( nVertices < 1 )                continue ;
 	 if ( vtxNdof[j]     < vtxCuts[0] )  continue ;
@@ -155,7 +158,7 @@ bool DPSelection::VertexFilter() {
      return pass ;
 }
 
-bool DPSelection::JetMETFilter() { 
+bool DPSelection::JetMETFilter( bool useJetID ) { 
 
      bool pass =  true ;
      // 1. jet selection
@@ -164,15 +167,15 @@ bool DPSelection::JetMETFilter() {
          TLorentzVector jp4( jetPx[j], jetPy[j], jetPz[j], jetE[j] ) ;
 	 if ( jp4.Pt()        < jetCuts[0] ) continue ;
 	 if ( fabs(jp4.Eta()) > jetCuts[1] ) continue ;
-
+           
          // Jet ID cuts
-         /*
-         if ( jetNDau[j] <    2 )  continue ;
-	 if ( jetCEM[j] >= 0.99 )  continue ;
-	 if ( jetNHF[j] >= 0.99 )  continue ;
-	 if ( jetNEF[j] >= 0.99 )  continue ;
-	 if ( fabs( jp4.eta() ) < 2.4 && jetCM[j]  <=0 ) continue ;
-         */
+         if ( useJetID ) {
+            if ( jetNDau[j] <    2 )  continue ;
+	    if ( jetCM[j] >= 0.99 )  continue ;
+	    if ( jetNHF[j] >= 0.99 )  continue ;
+	    if ( jetNEF[j] >= 0.99 )  continue ;
+	    if ( fabs( jp4.Eta() ) < 2.4 && jetCM[j]  <=0 ) continue ;
+         } 
 
 	 double dR_gj = 999. ;
 	 for ( size_t k=0; k< phoV.size() ; k++) {
@@ -180,6 +183,7 @@ bool DPSelection::JetMETFilter() {
 	 }
 	 if ( dR_gj < photonCuts[3] ) continue ;
 	 jetV.push_back( make_pair( j, jp4 ) );
+
      }
      int nu_Jets = (int)jetV.size() ;
      if ( nu_Jets < jetCuts[2] || nu_Jets > jetCuts[3] )      pass = false ;
@@ -255,17 +259,109 @@ bool DPSelection::GammaJetsBackground( ) {
     if ( dR <= (2*3.141593/3) )           pass = false ;
     if ( ratio1 >= 1.3 || ratio1 <= 0.7 ) pass = false ;
 
+    if ( jetV.size() > 1 ) {
+       double ratio2 = jetV[1].second.Pt() / phoV[0].second.Pt() ;
+       if ( ratio2 >= 0.1 ) pass = false ;
+    }
+
     return pass ;
 
 }
 
-void DPSelection::ResetCollection( string cutName ) {
+bool DPSelection::GammaJetsControlSample( bool isTightPhoton ) {
 
-  if ( cutName == "Photon"   || cutName == "All" ) phoV.clear() ;
-  if ( cutName == "Electron" || cutName == "All" ) eleV.clear() ;
-  if ( cutName == "Jet"      || cutName == "All" ) jetV.clear() ;
-  if ( cutName == "Muon"     || cutName == "All" ) muV.clear() ;
+       bool passHLT  = HLTFilter();
+       bool passVtx  = VertexFilter();
 
+       // reset cuts to tight photon selection
+       if ( isTightPhoton ) {
+          ResetCuts( "PhotonCuts", 0, 100. ) ;  // pt
+	  ResetCuts( "PhotonCuts", 1, 1.4 ) ;   // eta
+	  ResetCuts( "PhotonCuts", 7, -2. ) ;   // seed time
+	  ResetCuts( "PhotonIso",  0, 0.1 ) ;   // Trk Iso
+	  ResetCuts( "PhotonIso",  1, 2.4 ) ;   // Ecal Et 
+	  ResetCuts( "PhotonIso",  2, 0.05 ) ;  // Ecal Ratio
+	  ResetCuts( "PhotonIso",  3, 2.4 ) ;   // Hcal Et
+	  ResetCuts( "PhotonIso",  4, 0.05 ) ;  // Hcal Ratio
+       }
+       bool passPho = PhotonFilter( true );
+
+       ResetCuts( "JetCuts",  2, 1 ) ;  // Max Num of Jets
+       ResetCuts( "JetCuts",  3, 3 ) ;  // Max Num of Jets
+       bool passJet = JetMETFilter();
+
+       bool passGJets = GammaJetsBackground() ;
+
+       ResetCuts() ;  // reset cuts from Datacard
+
+       bool isGJet = ( passHLT && passVtx  && passPho && passJet && passGJets ) ? true : false ;
+       return isGJet ;
+}
+
+bool DPSelection::SignalSelection( bool isTightPhoton ) {
+
+       bool passHLT  = HLTFilter();
+       bool passVtx  = VertexFilter();
+
+       // reset cuts to tight photon selection
+       if ( isTightPhoton ) {
+          ResetCuts( "PhotonCuts", 0, 100. ) ;  // pt
+	  ResetCuts( "PhotonCuts", 1, 1.4 ) ;   // eta
+	  ResetCuts( "PhotonCuts", 7, -2. ) ;   // seed time
+	  ResetCuts( "PhotonIso",  0, 0.1 ) ;   // Trk Iso
+	  ResetCuts( "PhotonIso",  1, 2.4 ) ;   // Ecal Et 
+	  ResetCuts( "PhotonIso",  2, 0.05 ) ;  // Ecal Ratio
+	  ResetCuts( "PhotonIso",  3, 2.4 ) ;   // Hcal Et
+	  ResetCuts( "PhotonIso",  4, 0.05 ) ;  // Hcal Ratio
+       }
+       bool passPho = PhotonFilter( true );
+
+       ResetCuts( "JetCuts",  2, 3 ) ;  // Min Num of Jets
+       bool passJet = JetMETFilter();
+
+       bool passGJets = GammaJetsBackground() ;
+
+       ResetCuts() ;  // reset cuts from Datacard
+
+       bool isSignal = ( passHLT && passVtx  && passPho && passJet && !passGJets ) ? true : false ;
+       return isSignal ;
+
+}
+
+bool DPSelection::QCDControlSample() {
+
+       bool passHLT  = HLTFilter();
+       bool passVtx  = VertexFilter();
+       // reset cuts to tight photon selection
+       ResetCuts( "PhotonCuts", 0, 100. ) ;  // pt
+       ResetCuts( "PhotonCuts", 1, 1.4 ) ;   // eta
+       ResetCuts( "PhotonCuts", 7, -2. ) ;   // seed time
+       ResetCuts( "PhotonIso",  0, 0.1 ) ;   // Trk Iso
+       ResetCuts( "PhotonIso",  1, 2.4 ) ;   // Ecal Et 
+       ResetCuts( "PhotonIso",  2, 0.05 ) ;  // Ecal Ratio
+       ResetCuts( "PhotonIso",  3, 2.4 ) ;   // Hcal Et
+       ResetCuts( "PhotonIso",  4, 0.05 ) ;  // Hcal Ratio
+       bool passTight = PhotonFilter( true );
+ 
+       ResetCuts( "PhotonCuts", 0, 70. ) ;  // pt
+       ResetCuts( "PhotonCuts", 1, 9.9 ) ;  // eta
+       ResetCuts( "PhotonIso",  0, 0.2 ) ;  // Trk Iso
+       ResetCuts( "PhotonIso",  1, 4.5 ) ;  // Ecal Et 
+       ResetCuts( "PhotonIso",  2, 0.1 ) ;  // Ecal Ratio
+       ResetCuts( "PhotonIso",  3, 4.0 ) ;  // Hcal Et
+       ResetCuts( "PhotonIso",  4, 0.1 ) ;  // Hcal Ratio
+       bool passPho = PhotonFilter( true );
+
+       ResetCuts( "JetCuts",  2, 3 ) ;  // Min Num of Jets
+       bool passJet = JetMETFilter();
+
+       //bool passGJets = GammaJetsBackground() ;
+
+       ResetCuts() ;  // reset cuts from Datacard
+
+       bool isQCD = ( passHLT && passVtx  && passPho && passJet && !passTight ) ? true : false ;
+
+       return isQCD ;
 }
 
 void DPSelection::ResetCuts( string cutName, vector<int>& cutId, vector<double>& newValue ) {
@@ -303,6 +399,15 @@ void DPSelection::ResetCuts( string cutName ) {
 
 }
 
+void DPSelection::ResetCollection( string cutName ) {
+
+    if ( cutName == "Photon"   || cutName == "All" ) phoV.clear() ;
+    if ( cutName == "Electron" || cutName == "All" ) eleV.clear() ;
+    if ( cutName == "Jet"      || cutName == "All" ) jetV.clear() ;
+    if ( cutName == "Muon"     || cutName == "All" ) muV.clear() ;
+
+}
+
 void DPSelection::GetCollection( string collName, vector<objID>& coll ) {
 
    if ( collName == "Photon" ) {
@@ -322,3 +427,4 @@ void DPSelection::GetCollection( string collName, vector<objID>& coll ) {
    }
 
 }
+

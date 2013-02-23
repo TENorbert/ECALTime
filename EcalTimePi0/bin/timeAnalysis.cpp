@@ -17,12 +17,28 @@
 
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
-
 #include "DataFormats/Math/interface/LorentzVector.h"
 
-#include "CalibCalorimetry/EcalTiming/interface/EcalTimeTreeContent.h"
+//<<<<<<< timeAnalysis.cpp
+#include "ECALTime/EcalTimePi0/interface/EcalTimePhyTreeContent.h"
+// remove line below, when established
+//#include "CalibCalorimetry/EcalTiming/interface/EcalTimeTreeContent.h"
+
+//=======
+//included via EcalObjectTime.h  ->  analysisHisograms.h
+//#include "CalibCalorimetry/EcalTiming/interface/EcalTimeTreeContent.h"
+//>>>>>>> 1.3
 #include "ECALTime/EcalTimePi0/interface/timeVsAmpliCorrector.h"
-#include "ECALTime/EcalTimePi0/interface/EcalObjectTime.h"
+	//<<<<<<< timeAnalysis.cpp
+//#include "ECALTime/EcalTimePi0/interface/EcalObjectTime.h"
+#include "ECALTime/EcalTimePi0/interface/DPSelection.h"
+	//=======
+
+#include "ECALTime/EcalTimePi0/interface/analysisHistograms.h"
+// following is commented out because already included through analysisHisograms.h
+//#include "ECALTime/EcalTimePi0/interface/EcalObjectTime.h"
+
+//>>>>>>> 1.3
 
 #include "TChain.h"
 #include "TH1.h"
@@ -53,12 +69,14 @@ typedef std::set<std::pair<int,int> > SetOfIntPairs;
 
 
 // -------- Globals ----------------------------------------
-EcalTimeTreeContent treeVars_; 
+EcalTimePhyTreeContent treeVars_; 
 TFile* saving_;
 std::vector<std::string> listOfFiles_;
 bool speak_=false;
 char buffer_ [75];
 std::string bufferTitle_; 
+AnaInput    * Input_;    // imports values from a .txt datacard
+DPSelection * Selector_; // 
 // default settings
 std::string outputRootName_ = "outputHistos.root";
 int   numEvents_      = -1;
@@ -75,14 +93,14 @@ float eTPi0MinEE_     = 0.800;
 float swissCrossMaxEB_ = 0.95; // 1-E4/E1
 float swissCrossMaxEE_ = 0.95; // 1-E4/E1
 // based on range and bins, the bin width is 50 ps
-float rangeTDistro_ = 3; // 1-E4/E1
-int   binsTDistro_  = 120; // 1-E4/E1
+//float rangeTDistro_ = 3; // 1-E4/E1
+//int   binsTDistro_  = 120; // 1-E4/E1
 std::vector<std::vector<double> > trigIncludeVector;
 std::vector<std::vector<double> > trigExcludeVector;
 std::vector<std::vector<double> > ttrigIncludeVector;
 std::vector<std::vector<double> > ttrigExcludeVector;
-
-
+// expected standard path for datacard when running e.g. on pcminn03
+std::string   datacardfile_=std::string("/data/franzoni/cmssw/44x/CMSSW_4_4_2_forTimeHardware/src/ECALTime/EcalTimePi0/data/DataCard.txt");
 
 int  minEntriesForFit_ = 7;
 int  flagOneVertex_ = 0;
@@ -235,6 +253,7 @@ void parseArguments(int argc, char** argv)
   std::string vertex                 = "--vertex";
   std::string stringTriggers         = "--trig";
   std::string stringTechTriggers     = "--techTrig";
+  std::string stringDataCard         = "--datacard";
 
   // if no arguments are passed, suggest help
   if (argc < 2){
@@ -266,6 +285,7 @@ void parseArguments(int argc, char** argv)
       std::cout << " --vertex: require vertex@IP (1), veto it (2) or either (0, or unset)" << std::endl;
       std::cout << " --trig: L1 triggers to include (exclude with x)" << std::endl;
       std::cout << " --techTrig: L1 technical triggers to include (exclude with x)" << std::endl;
+      std::cout << " --datacard: data card holding Delayed Photon analysis selections" << std::endl;
       exit(1);      }
 
 
@@ -323,7 +343,8 @@ void parseArguments(int argc, char** argv)
       v++;
     }
     else if (argv[v] == stringminAmpliOverSigma) { // set min amplitude considered for time measurement
-      minAmpliOverSigma_  = atof(argv[v+1]);
+      // removed as a option since this variable is not globally defined in EcalObjectTime.h
+      // minAmpliOverSigma_  = atof(argv[v+1]);
       v++;
     }
     else if (argv[v] == vertex) { // collect requirement for one vertex only or not
@@ -339,6 +360,10 @@ void parseArguments(int argc, char** argv)
     }
     else if (argv[v] == stringTechTriggers) { // set L1 technical triggers to include/exclude
       genIncludeExcludeVectors(std::string(argv[v+1]),ttrigIncludeVector,ttrigExcludeVector);
+      v++;
+    }
+    else if (argv[v] == stringDataCard) { // set datacard holding selections for DP analysis
+      datacardfile_ = std::string(argv[v+1]);
       v++;
     }
     // handle here the case of multiple arguments for input files
@@ -367,237 +392,6 @@ void parseArguments(int argc, char** argv)
 
     }// loop over arguments input to the program
 }
-
-// ---------------------------------------------------------------------------------------
-// -------------------- struct holding sed of  histograms  -------------------------------
-struct HistSet{
-  
-  //book histogram set w/ common suffix inside the provided TFileDirectory
-  //void book(edm::Service<TFileService>& td,const std::string&);
-  void book(TFileDirectory subDir,const std::string&);
-  
-  // fill all histos of the set with the two electron candidates
-  void fill(int sc1, int sc2, int cl1, int cl2);
-  
-  TH1 * nVertices_;
-  TH1F* mass_;
-  TH1F* dZvertices_;
-  TH1F* Zvertices_;
-  TH1F* chi2_;
-  TH1F* seedTime_;
-  TH1F* secondTime_;
-  TH1F* clusterTime_;
-  TH1F* seedTimeDiffHist_;
-  TH1F* TOFcorrections_;
-  TH2F* TOFcorrectionsVSdeltaEta_;
-  TH2F* clusTimeDiffHistTOFVSdeltaEtaRightVertex_, *clusTimeDiffHistTOFVSdeltaEtaWrongVertex_;
-  TH1F* tColl_;
-  TH2F* tCollVSdeltaEtaRightVertex_, * tCollVStimeDiffHistTOF_;
-  TH1F* seedTimeDiffHistTOF_;
-  TH1F* secondTimeDiffHist_;
-  TH1F* secondTimeDiffHistTOF_;
-  TH1F* clusTimeDiffHist_;
-  TH1F* clusTimeDiffHistTOF_, *clusTimeDiffHistTOFwrongVertex_;
-  TH1F* numCryBC1, *numCryBC2;
-  TH2F* timeVsEtaLead_, *timeVsEtaSub_, *timeVsEta_, *outliersVsEtaPhi_; 
-  TH1F* seedAmpli_;
-  TH1F* secondAmpli_;
-  TH1F* diffSeedOther_, *diffSeedOtherOverErr_;
-  TH1F* diffSeedSecond_, *diffSeedSecondOverErr_;
-  TH2F* seedVSSecond_;  
-
-} theHists;
-
-
-void HistSet::book(TFileDirectory subDir, const std::string& post) {
-
-  nVertices_=subDir.make<TH1F>("num vertices","num vertices; num vertices",41,-0.5,40.5);
-  mass_         =(TH1F*) subDir.make<TH1F>("mass","mass; m(ele,ele) [GeV]",80,50,130);
-  dZvertices_   =(TH1F*) subDir.make<TH1F>("dZvertices","dZvertices; #DeltaZ(ele_{1},ele_{2}) [cm]",250,0,25);
-  Zvertices_    =(TH1F*) subDir.make<TH1F>("Zvertices","Zvertices; z vertex [cm]",250,-25,25);
-
-  // Initialize histograms -- xtals
-  chi2_                =(TH1F*) subDir.make<TH1F>("cluster chi2 ","cluster chi2 ; #chi^{2}",100,0,10);
-
-  seedTime_            =(TH1F*) subDir.make<TH1F>("seed time","seed time; t_{seed} [ns]; num. seeds/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
-  secondTime_          =(TH1F*) subDir.make<TH1F>("second time","second time; t_{second} [ns]; num. secs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
-  clusterTime_         =(TH1F*) subDir.make<TH1F>("cluster time","cluster time; t_{cluster} [ns]; num. clusters/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
-
-
-  TOFcorrections_      = (TH1F*) subDir.make<TH1F>("TOF difference","TOF difference; #Delta TOF [ns]; num. seeds/0.05ns",binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
-  TOFcorrectionsVSdeltaEta_=(TH2F*) subDir.make<TH2F>("TOF corrections VS #Delta#eta","TOF corrections VS #Delta#eta; #Delta#eta; #Delta TOF [ns]; ",30,0,3.,binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
-  clusTimeDiffHistTOFVSdeltaEtaRightVertex_=(TH2F*) subDir.make<TH2F>("TOF-corr cluster time difference VS #Delta#eta RightVertex","TOF-corr cluster time difference VS #Delta#eta RightVertex; |#Delta#eta|; (t_{clus1} - t_{clus2}) TOF-corrected [ns]; ",30,0,3.,binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
-  clusTimeDiffHistTOFVSdeltaEtaWrongVertex_=(TH2F*) subDir.make<TH2F>("TOF-corr cluster time difference VS #Delta#eta WrongVertex","TOF-corr cluster time difference VS #Delta#eta WrongVertex; |#Delta#eta|;  (t_{clus1} - t_{clus2}) TOF-corrected [ns]; ",30,0,3.,binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
-
-  tCollVSdeltaEtaRightVertex_=(TH2F*) subDir.make<TH2F>("t_{coll} VS #Delta#eta RightVertex","t_{coll} VS #Delta#eta RightVertex; |#Delta#eta|; t_{coll} [ns]; ",30,0,3.,binsTDistro_,-rangeTDistro_/4.,rangeTDistro_/4.);
-  tCollVStimeDiffHistTOF_=(TH2F*) subDir.make<TH2F>("TOF-corrected: (t_{clus1} + t_{clus2})/2  VS  (t_{clus1} - t_{clus2})/2","TOF-corrected: (t_{clus1} + t_{clus2})/2  VS  (t_{clus1} - t_{clus2})/2 [ns]; (t_{clus1} - t_{clus2})/2 ; (t_{clus1} + t_{clus2})/2 VS [ns]; ",binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.,binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
-
-
-  seedTimeDiffHist_    =(TH1F*) subDir.make<TH1F>("time difference of seeds","seeds time difference; t_{seed1} - t_{seed2} [ns]; num. seed pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
-  seedTimeDiffHistTOF_ =(TH1F*) subDir.make<TH1F>("TOF-corr time difference of seeds","TOF-corr seed time difference; (t_{seed1} - t_{seed2}) TOF-corrected   [ns]; num. seed pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
-
-  secondTimeDiffHist_  =(TH1F*) subDir.make<TH1F>("time difference of seconds","second time difference; t_{second1} - t_{second2} [ns]; num. seed pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);//GF new
-  secondTimeDiffHistTOF_ =(TH1F*) subDir.make<TH1F>("TOF-corr time difference of seconds","TOF-corr seconds time difference;  (t_{second1} - t_{second2}) TOF-corrected [ns]; num. sec pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
-
-  clusTimeDiffHist_    =(TH1F*) subDir.make<TH1F>("cluster time difference","cluster time difference;  t_{clus1} - t_{clus2} [ns]; num. cluster pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
-  clusTimeDiffHistTOF_ =(TH1F*) subDir.make<TH1F>("TOF-corr cluster time difference","TOF-corr cluster time difference; (t_{clus1} - t_{clus2}) TOF-corrected [ns]; num. cluster pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
-  //  clusTimeDiffHistTOFwrongVertex_ =(TH1F*) subDir.make<TH1F>("TOF-corr cluster time difference","TOF-corr cluster time difference; (t_{clus1} - t_{clus2}) TOF-corrected [ns]; num. cluster pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
-  clusTimeDiffHistTOFwrongVertex_=(TH1F*) subDir.make<TH1F>("TOF-corr cluster time difference wrong vertex","TOF-corr cluster time difference wronge vertex; (t_{clus1} - t_{clus2}) TOF-corrected [ns]; num. cluster pairs/0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
-
-  tColl_=(TH1F*) subDir.make<TH1F>("t_{coll}","t_{coll} [ns];  (t_{clus1} + t_{clus2})/2 [ns]",binsTDistro_,-rangeTDistro_/2.,rangeTDistro_/2.);
-
-
-  numCryBC1            =(TH1F*) subDir.make<TH1F>("num cry in bc1","num cry in bc1; num cry",25,0,25);
-  numCryBC2            =(TH1F*) subDir.make<TH1F>("num cry in bc2","num cry in bc2; num cry",25,0,25);
-  timeVsEta_           =(TH2F*) subDir.make<TH2F>("timeVsEta","timeVsEta;; #eta t [ns]",50,-2.5,2.5,150,-1.5,1.5);
-  timeVsEtaLead_       =(TH2F*) subDir.make<TH2F>("timeVsEtaLead","timeVsEtaLead;#eta_{lead}; t [ns]",50,-2.5,2.5,150,-1.5,1.5);
-  timeVsEtaSub_        =(TH2F*) subDir.make<TH2F>("timeVsEtaSub","timeVsEtaSub; #eta_{sublead}; t [ns]",50,-2.5,2.5,150,-1.5,1.5);
-  outliersVsEtaPhi_    =(TH2F*) subDir.make<TH2F>("outliersVsEtaPhi","outliersVsEtaPhi; #eta; #phi",50,-2.5,2.5,72,-3.14,3.14);
-  seedAmpli_           =(TH1F*) subDir.make<TH1F>("E(seed)  ","E(seed) ; E [GeV]",130,0,130);
-  secondAmpli_         =(TH1F*) subDir.make<TH1F>("E(second)  ","E(second) ; E [GeV]",130,0,130);
-  diffSeedOther_       =(TH1F*) subDir.make<TH1F>("t_{seed}-t_{others}","t_{seed}-t_{others}; t_{seed}-t_{others} [ns]; num./0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
-  diffSeedOtherOverErr_ =(TH1F*) subDir.make<TH1F>("(t_{seed}-t_{others})/#sigma","(t_{seed}-t_{others})/#sigma; (t_{seed}-t_{others})/#sigma; num./0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
-
-  diffSeedSecond_      =(TH1F*) subDir.make<TH1F>("t_{seed}-t_{second}","t_{seed}-t_{second}; t_{seed}-t_{second} [ns]; num./0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
-  diffSeedSecondOverErr_ =(TH1F*) subDir.make<TH1F>("(t_{seed}-t_{second})/#sigma","(t_{seed}-t_{second})/#sigma; (t_{seed}-t_{second})/#sigma; num./0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
-  seedVSSecond_        =(TH2F*) subDir.make<TH2F>("t_{seed} VS t_{second}","t_{seed} VS t_{second}; t_{seed} [ns]; t_{second} [ns]",75,-1.5,1.5,75,-1.5,1.5);
-
-}
-  
-void HistSet::fill(int sc1, int sc2, int bc1, int bc2 ){
-
-  float et1 = treeVars_.superClusterRawEnergy[sc1]/cosh( treeVars_.superClusterEta[sc1] );
-  math::PtEtaPhiELorentzVectorD  el1(et1  ,
-				     treeVars_.superClusterEta[sc1],
-				     treeVars_.superClusterPhi[sc1],
-				     treeVars_.superClusterRawEnergy[sc1] );  
-  float et2 = treeVars_.superClusterRawEnergy[sc2]/cosh( treeVars_.superClusterEta[sc2] );
-  math::PtEtaPhiELorentzVectorD  el2(et2 ,
-				     treeVars_.superClusterEta[sc2],
-				     treeVars_.superClusterPhi[sc2],
-				     treeVars_.superClusterRawEnergy[sc2] );
-  math::PtEtaPhiELorentzVectorD diEle = el1;
-  diEle += el2;
-  
-  // ////////////////////////
-  mass_      ->Fill(diEle.M());
-  float dvertex = pow(treeVars_.superClusterVertexZ[sc1]-treeVars_.superClusterVertexZ[sc2],2);
-  //dvertex       += pow(treeVars_.superClusterVertexY[sc1]-treeVars_.superClusterVertexY[sc2],2);
-  //dvertex       += pow(treeVars_.superClusterVertexX[sc1]-treeVars_.superClusterVertexX[sc2],2);
-  dvertex       = sqrt(dvertex);
-  dZvertices_->Fill(dvertex);
-  Zvertices_->Fill( (treeVars_.superClusterVertexZ[sc1]+treeVars_.superClusterVertexZ[sc2])/2 );
-  nVertices_->Fill(treeVars_.nVertices);
-
-  ClusterTime bcTime1 = timeAndUncertSingleCluster(bc1,treeVars_);
-  ClusterTime bcTime2 = timeAndUncertSingleCluster(bc2,treeVars_);
-  
-  TOFcorrections_           -> Fill(extraTravelTime(sc2,treeVars_) - extraTravelTime(sc1,treeVars_) );
-  TOFcorrectionsVSdeltaEta_ -> Fill(  fabs(treeVars_.superClusterEta[sc2]-treeVars_.superClusterEta[sc1]) , extraTravelTime(sc2,treeVars_) - extraTravelTime(sc1,treeVars_)  );
-
-  int vtxOfThisEle=-99;
-  // look for the vertex which electrons  are attached to: 
-  for(int u=0; u<treeVars_.nVertices; u++){
-    // matching done with 1mm tolerance
-    if( fabs(treeVars_.superClusterVertexZ[sc2]-treeVars_.vtxZ[u]) < 0.1) {       vtxOfThisEle=u;     }
-    //std::cout << u << "\t" << treeVars_.superClusterVertexZ[sc2] << "\t" << treeVars_.vtxZ[u] << std::endl;
-  }
-  //std::cout << "\n\tdebugging vertices" << std::endl;
-  if(vtxOfThisEle >-99){
-
-    for(int u=0; u<treeVars_.nVertices; u++){
-      if(u==vtxOfThisEle) {
-	clusTimeDiffHistTOFVSdeltaEtaRightVertex_ -> Fill(  fabs(treeVars_.superClusterEta[sc2]-treeVars_.superClusterEta[sc1]) , 
-							    (bcTime1.time-extraTravelTime(sc1,u,treeVars_))  - (bcTime2.time-extraTravelTime(sc2,u,treeVars_))
-							    //(bcTime1.time-extraTravelTime(sc1,treeVars_))  - (bcTime2.time-extraTravelTime(sc2,treeVars_))
-							    );
-
-	tCollVSdeltaEtaRightVertex_-> Fill(  fabs(treeVars_.superClusterEta[sc2]-treeVars_.superClusterEta[sc1]) , 
-					     ( (bcTime1.time-extraTravelTime(sc1,u,treeVars_)) + (bcTime2.time-extraTravelTime(sc2,u,treeVars_)) ) /2.
-					     );
-	tCollVStimeDiffHistTOF_    -> Fill(  ( (bcTime1.time-extraTravelTime(sc1,u,treeVars_)) - (bcTime2.time-extraTravelTime(sc2,u,treeVars_)) ) /2. ,
-					     ( (bcTime1.time-extraTravelTime(sc1,u,treeVars_)) + (bcTime2.time-extraTravelTime(sc2,u,treeVars_)) ) /2.
-					     );
-	tColl_                     -> Fill( ( (bcTime1.time-extraTravelTime(sc1,u,treeVars_)) + (bcTime2.time-extraTravelTime(sc2,u,treeVars_)) ) /2. );
-
-      }// if correct vertex
-      else   {
-	clusTimeDiffHistTOFVSdeltaEtaWrongVertex_ -> Fill(  fabs(treeVars_.superClusterEta[sc2]-treeVars_.superClusterEta[sc1]) , 
-							    (bcTime1.time-extraTravelTime(sc1,u,treeVars_))  - (bcTime2.time-extraTravelTime(sc2,u,treeVars_))
-							    //(bcTime1.time-extraTravelTime(sc1,treeVars_))  - (bcTime2.time-extraTravelTime(sc2,treeVars_))
-							    );
-	clusTimeDiffHistTOFwrongVertex_           -> Fill( (bcTime1.time-extraTravelTime(sc1,u,treeVars_))  - (bcTime2.time-extraTravelTime(sc2,u,treeVars_) ));
-      }// if wrong vertex
-    }//loop on vertices
-
-  } // if vertex matching succeeded
-  //  else std::cout << "vertex was not found which matches electrons track... " << std::endl;
- 
-  chi2_->Fill(bcTime1.chi2);	  chi2_->Fill(bcTime2.chi2);
-
-  // take care of the seeds
-  seedTime_            -> Fill(bcTime1.seedtime);  seedTime_->Fill(bcTime2.seedtime); 
-  seedTimeDiffHist_    -> Fill( bcTime1.seedtime - bcTime2.seedtime );
-  seedTimeDiffHistTOF_ -> Fill( (bcTime1.seedtime-extraTravelTime(sc1,treeVars_))  - (bcTime2.seedtime-extraTravelTime(sc2,treeVars_))  );
-  
-  // take care of the second-highest amplitude crystal
-  if(bcTime1.second>-1) secondAmpli_->Fill(treeVars_.xtalInBCEnergy[bc1][bcTime1.second]);  // check that there's crystals beyond seed
-  else                  secondAmpli_->Fill(0);  
-  if(bcTime2.second>-1) secondAmpli_->Fill(treeVars_.xtalInBCEnergy[bc2][bcTime2.second]);
-  else                  secondAmpli_->Fill(0);  
-  if(bcTime1.second>-1 && bcTime2.second>-1){
-    secondTime_            -> Fill( bcTime1.secondtime);  secondTime_->Fill(bcTime2.secondtime); 
-    secondTimeDiffHist_    -> Fill( bcTime1.secondtime - bcTime2.secondtime );
-    secondTimeDiffHistTOF_ -> Fill( (bcTime1.secondtime-extraTravelTime(sc1,treeVars_))  - (bcTime2.secondtime-extraTravelTime(sc2,treeVars_))  );
-  }
-  
-  
-  clusterTime_         -> Fill(bcTime1.time);              clusterTime_ ->Fill(bcTime2.time);
-  clusTimeDiffHist_    -> Fill(bcTime1.time - bcTime2.time );
-  clusTimeDiffHistTOF_ -> Fill( (bcTime1.time - extraTravelTime(sc1,treeVars_) ) - (bcTime2.time -extraTravelTime(sc2,treeVars_)) );
-
-  seedAmpli_->Fill(treeVars_.xtalInBCEnergy[bc1][bcTime1.seed]);
-  seedAmpli_->Fill(treeVars_.xtalInBCEnergy[bc2][bcTime2.seed]);
-  
-  // std::cout << "otherstime:  " << bcTime1.otherstime << "\t" << bcTime2.otherstime << std::endl;
-  // std::cout << "seedtime:  " << bcTime1.seedtime << "\t" << bcTime2.seedtime << std::endl;
-  if(bcTime1.otherstime>-999) // check that there's crystals beyond seed
-    {
-      diffSeedOther_ -> Fill(bcTime1.seedtime-bcTime1.otherstime); 
-      diffSeedOtherOverErr_->Fill( (bcTime1.seedtime-bcTime1.otherstime) / sqrt( pow(treeVars_.xtalInBCTimeErr[bc1][bcTime1.seed],2) -0.6*0.6+timingResParamConstEB*timingResParamConstEB + pow(bcTime1.otherstimeErr,2)) );
-      diffSeedSecond_ -> Fill(bcTime1.seedtime-treeVars_.xtalInBCTime[bc1][bcTime1.second]); 
-      seedVSSecond_ -> Fill(treeVars_.xtalInBCTime[bc1][bcTime1.second],bcTime1.seedtime); 
-      diffSeedSecondOverErr_    -> Fill( (bcTime1.seedtime-treeVars_.xtalInBCTime[bc1][bcTime1.second]) 
-					   / sqrt( pow(treeVars_.xtalInBCTimeErr[bc1][bcTime1.seed],2) 
-						   +  pow(treeVars_.xtalInBCTimeErr[bc1][bcTime1.second],2)
-						   - 2* 0.6*0.6 + 2*timingResParamConstEB*timingResParamConstEB 
-						   )   
-					   ); 
-    }
-  if(bcTime2.otherstime>-999) // check that there's crystals beyond seed
-    {
-      diffSeedOther_           -> Fill(bcTime2.seedtime-bcTime2.otherstime);
-      diffSeedOtherOverErr_    ->Fill( (bcTime2.seedtime-bcTime2.otherstime) / sqrt( pow(treeVars_.xtalInBCTime[bc2][bcTime2.seed],2) -0.6*0.6+timingResParamConstEB*timingResParamConstEB + pow(bcTime2.otherstimeErr,2)) ); 
-      diffSeedSecond_          -> Fill(bcTime2.seedtime-treeVars_.xtalInBCTime[bc2][bcTime2.second]); 
-      diffSeedSecondOverErr_    -> Fill( (bcTime2.seedtime-treeVars_.xtalInBCTime[bc2][bcTime2.second]) 
-					   / sqrt( pow(treeVars_.xtalInBCTimeErr[bc2][bcTime2.seed],2) 
-						   +  pow(treeVars_.xtalInBCTimeErr[bc2][bcTime2.second],2)
-						   - 2* 0.6*0.6 + 2*timingResParamConstEB*timingResParamConstEB 
-						   )   
-					   ); 
-    }
-  
-  numCryBC1->Fill(bcTime1.numCry);
-  numCryBC2->Fill(bcTime2.numCry);
-  timeVsEta_ -> Fill( treeVars_.superClusterEta[sc1] , (bcTime1.time - extraTravelTime(sc1,treeVars_) ) );
-  timeVsEtaLead_ -> Fill( treeVars_.superClusterEta[sc1] , (bcTime1.time - extraTravelTime(sc1,treeVars_) ) );
-  timeVsEtaSub_  -> Fill( treeVars_.superClusterEta[sc2] , (bcTime2.time - extraTravelTime(sc2,treeVars_) ) ); 
-  // catch location of time outliers
-  if ( fabs(    (bcTime1.seedtime - extraTravelTime(sc1,treeVars_))    )>1.5 )  outliersVsEtaPhi_ -> Fill( treeVars_.superClusterEta[sc1] , treeVars_.superClusterPhi[sc1]); 
-  if ( fabs(    (bcTime2.seedtime - extraTravelTime(sc2,treeVars_))    )>1.5 )  outliersVsEtaPhi_ -> Fill( treeVars_.superClusterEta[sc2] , treeVars_.superClusterPhi[sc2]); 
-
-}
-// end HistSet::fill
 
 
 // ---------------------------------------------------------------------------------------
@@ -634,13 +428,17 @@ int main (int argc, char** argv)
 
   // Tree construction
   // FIX should turn this string into a configurable 
-  TChain * chain = new TChain ("EcalTimeAnalysis") ;  // ntuple producer in CMSSW CVS
-  //TChain * chain = new TChain ("EcalTimePi0Analysis") ;  // ntuple producer in UserCode/UMN space
+  TChain * chain            = new TChain ("EcalTimeAnalysis") ;        // ntuple producer in CMSSW CVS
+  //TChain * chainForSelector = new TChain ("EcalTimeAnalysisForSel") ;  // ntuple producer in CMSSW CVS
   std::vector<std::string>::const_iterator file_itr;
   for(file_itr=listOfFiles_.begin(); file_itr!=listOfFiles_.end(); file_itr++){
-    chain->Add( (*file_itr).c_str() );
+    chain           ->Add( (*file_itr).c_str() );
+    //chainForSelector->Add( (*file_itr).c_str() );
   }
+  // a separate instane for SC's DP selector
+  TChain * chainForSelector = (TChain *) chain->Clone();
   int nEntries = chain->GetEntries () ;
+
   if (numEvents_==-1) numEvents_ = nEntries;
   std::cout << "\n\tFOUND "         <<  listOfFiles_.size() << " input files" << std::endl ;    
   std::cout << "\n\tFOUND "         <<  nEntries << " events" << std::endl ;    
@@ -657,8 +455,34 @@ int main (int argc, char** argv)
   std::cout << "\tmaxRun: "         <<  maxRun_ << std::endl;
   std::cout << "\tminLS: "          <<  minLS_ << std::endl;
   std::cout << "\tmaxLS: "          <<  maxLS_ << std::endl;
-	
+  std::cout << "\tdatacard: "       <<  datacardfile_ << std::endl;
+  
+  // establish link between ttree variables and local variables
   setBranchAddresses (chain, treeVars_);
+
+  Input_    = new AnaInput( datacardfile_ );
+  Selector_ = new DPSelection( datacardfile_ ) ;
+  int nEntriesSelector = chainForSelector->GetEntries () ;
+  std::cout << "nEntriesSelector: " << nEntriesSelector << " nEntries: " << nEntries << std::endl;
+
+  // link the variables for selection module
+  Selector_->Init( chainForSelector ) ;
+
+  string hfolder ;
+  string plotType ;
+  int ProcessEvents ;
+  string debugStr ;
+  int selectBackground ;
+  int split ;
+  int counter[10] ;
+  for (int i=0; i<10; i++)  counter[i] = 0 ;
+
+  Input_->GetParameters("PlotType",      &plotType ) ; 
+  Input_->GetParameters("Path",          &hfolder ) ; 
+  Input_->GetParameters("ProcessEvents", &ProcessEvents ) ; 
+
+  Input_->GetParameters( "SelectBackground",  &selectBackground );
+  Input_->GetParameters( "SplitEvent",        &split );
   
   // setting up the TFileService in the ServiceRegistry;
   edmplugin::PluginManager::Config config;
@@ -666,43 +490,47 @@ int main (int argc, char** argv)
   std::vector<edm::ParameterSet> psets;
   edm::ParameterSet pSet;
   pSet.addParameter("@service_type",std::string("TFileService"));
-  pSet.addParameter("fileName",std::string("TimePerf-plots.root")); // this is the file TFileService will write into
+  pSet.addParameter("fileName",outputRootName_); // this is the file TFileService will write into    //pSet.addParameter("fileName",std::string("TimePerf-plots.root"));
   psets.push_back(pSet);
   static edm::ServiceToken services(edm::ServiceRegistry::createSet(psets));
   static edm::ServiceRegistry::Operate operate(services);
   edm::Service<TFileService> fs;
 
   TFileDirectory subDirECALECAL=fs->mkdir("ECALECAL");  
-  HistSet plotsECALECAL;
-  plotsECALECAL.book(subDirECALECAL,std::string("ECALECAL"));
+  HistSet plotsECALECAL;   plotsECALECAL.book(subDirECALECAL,std::string("ECALECAL"));
+  plotsECALECAL.setTree(&treeVars_);
 
-  TFileDirectory subDirEBEB=fs->mkdir("EBEB");  
-  HistSet plotsEBEB;
-  plotsEBEB.book(subDirEBEB,std::string("EBEB"));
-  
-  TFileDirectory subDirEEEE=fs->mkdir("EEEE");  
-  HistSet plotsEEEE;
-  plotsEEEE.book(subDirEEEE,std::string("EEEE"));
-    
+  TFileDirectory subDirEB=fs->mkdir("EB");  
+  HistSet plotsEB;   plotsEB.book(subDirEB,std::string("EB"));
+  plotsEB.setTree(&treeVars_);
+
+
+  TFileDirectory subDirEBchi2=fs->mkdir("EBchi2");  
+  HistSet plotsEBchi2;   plotsEBchi2.book(subDirEBchi2,std::string("EBchi2"));
+  plotsEBchi2.setTree(&treeVars_);
+
+
+  TFileDirectory subDirEBchi2loose=fs->mkdir("EBchi2loose");  
+  HistSet plotsEBchi2loose;   plotsEBchi2loose.book(subDirEBchi2loose,std::string("EBchi2loose"));
+  plotsEBchi2loose.setTree(&treeVars_);
+
+
+  TFileDirectory subDirEBchi2tight=fs->mkdir("EBchi2tight");  
+  HistSet plotsEBchi2tight;   plotsEBchi2tight.book(subDirEBchi2tight,std::string("EBchi2tight"));
+  plotsEBchi2tight.setTree(&treeVars_);
+
+
   TFileDirectory subDirEBEE=fs->mkdir("EBEE");  
-  HistSet plotsEBEE;
-  plotsEBEE.book(subDirEBEE,std::string("EBEE"));
-    
-  TFileDirectory subDirEBEBequalShare=fs->mkdir("EBEBequalShare");  
-  HistSet plotsEBEBequalShare;
-  plotsEBEBequalShare.book(subDirEBEBequalShare,std::string("EBEBequalShare"));
-    
-  TFileDirectory subDirEBEBunevenShare=fs->mkdir("EBEBunevenShare");  
-  HistSet plotsEBEBunevenShare;
-  plotsEBEBunevenShare.book(subDirEBEBunevenShare,std::string("EBEBunevenShare"));
-  
+  HistSet plotsEBEE;   plotsEBEE.book(subDirEBEE,std::string("EBEE"));
+  plotsEBEE.setTree(&treeVars_);
+
   timeCorrector theCorr;
   std::cout << "\ncreated object theCorr to be used for timeVsAmpliCorrections" << std::endl;
   std::cout << "\ninitializing theCorr" << std::endl;
   //theCorr.initEB( std::string("EBmod4") );
   //theCorr.initEE( std::string("EElow") );
   theCorr.initEB( "EB" );
-  theCorr.initEE( "EE" );
+  theCorr.initEE( "EElow" );
 
 
   //Initialize output root file
@@ -712,12 +540,16 @@ int main (int argc, char** argv)
   TFileDirectory subDirGeneral=fs->mkdir("General");  
   initializeHists(subDirGeneral);
 
-  int eventCounter = 0;
-  /////////////////////////////////////////////////////
+  int eventCounter     = 0;
+  int eventPassCounter = 0;
+
+  /////////////////////////////////////////////////////  /////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////  /////////////////////////////////////////////////////
   // Main loop over entries
   for (int entry = 0 ; (entry < nEntries && eventCounter < numEvents_); ++entry)
   {
-    chain->GetEntry (entry) ;
+    chain            ->GetEntry (entry) ;
+    chainForSelector ->GetEntry (entry) ;
     // Keep the event?
     bool keepEvent = includeEvent(treeVars_.l1ActiveTriggers,
         treeVars_.l1NActiveTriggers,trigIncludeVector,trigExcludeVector)
@@ -733,6 +565,65 @@ int main (int argc, char** argv)
     // do analysis if the LS is in the desired range  
     if( treeVars_.lumiSection<minLS_  || maxLS_<treeVars_.lumiSection) continue;
     
+    // if evet being actually processed, increment counter of analyzed events
+    eventCounter++;
+
+    /////////////////// DP analysis events selection ////////////////////////
+    bool passEvent = true ;
+
+    // FIXME
+    if ( entry%2 == split ) continue ;    // FIXME
+    // FIXME
+    counter[0]++ ;   
+    // put back the cuts to be the same as they are in the datacard
+    Selector_->ResetCollection() ;
+    Selector_->ResetCuts() ;
+
+    bool passPhoton = Selector_->PhotonFilter( false );
+    /* DEBUG */    //std::cout << "passPhoton Loose No Iso: " << passPhoton << std::endl; /* DEBUG */
+    passEvent = ( passPhoton && passEvent ) ? true : false ;
+    if ( passEvent ) counter[1]++ ;   
+
+    bool passVertex = Selector_->VertexFilter();
+    passEvent = ( passVertex && passEvent ) ? true : false ;
+    if ( passEvent ) counter[2]++ ;   
+
+    Selector_->ResetCuts( "PhotonCuts", 1, 1.4 ) ;
+    bool passIso = Selector_->PhotonFilter( true );
+    passEvent = ( passIso && passEvent ) ? true : false ;
+    if ( passEvent ) counter[3]++ ;   
+
+    bool isGJets = Selector_->GammaJetsBackground() ;
+    passEvent = ( !isGJets && passEvent ) ? true : false ;
+    if ( passEvent ) counter[4]++ ;   
+
+    Selector_->ResetCuts( "PhotonCuts", 0, 100. ) ;
+    bool passTight = Selector_->PhotonFilter( true );
+    passEvent = ( passTight && passEvent ) ? true : false ;
+    if ( passEvent ) counter[5]++ ;   
+
+    bool passJet    = Selector_->JetMETFilter();
+    passEvent = ( passJet && passEvent ) ? true : false ;
+    if ( passEvent ) counter[6]++ ;   
+
+    bool passHLT    = Selector_->HLTFilter();
+    passEvent = ( passHLT && passEvent ) ? true : false ;
+    if ( passEvent ) counter[7]++ ;   
+    /////////////////// DP analysis events selection ////////////////////////
+
+   
+    // if selection according to datacard not passed, move on to next event 
+    if ( ! passEvent ) continue;
+    
+    // define samples here /////////////////////////////////// (to be updated/FIXED including SC's implementation )
+    // control region
+    // 1: gamma+jets background control sample - FIXME
+    if( selectBackground==1 && (treeVars_.nJets<1 || treeVars_.nJets>2) ) continue;
+    // 2: QCD background control sample - FIXME
+    if( selectBackground==2 && (treeVars_.nJets<1 || treeVars_.nJets>2) ) continue;
+    // look only at half of the events 
+    if ( (treeVars_.orbit % 2)==1 ) continue;
+
     bool verticesAreOnlyNextToNominalIP;
     int  count=0;
     
@@ -746,8 +637,7 @@ int main (int argc, char** argv)
     if (flagOneVertex_ ==1 && (!verticesAreOnlyNextToNominalIP) ) continue;
     if (flagOneVertex_ ==2 && (verticesAreOnlyNextToNominalIP) )  continue;
     
-    // if evet being actually processed, increment counter of analyzed events
-    eventCounter++;
+    eventPassCounter++;
     
     speak_=false;
     if (entry<10 || entry%10000==0) speak_=true;
@@ -756,56 +646,21 @@ int main (int argc, char** argv)
     if (speak_)  std::cout << "  found " << treeVars_.nSuperClusters << " superclusters" << std::endl ;
     if (speak_)  std::cout << "  found " << treeVars_.nClusters << " basic clusters" << std::endl ;
 
-
+    nVertices_->Fill(treeVars_.nVertices);
+    
     ///////////////////////////////////////////////////////////////////////
     // outer loop on supercluster
     for (int sc1=0; sc1<treeVars_.nSuperClusters; sc1++){
 
+      // require object FIRST, since for jets there may not BE superClusterRawEnergy or superClusterEta 
+      if ( fabs ( treeVars_.SCPIdx[sc1] - 22) > 2) continue;
+
       float et1 = treeVars_.superClusterRawEnergy[sc1]/cosh( treeVars_.superClusterEta[sc1] );
-      if (et1<20) continue;
+      //std::cout << "gf1 num SC n SC" << treeVars_.nSuperClusters << "\t et: " << et1 << "\t" << treeVars_.superClusterRawEnergy[sc1] << "\t" << treeVars_.superClusterEta[sc1] << "\t" << treeVars_.SCPIdx[sc1] << std::endl; 
+      if (et1<70) continue; // match choice of control region; this should be translated into cut on the photon, not SC
+      // select only photons
 
-      math::PtEtaPhiELorentzVectorD  el1(et1  ,
-					 treeVars_.superClusterEta[sc1],
-					 treeVars_.superClusterPhi[sc1],
-					 treeVars_.superClusterRawEnergy[sc1] );
-
-      ///////////////////////////////////////////////////////////////////////
-      // inner loop on supercluster
-      for (int sc2=(sc1+1); sc2<treeVars_.nSuperClusters; sc2++){
-
-	float et2 = treeVars_.superClusterRawEnergy[sc2]/cosh( treeVars_.superClusterEta[sc2] );
-	if (et2<20) continue;
-	
-	math::PtEtaPhiELorentzVectorD  el2(et2 ,
-					   treeVars_.superClusterEta[sc2],
-					   treeVars_.superClusterPhi[sc2],
-					   treeVars_.superClusterRawEnergy[sc2] );
-      
-	// there seems to be a problem with vertexing - since nearly none of the electrons have the same vertex... CHECK!
-	float dvertex = pow(treeVars_.superClusterVertexZ[sc1]-treeVars_.superClusterVertexZ[sc2],2);
-	//dvertex       += pow(treeVars_.superClusterVertexY[sc1]-treeVars_.superClusterVertexY[sc2],2);
-	//dvertex       += pow(treeVars_.superClusterVertexX[sc1]-treeVars_.superClusterVertexX[sc2],2);
-	dvertex       = sqrt(dvertex);
-	
-	math::PtEtaPhiELorentzVectorD diEle = el1;
-	diEle += el2;
-
-	// ////////////////////////
-	mass_      ->Fill(diEle.M());
-	dZvertices_->Fill(dvertex);
-	Zvertices_->Fill( (treeVars_.superClusterVertexZ[sc1]-treeVars_.superClusterVertexZ[sc2])/2 );
-	nVertices_->Fill(treeVars_.nVertices);
-
-	// require invariant mass
-	if( fabs( diEle.M() - 91 ) > 20 ) continue;
-	// require two electrons from the same vertex
-	if ( dvertex > 0.01 )             continue;
-
-	if(0) std::cout << "di-electron system mass: " << diEle.M() << " vertex distance: " << dvertex << std::endl;
-
-	// at this stage I have a suitable di-electron system for time studies
-
-	float tmpEne=-9999;
+      float tmpEne=-9999;
 	// loop on BC and match to sc1  ===============
 	int bc1=-1;
 	for (int bc=0; bc<treeVars_.nClusters; bc++){
@@ -817,63 +672,39 @@ int main (int argc, char** argv)
 	}// end - loop over BC
 
 	
-	tmpEne=-9999;
-	// loop on BC and match to sc2 ==============
-	int bc2=-1;
-	for (int bc=0; bc<treeVars_.nClusters; bc++){
-	  if ( pow(treeVars_.superClusterEta[sc2]-treeVars_.clusterEta[bc],2)+ pow(treeVars_.superClusterPhi[sc2]-treeVars_.clusterPhi[bc],2) < 0.02 
-	       && treeVars_.clusterEnergy[bc]>tmpEne) {
-	    tmpEne=treeVars_.clusterEnergy[bc];
-	    bc2=bc;
-	  }// end - if good bc candidate
-	}// end - loop over BC
-	
 	// protect in case of no matching
-	if(bc1==-1 || bc2==-1) continue;
-	if(0) {
-	std::cout << "\n\nsc1 : " << treeVars_.superClusterEta[sc1] << " " << treeVars_.superClusterPhi[sc1] << " " << treeVars_.superClusterRawEnergy[sc1] << std::endl;
-	std::cout << "bc1 : " << treeVars_.clusterEta[bc1] << " " << treeVars_.clusterPhi[bc1] << " " << treeVars_.clusterEnergy[bc1] << "\n"<< std::endl;
-	std::cout << "sc2 : " << treeVars_.superClusterEta[sc2] << " " << treeVars_.superClusterPhi[sc2] << " " << treeVars_.superClusterRawEnergy[sc2] << std::endl;
-	std::cout << "bc2 : " << treeVars_.clusterEta[bc2] << " " << treeVars_.clusterPhi[bc2] << " " << treeVars_.clusterEnergy[bc2] << std::endl;
-	}
+	if(bc1==-1) continue;
 	
 	ClusterTime bcTime1 = timeAndUncertSingleCluster(bc1,treeVars_);
-	ClusterTime bcTime2 = timeAndUncertSingleCluster(bc2,treeVars_);
+	if(! (bcTime1.isvalid ) ) continue;
 
-	if(! (bcTime1.isvalid && bcTime2.isvalid) ) continue;
-
-	// fill the structures which hold all the plots
-	plotsECALECAL.fill(sc1,sc2, bc1,bc2);
-	if      ( fabs(treeVars_.clusterEta[bc1])<1.4    &&  fabs(treeVars_.clusterEta[bc2])<1.4 ){
- 	  plotsEBEB.fill(sc1,sc2, bc1,bc2);
-
-	  float energyRatio1 = treeVars_.xtalInBCEnergy[bc1][bcTime1.seed];
-	  if(bcTime1.second>-1) {energyRatio1 /= treeVars_.xtalInBCEnergy[bc1][bcTime1.second]; }
-	  else { energyRatio1 /= 99999; }
-	  float energyRatio2 = treeVars_.xtalInBCEnergy[bc2][bcTime2.seed];
-	  if(bcTime2.second>-1) {energyRatio2 /= treeVars_.xtalInBCEnergy[bc2][bcTime2.second]; }
-	  else { energyRatio2 /= 99999; }
-
-	  float minRatio = 0.7; float maxRatio = 1.3;
-	  if(minRatio<energyRatio1 && minRatio<energyRatio2 && energyRatio1<maxRatio && energyRatio2<maxRatio) 	  plotsEBEBequalShare.fill(sc1,sc2, bc1,bc2);  
-
-	  minRatio = 2; maxRatio = 10;
-	  if(minRatio<energyRatio1 && minRatio<energyRatio2 && energyRatio1<maxRatio && energyRatio2<maxRatio) 	  plotsEBEBunevenShare.fill(sc1,sc2, bc1,bc2);  
+	if      ( fabs(treeVars_.clusterEta[bc1])<1.4   ){
+	  plotsEB.fillSingle(sc1, bc1,  bcTime1);
 	  
-	}// if EBEB, and subcases
-	else if ( fabs(treeVars_.clusterEta[bc1])>1.5    &&  fabs(treeVars_.clusterEta[bc2])>1.5 ) 	  plotsEEEE.fill(sc1,sc2, bc1,bc2);
-	else if ( (fabs(treeVars_.clusterEta[bc1])<1.4 && fabs(treeVars_.clusterEta[bc2])>1.5) ||
-		  (fabs(treeVars_.clusterEta[bc1])>1.5 && fabs(treeVars_.clusterEta[bc2])<1.4)    ) 	plotsEBEE.fill(sc1,sc2, bc1,bc2);
+	  int type=3; float cut=6;
+	  plotsEBchi2loose.fillSingle(sc1, bc1,  bcTime1, type, cut);
 
-	// if I've found a pair of supercluster, bail out of loop to repeat using twice the same supercluster
+	  type=3; cut=4;
+	  plotsEBchi2.fillSingle(sc1, bc1,  bcTime1, type, cut);
+
+	  type=3; cut=3;
+	  plotsEBchi2tight.fillSingle(sc1, bc1,  bcTime1, type, cut);
+
+	} 
+	else if( fabs(treeVars_.clusterEta[bc1])>1.5 && fabs(treeVars_.clusterEta[bc1])<2.5 ){
+	plotsEBEE.fillSingle(sc1, bc1,  bcTime1);
+	}
+
 	break;	
 	
-      }// end loop sc2
     }// end loop sc1
     
   }   // end of loop over entries
   
-
+  /////////////////// summary of DP analysis events selection ////////////////////////
+  std::cout<<"\n final event summary -  all:"<< counter[0] <<" pho:"<<counter[1]<<" vtx:"<< counter[2]<<" Iso:"<<counter[3]<<" noGjets:"<<counter[4] ;
+  std::cout<<" tight:"<< counter[5] <<" jet:"<<counter[6]<<" hlt:"<<counter[7]<< " - events that passed preselection;     inclusive plots: " << eventPassCounter << " (that have passed the Sample type you want: sig, control, control QCD )" <<std::endl; 
+  
   delete chain ;
   
   return 0 ;

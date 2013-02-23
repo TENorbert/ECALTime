@@ -1,14 +1,31 @@
 #include "ECALTime/EcalTimePi0/interface/timeVsAmpliCorrector.h"
 
+timeCorrector::timeCorrector(){
+
+  // the  constructor sets the time corrections to 0 everywhere => the timeVsAmpliCorrector can be used in 'off mode' 
+  // provided initEB and initEE are not invoked
+
+  theCorrectionsEB.push_back(0.0);   theBinsEB.push_back(-10.0);
+  theCorrectionsEB.push_back(0.0);   theBinsEB.push_back(21610.);
+
+  theCorrectionsEE.push_back(0.0);   theBinsEE.push_back(-10.0);
+  theCorrectionsEE.push_back(0.0);   theBinsEE.push_back(10626.2);
+
+  std::cout << "\n++ timeCorrector constructor; by default, dummy corrections (==0.) applied;" << std::endl;
+
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////
 // implementation of the class methods
 
 float timeCorrector::getCorrectionEB(float A){
+  // pick a representative pseudorapidity to invoke the desired correction
   return getCorrection(A, 1.);
 }
 
 
 float timeCorrector::getCorrectionEE(float A){
+  // pick a representative pseudorapidity to invoke the desired correction
   return getCorrection(A, 2.);
 }
 
@@ -33,7 +50,6 @@ float timeCorrector::getCorrection(float A, float eta){
   std::cout << "wrong eta value: " << eta << std::endl; 
   return -999;
   }
-
 
   double theCorrection=0;
 
@@ -79,137 +95,146 @@ float timeCorrector::getCorrection(float A, float eta){
 
 
 void timeCorrector::initEE(std::string version){
-   std::cout << "\ninitializing corrections for EE" << std::endl;
+   std::cout << "\n++ initializing corrections for EE (no longer dummy corrections)" << std::endl;
    theCorrectionsEE.clear();          theBinsEE.clear();
  
    // this is binned measured bias in nanosecond; correction needs be the opposited. 
    if(version==std::string("EElow")){
 
-    //theCorrectionsEE.push_back(0);   theBinsEE.push_back(18.9123);
-    //theCorrectionsEE.push_back(0);   theBinsEE.push_back(21.218);
-    //theCorrectionsEE.push_back(0);   theBinsEE.push_back(23.805);
-    theCorrectionsEE.push_back(-0.133039);   theBinsEE.push_back(26.7077);
-    theCorrectionsEE.push_back(-0.103766);   theBinsEE.push_back(29.9646);
-    theCorrectionsEE.push_back(-0.0728432);   theBinsEE.push_back(33.6189);
-    theCorrectionsEE.push_back(-0.0578023);   theBinsEE.push_back(37.7191);
-    theCorrectionsEE.push_back(-0.0422981);   theBinsEE.push_back(42.3196);
-    theCorrectionsEE.push_back(-0.0345444);   theBinsEE.push_back(47.4814);
-    theCorrectionsEE.push_back(-0.0129457);   theBinsEE.push_back(53.2731);
-    theCorrectionsEE.push_back(-0.00379589);   theBinsEE.push_back(59.7715);
-    theCorrectionsEE.push_back(-0.00313104);   theBinsEE.push_back(67.0628);
-    theCorrectionsEE.push_back(-0.000504792);   theBinsEE.push_back(75.2437);
-    theCorrectionsEE.push_back(0.000467353);   theBinsEE.push_back(84.4229);
-    theCorrectionsEE.push_back(0.00421467);   theBinsEE.push_back(94.7221);
-    theCorrectionsEE.push_back(0.00638916);   theBinsEE.push_back(106.278);
-    theCorrectionsEE.push_back(0.00640062);   theBinsEE.push_back(119.244);
-    theCorrectionsEE.push_back(0.00341919);   theBinsEE.push_back(133.792);
-    theCorrectionsEE.push_back(-0.00301614);   theBinsEE.push_back(150.115);
-    theCorrectionsEE.push_back(-0.00250331);   theBinsEE.push_back(168.43);
-    theCorrectionsEE.push_back(-0.000503837);   theBinsEE.push_back(188.98);
-    theCorrectionsEE.push_back(-0.00158694);   theBinsEE.push_back(212.037);
-    theCorrectionsEE.push_back(0.00106072);   theBinsEE.push_back(237.907);
-    theCorrectionsEE.push_back(0.00538018);   theBinsEE.push_back(266.934);
-    theCorrectionsEE.push_back(0.00640622);   theBinsEE.push_back(299.503);
-    theCorrectionsEE.push_back(0.00550587);   theBinsEE.push_back(336.046);
-    theCorrectionsEE.push_back(0.00805342);   theBinsEE.push_back(377.048);
-    theCorrectionsEE.push_back(0.00965012);   theBinsEE.push_back(423.053);
-    theCorrectionsEE.push_back(0.0111103);   theBinsEE.push_back(474.671);
-    theCorrectionsEE.push_back(0.0138681);   theBinsEE.push_back(532.588);
-    theCorrectionsEE.push_back(0.020215);   theBinsEE.push_back(597.572);
-    theCorrectionsEE.push_back(0.0194182);   theBinsEE.push_back(670.485);
-    theCorrectionsEE.push_back(0.0249657);   theBinsEE.push_back(752.294);
-    theCorrectionsEE.push_back(0.00798197);   theBinsEE.push_back(844.086);
-    theCorrectionsEE.push_back(0.00655069);   theBinsEE.push_back(947.078);
-    theCorrectionsEE.push_back(0.0131119);   theBinsEE.push_back(1062.64);
-    theCorrectionsEE.push_back(0.0210328);   theBinsEE.push_back(1192.3);
-    theCorrectionsEE.push_back(0.0336762);   theBinsEE.push_back(1337.78);
-    theCorrectionsEE.push_back(0.0304386);   theBinsEE.push_back(1501.01);
-    theCorrectionsEE.push_back(0.0417921);   theBinsEE.push_back(1684.16);
-    theCorrectionsEE.push_back(0.0525334);   theBinsEE.push_back(1889.65);
-    theCorrectionsEE.push_back(0.0647914);   theBinsEE.push_back(2120.22);
-    theCorrectionsEE.push_back(0.0605786);   theBinsEE.push_back(2378.93);
-    theCorrectionsEE.push_back(0.0594094);   theBinsEE.push_back(2669.2);
-    theCorrectionsEE.push_back(0.0678715);   theBinsEE.push_back(2994.89);
-    theCorrectionsEE.push_back(0.0787326);   theBinsEE.push_back(3360.32);
-    theCorrectionsEE.push_back(0.0905882);   theBinsEE.push_back(3770.34);
-    theCorrectionsEE.push_back(0.0856276);   theBinsEE.push_back(4230.39);
-    theCorrectionsEE.push_back(0.0967914);   theBinsEE.push_back(4746.57);
-    theCorrectionsEE.push_back(0.163573);   theBinsEE.push_back(5325.74);
-    theCorrectionsEE.push_back(0.144924);   theBinsEE.push_back(5975.58);
-    theCorrectionsEE.push_back(0.147008);   theBinsEE.push_back(6704.7);
-    theCorrectionsEE.push_back(0.268835);   theBinsEE.push_back(7522.8);
-    theCorrectionsEE.push_back(0.605681);   theBinsEE.push_back(8440.72);
-    theCorrectionsEE.push_back(0.52275);   theBinsEE.push_back(9470.64);
-    theCorrectionsEE.push_back(0.404734);   theBinsEE.push_back(10626.2);
-    theCorrectionsEE.push_back(-0.155081);   theBinsEE.push_back(11922.8); // GF which of the following is reliable?
-    theCorrectionsEE.push_back(0.138734);   theBinsEE.push_back(13377.6);
-    theCorrectionsEE.push_back(-0.232964);   theBinsEE.push_back(15009.9);
-    theCorrectionsEE.push_back(-0.0243007);   theBinsEE.push_back(16841.4);
-    //theCorrectionsEE.push_back(0);   theBinsEE.push_back(0.000581012);
+     // using Tambe's result: http://tambe.web.cern.ch/tambe/TimingResolutionPlots/PhysPhoton/CorrFactorsFromLowEEAndEB/
+
+     //theCorrectionsEE.push_back(0.25);   theBinsEE.push_back(9.47062);
+     //theCorrectionsEE.push_back(0.25);   theBinsEE.push_back(10.6262);
+     //theCorrectionsEE.push_back(0.25);   theBinsEE.push_back(11.9228);
+     //theCorrectionsEE.push_back(0.25);   theBinsEE.push_back(13.3776);
+     //theCorrectionsEE.push_back(0.25);   theBinsEE.push_back(15.0099);
+     //theCorrectionsEE.push_back(0.25);   theBinsEE.push_back(16.8414);
+     //theCorrectionsEE.push_back(0.25);   theBinsEE.push_back(18.8964);
+     //theCorrectionsEE.push_back(0.25);   theBinsEE.push_back(21.2021);
+     //theCorrectionsEE.push_back(0.25);   theBinsEE.push_back(23.7891);
+     theCorrectionsEE.push_back(-0.155735);   theBinsEE.push_back(26.6918);
+     theCorrectionsEE.push_back(-0.109962);   theBinsEE.push_back(29.9487);
+     theCorrectionsEE.push_back(-0.0715073);   theBinsEE.push_back(33.603);
+     theCorrectionsEE.push_back(-0.060626);   theBinsEE.push_back(37.7032);
+     theCorrectionsEE.push_back(-0.0463754);   theBinsEE.push_back(42.3037);
+     theCorrectionsEE.push_back(-0.0414362);   theBinsEE.push_back(47.4656);
+     theCorrectionsEE.push_back(-0.0339144);   theBinsEE.push_back(53.2572);
+     theCorrectionsEE.push_back(-0.0138342);   theBinsEE.push_back(59.7556);
+     theCorrectionsEE.push_back(-0.0199016);   theBinsEE.push_back(67.0469);
+     theCorrectionsEE.push_back(-0.0199928);   theBinsEE.push_back(75.2278);
+     theCorrectionsEE.push_back(-0.0193039);   theBinsEE.push_back(84.407);
+     theCorrectionsEE.push_back(-0.0150271);   theBinsEE.push_back(94.7062);
+     theCorrectionsEE.push_back(-0.00883894);   theBinsEE.push_back(106.262);
+     theCorrectionsEE.push_back(-0.0160218);   theBinsEE.push_back(119.228);
+     theCorrectionsEE.push_back(-0.0179918);   theBinsEE.push_back(133.776);
+     theCorrectionsEE.push_back(-0.0203784);   theBinsEE.push_back(150.099);
+     theCorrectionsEE.push_back(-0.0238918);   theBinsEE.push_back(168.414);
+     theCorrectionsEE.push_back(-0.0172227);   theBinsEE.push_back(188.964);
+     theCorrectionsEE.push_back(-0.0153935);   theBinsEE.push_back(212.021);
+     theCorrectionsEE.push_back(-0.0166607);   theBinsEE.push_back(237.891);
+     theCorrectionsEE.push_back(-0.0168141);   theBinsEE.push_back(266.918);
+     theCorrectionsEE.push_back(-0.00898462);   theBinsEE.push_back(299.487);
+     theCorrectionsEE.push_back(-0.0128605);   theBinsEE.push_back(336.03);
+     theCorrectionsEE.push_back(-0.0110128);   theBinsEE.push_back(377.032);
+     theCorrectionsEE.push_back(-0.0148466);   theBinsEE.push_back(423.037);
+     theCorrectionsEE.push_back(-0.0124556);   theBinsEE.push_back(474.656);
+     theCorrectionsEE.push_back(-0.0180545);   theBinsEE.push_back(532.572);
+     theCorrectionsEE.push_back(-0.00312731);   theBinsEE.push_back(597.556);
+     theCorrectionsEE.push_back(-0.00553613);   theBinsEE.push_back(670.469);
+     theCorrectionsEE.push_back(-0.00063198);   theBinsEE.push_back(752.278);
+     theCorrectionsEE.push_back(-0.017085);   theBinsEE.push_back(844.07);
+     theCorrectionsEE.push_back(-0.0231402);   theBinsEE.push_back(947.062);
+     theCorrectionsEE.push_back(-0.00411875);   theBinsEE.push_back(1062.62);
+     theCorrectionsEE.push_back(-0.00740504);   theBinsEE.push_back(1192.28);
+     theCorrectionsEE.push_back(-0.0123253);   theBinsEE.push_back(1337.76);
+     theCorrectionsEE.push_back(-0.00596664);   theBinsEE.push_back(1500.99);
+     theCorrectionsEE.push_back(0.0134503);   theBinsEE.push_back(1684.14);
+     theCorrectionsEE.push_back(0.0338138);   theBinsEE.push_back(1889.64);
+     theCorrectionsEE.push_back(0.0485774);   theBinsEE.push_back(2120.21);
+     theCorrectionsEE.push_back(0.0493507);   theBinsEE.push_back(2378.91);
+     theCorrectionsEE.push_back(0.0326397);   theBinsEE.push_back(2669.18);
+     theCorrectionsEE.push_back(0.0410606);   theBinsEE.push_back(2994.87);
+     theCorrectionsEE.push_back(0.019095);   theBinsEE.push_back(3360.3);
+     theCorrectionsEE.push_back(0.0183005);   theBinsEE.push_back(3770.32);
+     theCorrectionsEE.push_back(0.070756);   theBinsEE.push_back(4230.37);
+     theCorrectionsEE.push_back(0.0951582);   theBinsEE.push_back(4746.56);
+     theCorrectionsEE.push_back(0.136976);   theBinsEE.push_back(5325.72);
+     theCorrectionsEE.push_back(0.113812);   theBinsEE.push_back(5975.56);
+     theCorrectionsEE.push_back(0.156085);   theBinsEE.push_back(6704.69);
+     theCorrectionsEE.push_back(0.229406);   theBinsEE.push_back(7522.78);
+     theCorrectionsEE.push_back(0.677131);   theBinsEE.push_back(8440.7);
+     theCorrectionsEE.push_back(0.522906);   theBinsEE.push_back(9470.62);
+     theCorrectionsEE.push_back(0.251158);   theBinsEE.push_back(10626.2);
+
+     //theCorrectionsEE.push_back(-1.71373);   theBinsEE.push_back(11922.8);
+     //theCorrectionsEE.push_back(-4.75);      theBinsEE.push_back(13377.6);
+     //theCorrectionsEE.push_back(-4.75);      theBinsEE.push_back(15009.9);
+     //theCorrectionsEE.push_back(0);   theBinsEE.push_back(0);
 
    } else if (version==std::string("EE")){
 
-    //theCorrectionsEE.push_back(0);   theBinsEE.push_back(30.5506);
-    //theCorrectionsEE.push_back(0);   theBinsEE.push_back(34.2752);
-    //theCorrectionsEE.push_back(0);   theBinsEE.push_back(38.4542);
-    theCorrectionsEE.push_back(-0.167688);   theBinsEE.push_back(43.1432);
-    theCorrectionsEE.push_back(-0.136405);   theBinsEE.push_back(48.4044);
-    theCorrectionsEE.push_back(-0.10191);   theBinsEE.push_back(54.3075);
-    theCorrectionsEE.push_back(-0.0818226);   theBinsEE.push_back(60.9309);
-    theCorrectionsEE.push_back(-0.0596632);   theBinsEE.push_back(68.3624);
-    theCorrectionsEE.push_back(-0.0452422);   theBinsEE.push_back(76.7008);
-    theCorrectionsEE.push_back(-0.0204676);   theBinsEE.push_back(86.0566);
-    theCorrectionsEE.push_back(-0.00708579);   theBinsEE.push_back(96.5539);
-    theCorrectionsEE.push_back(-0.00502538);   theBinsEE.push_back(108.332);
-    theCorrectionsEE.push_back(-0.00289768);   theBinsEE.push_back(121.548);
-    theCorrectionsEE.push_back(-0.00188651);   theBinsEE.push_back(136.375);
-    theCorrectionsEE.push_back(0.00172187);   theBinsEE.push_back(153.013);
-    theCorrectionsEE.push_back(0.00422572);   theBinsEE.push_back(171.68);
-    theCorrectionsEE.push_back(0.00352601);   theBinsEE.push_back(192.625);
-    theCorrectionsEE.push_back(0.000234735);   theBinsEE.push_back(216.126);
-    theCorrectionsEE.push_back(-0.00497225);   theBinsEE.push_back(242.494);
-    theCorrectionsEE.push_back(-0.00255359);   theBinsEE.push_back(272.079);
-    theCorrectionsEE.push_back(0.000276509);   theBinsEE.push_back(305.275);
-    theCorrectionsEE.push_back(-0.000676717);   theBinsEE.push_back(342.521);
-    theCorrectionsEE.push_back(0.00375508);   theBinsEE.push_back(384.312);
-    theCorrectionsEE.push_back(0.00800281);   theBinsEE.push_back(431.202);
-    theCorrectionsEE.push_back(0.00939014);   theBinsEE.push_back(483.813);
-    theCorrectionsEE.push_back(0.00933337);   theBinsEE.push_back(542.844);
-    theCorrectionsEE.push_back(0.0127813);   theBinsEE.push_back(609.078);
-    theCorrectionsEE.push_back(0.0149195);   theBinsEE.push_back(683.394);
-    theCorrectionsEE.push_back(0.0169709);   theBinsEE.push_back(766.777);
-    theCorrectionsEE.push_back(0.0198988);   theBinsEE.push_back(860.335);
-    theCorrectionsEE.push_back(0.0265556);   theBinsEE.push_back(965.308);
-    theCorrectionsEE.push_back(0.0266586);   theBinsEE.push_back(1083.09);
-    theCorrectionsEE.push_back(0.0308715);   theBinsEE.push_back(1215.24);
-    theCorrectionsEE.push_back(0.0147255);   theBinsEE.push_back(1363.52);
-    theCorrectionsEE.push_back(0.0155513);   theBinsEE.push_back(1529.9);
-    theCorrectionsEE.push_back(0.0234095);   theBinsEE.push_back(1716.57);
-    theCorrectionsEE.push_back(0.0319073);   theBinsEE.push_back(1926.02);
-    theCorrectionsEE.push_back(0.0440146);   theBinsEE.push_back(2161.02);
-    theCorrectionsEE.push_back(0.0401477);   theBinsEE.push_back(2424.71);
-    theCorrectionsEE.push_back(0.0538419);   theBinsEE.push_back(2720.56);
-    theCorrectionsEE.push_back(0.06414);   theBinsEE.push_back(3052.52);
-    theCorrectionsEE.push_back(0.0769302);   theBinsEE.push_back(3424.98);
-    theCorrectionsEE.push_back(0.0733546);   theBinsEE.push_back(3842.89);
-    theCorrectionsEE.push_back(0.0753102);   theBinsEE.push_back(4311.79);
-    theCorrectionsEE.push_back(0.0786608);   theBinsEE.push_back(4837.9);
-    theCorrectionsEE.push_back(0.0960978);   theBinsEE.push_back(5428.21);
-    theCorrectionsEE.push_back(0.111197);   theBinsEE.push_back(6090.55);
-    theCorrectionsEE.push_back(0.108132);   theBinsEE.push_back(6833.7);
-    theCorrectionsEE.push_back(0.12744);   theBinsEE.push_back(7667.54);
-    theCorrectionsEE.push_back(0.177114);   theBinsEE.push_back(8603.12);
-    theCorrectionsEE.push_back(0.168588);   theBinsEE.push_back(9652.85);
-    theCorrectionsEE.push_back(0.178248);   theBinsEE.push_back(10830.7);
-    theCorrectionsEE.push_back(0.286695);   theBinsEE.push_back(12152.2);
-    theCorrectionsEE.push_back(0.649502);   theBinsEE.push_back(13635);
-    theCorrectionsEE.push_back(0.561537);   theBinsEE.push_back(15298.7);
-    theCorrectionsEE.push_back(0.315861);   theBinsEE.push_back(17165.5);
-    theCorrectionsEE.push_back(-0.260055);   theBinsEE.push_back(19259.9);
-    theCorrectionsEE.push_back(-0.485963);   theBinsEE.push_back(21610);
-    theCorrectionsEE.push_back(-0.526979);   theBinsEE.push_back(24246.8);
-    theCorrectionsEE.push_back(-0.320099);   theBinsEE.push_back(27205.4);
-    //theCorrectionsEE.push_back(0);   theBinsEE.push_back(0.000463988);
+     // obsolete, Mon Dec  5 12:12:29 CET 2011
+     //theCorrectionsEE.push_back(0);   theBinsEE.push_back(18.9123);
+     //theCorrectionsEE.push_back(0);   theBinsEE.push_back(21.218);
+     //theCorrectionsEE.push_back(0);   theBinsEE.push_back(23.805);
+     //theCorrectionsEE.push_back(-0.167688);   theBinsEE.push_back(26.7077);
+     //theCorrectionsEE.push_back(-0.136405);   theBinsEE.push_back(29.9646);
+     //theCorrectionsEE.push_back(-0.10191);   theBinsEE.push_back(33.6189);
+     //theCorrectionsEE.push_back(-0.0818226);   theBinsEE.push_back(37.7191);
+     //theCorrectionsEE.push_back(-0.0596632);   theBinsEE.push_back(42.3196);
+     //theCorrectionsEE.push_back(-0.0452422);   theBinsEE.push_back(47.4814);
+     //theCorrectionsEE.push_back(-0.0204676);   theBinsEE.push_back(53.2731);
+     //theCorrectionsEE.push_back(-0.00708579);   theBinsEE.push_back(59.7715);
+     //theCorrectionsEE.push_back(-0.00502538);   theBinsEE.push_back(67.0628);
+     //theCorrectionsEE.push_back(-0.00289768);   theBinsEE.push_back(75.2437);
+     //theCorrectionsEE.push_back(-0.00188651);   theBinsEE.push_back(84.4229);
+     //theCorrectionsEE.push_back(0.00172187);   theBinsEE.push_back(94.7221);
+     //theCorrectionsEE.push_back(0.00422572);   theBinsEE.push_back(106.278);
+     //theCorrectionsEE.push_back(0.00352601);   theBinsEE.push_back(119.244);
+     //theCorrectionsEE.push_back(0.000234735);   theBinsEE.push_back(133.792);
+     //theCorrectionsEE.push_back(-0.00497225);   theBinsEE.push_back(150.115);
+     //theCorrectionsEE.push_back(-0.00255359);   theBinsEE.push_back(168.43);
+     //theCorrectionsEE.push_back(0.000276509);   theBinsEE.push_back(188.98);
+     //theCorrectionsEE.push_back(-0.000676717);   theBinsEE.push_back(212.037);
+     //theCorrectionsEE.push_back(0.00375508);   theBinsEE.push_back(237.907);
+     //theCorrectionsEE.push_back(0.00800281);   theBinsEE.push_back(266.934);
+     //theCorrectionsEE.push_back(0.00939014);   theBinsEE.push_back(299.503);
+     //theCorrectionsEE.push_back(0.00933337);   theBinsEE.push_back(336.046);
+     //theCorrectionsEE.push_back(0.0127813);   theBinsEE.push_back(377.048);
+     //theCorrectionsEE.push_back(0.0149195);   theBinsEE.push_back(423.053);
+     //theCorrectionsEE.push_back(0.0169709);   theBinsEE.push_back(474.671);
+     //theCorrectionsEE.push_back(0.0198988);   theBinsEE.push_back(532.588);
+     //theCorrectionsEE.push_back(0.0265556);   theBinsEE.push_back(597.572);
+     //theCorrectionsEE.push_back(0.0266586);   theBinsEE.push_back(670.485);
+     //theCorrectionsEE.push_back(0.0308715);   theBinsEE.push_back(752.294);
+     //theCorrectionsEE.push_back(0.0147255);   theBinsEE.push_back(844.086);
+     //theCorrectionsEE.push_back(0.0155513);   theBinsEE.push_back(947.078);
+     //theCorrectionsEE.push_back(0.0234095);   theBinsEE.push_back(1062.64);
+     //theCorrectionsEE.push_back(0.0319073);   theBinsEE.push_back(1192.3);
+     //theCorrectionsEE.push_back(0.0440146);   theBinsEE.push_back(1337.78);
+     //theCorrectionsEE.push_back(0.0401477);   theBinsEE.push_back(1501.01);
+     //theCorrectionsEE.push_back(0.0538419);   theBinsEE.push_back(1684.16);
+     //theCorrectionsEE.push_back(0.06414);   theBinsEE.push_back(1889.65);
+     //theCorrectionsEE.push_back(0.0769302);   theBinsEE.push_back(2120.22);
+     //theCorrectionsEE.push_back(0.0733546);   theBinsEE.push_back(2378.93);
+     //theCorrectionsEE.push_back(0.0753102);   theBinsEE.push_back(2669.2);
+     //theCorrectionsEE.push_back(0.0786608);   theBinsEE.push_back(2994.89);
+     //theCorrectionsEE.push_back(0.0960978);   theBinsEE.push_back(3360.32);
+     //theCorrectionsEE.push_back(0.111197);   theBinsEE.push_back(3770.34);
+     //theCorrectionsEE.push_back(0.108132);   theBinsEE.push_back(4230.39);
+     //theCorrectionsEE.push_back(0.12744);   theBinsEE.push_back(4746.57);
+     //theCorrectionsEE.push_back(0.177114);   theBinsEE.push_back(5325.74);
+     //theCorrectionsEE.push_back(0.168588);   theBinsEE.push_back(5975.58);
+     //theCorrectionsEE.push_back(0.178248);   theBinsEE.push_back(6704.7);
+     //theCorrectionsEE.push_back(0.286695);   theBinsEE.push_back(7522.8);
+     //theCorrectionsEE.push_back(0.649502);   theBinsEE.push_back(8440.72);
+     //theCorrectionsEE.push_back(0.561537);   theBinsEE.push_back(9470.64);
+     //theCorrectionsEE.push_back(0.315861);   theBinsEE.push_back(10626.2);
+     //theCorrectionsEE.push_back(-0.260055);   theBinsEE.push_back(11922.8);
+     //theCorrectionsEE.push_back(-0.485963);   theBinsEE.push_back(13377.6);
+     //theCorrectionsEE.push_back(-0.526979);   theBinsEE.push_back(15009.9);
+     //theCorrectionsEE.push_back(-0.320099);   theBinsEE.push_back(16841.4);
+     std::cout << "you've selected a correction type (" << version << ") for EE which is OBSOLETE and won't be used." << std::endl;
    }
    else {
    std::cout << "you've selected a correction type (" << version << ") for EE which does not exist" << std::endl;
@@ -228,7 +253,7 @@ void timeCorrector::initEE(std::string version){
 
 
 void timeCorrector::initEB(std::string version){
-  std::cout << "\ninitializing corrections for EB" << std::endl;
+  std::cout << "\n++ initializing corrections for EB (no longer dummy corrections)" << std::endl;
 
    theCorrectionsEB.clear();          theBinsEB.clear();
 
@@ -299,68 +324,76 @@ void timeCorrector::initEB(std::string version){
 
    } else if (version==std::string("EB") ){
 
-      theCorrectionsEB.push_back(0.0491541);   theBinsEB.push_back(30.5506);
-      theCorrectionsEB.push_back(0.0366708);   theBinsEB.push_back(34.2752);
-      theCorrectionsEB.push_back(0.0329733);   theBinsEB.push_back(38.4542);
-      theCorrectionsEB.push_back(0.0294081);   theBinsEB.push_back(43.1432);
-      theCorrectionsEB.push_back(0.0259356);   theBinsEB.push_back(48.4044);
-      theCorrectionsEB.push_back(0.0231976);   theBinsEB.push_back(54.3075);
-      theCorrectionsEB.push_back(0.020153);   theBinsEB.push_back(60.9309);
-      theCorrectionsEB.push_back(0.0189855);   theBinsEB.push_back(68.3624);
-      theCorrectionsEB.push_back(0.018099);   theBinsEB.push_back(76.7008);
-      theCorrectionsEB.push_back(0.0150657);   theBinsEB.push_back(86.0566);
-      theCorrectionsEB.push_back(0.013667);   theBinsEB.push_back(96.5539);
-      theCorrectionsEB.push_back(0.0127761);   theBinsEB.push_back(108.332);
-      theCorrectionsEB.push_back(0.0142797);   theBinsEB.push_back(121.548);
-      theCorrectionsEB.push_back(0.0134406);   theBinsEB.push_back(136.375);
-      theCorrectionsEB.push_back(0.00871709);   theBinsEB.push_back(153.013);
-      theCorrectionsEB.push_back(0.00774489);   theBinsEB.push_back(171.68);
-      theCorrectionsEB.push_back(0.00916078);   theBinsEB.push_back(192.625);
-      theCorrectionsEB.push_back(0.0071625);   theBinsEB.push_back(216.126);
-      theCorrectionsEB.push_back(0.00582299);   theBinsEB.push_back(242.494);
-      theCorrectionsEB.push_back(0.00974502);   theBinsEB.push_back(272.079);
-      theCorrectionsEB.push_back(0.00911389);   theBinsEB.push_back(305.275);
-      theCorrectionsEB.push_back(0.00685906);   theBinsEB.push_back(342.521);
-      theCorrectionsEB.push_back(0.00427364);   theBinsEB.push_back(384.312);
-      theCorrectionsEB.push_back(0.00683086);   theBinsEB.push_back(431.202);
-      theCorrectionsEB.push_back(0.00458362);   theBinsEB.push_back(483.813);
-      theCorrectionsEB.push_back(0.00442922);   theBinsEB.push_back(542.844);
-      theCorrectionsEB.push_back(0.0111124);   theBinsEB.push_back(609.078);
-      theCorrectionsEB.push_back(0.00586062);   theBinsEB.push_back(683.394);
-      theCorrectionsEB.push_back(0.0156288);   theBinsEB.push_back(766.777);
-      theCorrectionsEB.push_back(0.00229034);   theBinsEB.push_back(860.335);
-      theCorrectionsEB.push_back(0.000420746);   theBinsEB.push_back(965.308);
-      theCorrectionsEB.push_back(0.00168491);   theBinsEB.push_back(1083.09);
-      theCorrectionsEB.push_back(-0.00289166);   theBinsEB.push_back(1215.24);
-      theCorrectionsEB.push_back(0.000502757);   theBinsEB.push_back(1363.52);
-      theCorrectionsEB.push_back(-0.0113229);   theBinsEB.push_back(1529.9);
-      theCorrectionsEB.push_back(-0.0228308);   theBinsEB.push_back(1716.57);
-      theCorrectionsEB.push_back(-0.0108323);   theBinsEB.push_back(1926.02);
-      theCorrectionsEB.push_back(-0.0109995);   theBinsEB.push_back(2161.02);
-      theCorrectionsEB.push_back(-0.034372);   theBinsEB.push_back(2424.71);
-      theCorrectionsEB.push_back(-0.0414099);   theBinsEB.push_back(2720.56);
-      theCorrectionsEB.push_back(-0.0361992);   theBinsEB.push_back(3052.52);
-      theCorrectionsEB.push_back(-0.0293669);   theBinsEB.push_back(3424.98);
-      theCorrectionsEB.push_back(0.00775366);   theBinsEB.push_back(3842.89);
-      theCorrectionsEB.push_back(-0.150378);   theBinsEB.push_back(4311.79);
-      theCorrectionsEB.push_back(-0.179345);   theBinsEB.push_back(4837.9);
-      theCorrectionsEB.push_back(-0.221932);   theBinsEB.push_back(5428.21);
-      theCorrectionsEB.push_back(-0.411671);   theBinsEB.push_back(6090.55);
-      theCorrectionsEB.push_back(-0.565842);   theBinsEB.push_back(6833.7);
-      theCorrectionsEB.push_back(-0.710823);   theBinsEB.push_back(7667.54);
-      theCorrectionsEB.push_back(-0.560967);   theBinsEB.push_back(8603.12);
-      theCorrectionsEB.push_back(-0.724621);   theBinsEB.push_back(9652.85);
-      theCorrectionsEB.push_back(-0.786503);   theBinsEB.push_back(10830.7);
-      theCorrectionsEB.push_back(-0.823316);   theBinsEB.push_back(12152.2);
-      theCorrectionsEB.push_back(-0.868813);   theBinsEB.push_back(13635);
-      theCorrectionsEB.push_back(-1.36518);   theBinsEB.push_back(15298.7);
-      theCorrectionsEB.push_back(-1.06207);   theBinsEB.push_back(17165.5);
-      //theCorrectionsEB.push_back(0);   theBinsEB.push_back(19259.9);
-      //theCorrectionsEB.push_back(0);   theBinsEB.push_back(21610);
-      //theCorrectionsEB.push_back(0);   theBinsEB.push_back(24246.8);
-      //theCorrectionsEB.push_back(0);   theBinsEB.push_back(27205.4);
-      //theCorrectionsEB.push_back(0);   theBinsEB.push_back(0.000589421);
-
+     // using Tambe's result: http://tambe.web.cern.ch/tambe/TimingResolutionPlots/PhysPhoton/CorrFactorsFromLowEEAndEB/
+     theCorrectionsEB.push_back(0.129119);   theBinsEB.push_back(15.2987);
+     theCorrectionsEB.push_back(0.0666236);   theBinsEB.push_back(17.1654);
+     theCorrectionsEB.push_back(0.0750206);   theBinsEB.push_back(19.2599);
+     theCorrectionsEB.push_back(0.0585525);   theBinsEB.push_back(21.61);
+     theCorrectionsEB.push_back(0.0524942);   theBinsEB.push_back(24.2468);
+     theCorrectionsEB.push_back(0.0410405);   theBinsEB.push_back(27.2054);
+     theCorrectionsEB.push_back(0.0422359);   theBinsEB.push_back(30.5249);
+     theCorrectionsEB.push_back(0.0323442);   theBinsEB.push_back(34.2495);
+     theCorrectionsEB.push_back(0.0261736);   theBinsEB.push_back(38.4286);
+     theCorrectionsEB.push_back(0.0184196);   theBinsEB.push_back(43.1176);
+     theCorrectionsEB.push_back(0.0184786);   theBinsEB.push_back(48.3787);
+     theCorrectionsEB.push_back(0.0145926);   theBinsEB.push_back(54.2818);
+     theCorrectionsEB.push_back(0.00614763);   theBinsEB.push_back(60.9052);
+     theCorrectionsEB.push_back(0.00712762);   theBinsEB.push_back(68.3368);
+     theCorrectionsEB.push_back(0.00556952);   theBinsEB.push_back(76.6751);
+     theCorrectionsEB.push_back(0.000358535);   theBinsEB.push_back(86.0309);
+     theCorrectionsEB.push_back(-0.00035637);   theBinsEB.push_back(96.5283);
+     theCorrectionsEB.push_back(-0.00591454);   theBinsEB.push_back(108.307);
+     theCorrectionsEB.push_back(-0.00270605);   theBinsEB.push_back(121.522);
+     theCorrectionsEB.push_back(-0.00176438);   theBinsEB.push_back(136.35);
+     theCorrectionsEB.push_back(-0.00849706);   theBinsEB.push_back(152.987);
+     theCorrectionsEB.push_back(-0.0116634);   theBinsEB.push_back(171.654);
+     theCorrectionsEB.push_back(-0.00833955);   theBinsEB.push_back(192.599);
+     theCorrectionsEB.push_back(-0.0153301);   theBinsEB.push_back(216.1);
+     theCorrectionsEB.push_back(-0.0151621);   theBinsEB.push_back(242.468);
+     theCorrectionsEB.push_back(-0.00896533);   theBinsEB.push_back(272.054);
+     theCorrectionsEB.push_back(-0.01008);   theBinsEB.push_back(305.249);
+     theCorrectionsEB.push_back(-0.0188685);   theBinsEB.push_back(342.495);
+     theCorrectionsEB.push_back(-0.0171632);   theBinsEB.push_back(384.286);
+     theCorrectionsEB.push_back(-0.0159843);   theBinsEB.push_back(431.176);
+     theCorrectionsEB.push_back(-0.0185847);   theBinsEB.push_back(483.787);
+     theCorrectionsEB.push_back(-0.0209603);   theBinsEB.push_back(542.818);
+     theCorrectionsEB.push_back(-0.0130973);   theBinsEB.push_back(609.052);
+     theCorrectionsEB.push_back(-0.0154015);   theBinsEB.push_back(683.368);
+     theCorrectionsEB.push_back(-0.00529718);   theBinsEB.push_back(766.751);
+     theCorrectionsEB.push_back(-0.0174984);   theBinsEB.push_back(860.309);
+     theCorrectionsEB.push_back(-0.0284475);   theBinsEB.push_back(965.283);
+     theCorrectionsEB.push_back(-0.0264779);   theBinsEB.push_back(1083.07);
+     theCorrectionsEB.push_back(-0.0234928);   theBinsEB.push_back(1215.22);
+     theCorrectionsEB.push_back(-0.0262998);   theBinsEB.push_back(1363.5);
+     theCorrectionsEB.push_back(-0.0412084);   theBinsEB.push_back(1529.87);
+     theCorrectionsEB.push_back(-0.043147);   theBinsEB.push_back(1716.54);
+     theCorrectionsEB.push_back(-0.034127);   theBinsEB.push_back(1925.99);
+     theCorrectionsEB.push_back(-0.0282815);   theBinsEB.push_back(2161);
+     theCorrectionsEB.push_back(-0.0649723);   theBinsEB.push_back(2424.68);
+     theCorrectionsEB.push_back(-0.0586241);   theBinsEB.push_back(2720.54);
+     theCorrectionsEB.push_back(-0.0689535);   theBinsEB.push_back(3052.49);
+     theCorrectionsEB.push_back(-0.0644636);   theBinsEB.push_back(3424.95);
+     theCorrectionsEB.push_back(-0.0302987);   theBinsEB.push_back(3842.86);
+     theCorrectionsEB.push_back(-0.231401);   theBinsEB.push_back(4311.76);
+     theCorrectionsEB.push_back(-0.271354);   theBinsEB.push_back(4837.87);
+     theCorrectionsEB.push_back(-0.334614);   theBinsEB.push_back(5428.18);
+     theCorrectionsEB.push_back(-0.500895);   theBinsEB.push_back(6090.52);
+     theCorrectionsEB.push_back(-0.671807);   theBinsEB.push_back(6833.68);
+     theCorrectionsEB.push_back(-0.71232);   theBinsEB.push_back(7667.51);
+     theCorrectionsEB.push_back(-0.69643);   theBinsEB.push_back(8603.09);
+     theCorrectionsEB.push_back(-0.692654);   theBinsEB.push_back(9652.83);
+     theCorrectionsEB.push_back(-0.810051);   theBinsEB.push_back(10830.7);
+     theCorrectionsEB.push_back(-0.821316);   theBinsEB.push_back(12152.2);
+     theCorrectionsEB.push_back(-0.786343);   theBinsEB.push_back(13635);
+     // the points below are outside of the plot: 
+     // http://tambe.web.cern.ch/tambe/TimingResolutionPlots/PhysPhoton/CorrFactorsFromLowEEAndEB/Mean_Time_(+250ps)_Vs_Amplitude_Crys%20In%20EB.png
+     // check before confirming
+     theCorrectionsEB.push_back(-1.28217);   theBinsEB.push_back(15298.7);
+     theCorrectionsEB.push_back(-2.25185);   theBinsEB.push_back(17165.4);
+     theCorrectionsEB.push_back(-3.48219);   theBinsEB.push_back(19259.9);
+     theCorrectionsEB.push_back(-4.75);   theBinsEB.push_back(21610);
+     // theCorrectionsEB.push_back(5.25);   theBinsEB.push_back(24246.8); // this looks unphysical
+     
    }
    else {
    std::cout << "you've selected a correction type  (" << version << ")  for EB which does not exist" << std::endl;

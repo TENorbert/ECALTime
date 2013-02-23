@@ -12,14 +12,16 @@
 
 #include "MathFunctions.h"
 #include "AnaInput.h"
-#include "PhotonAna.h"
+#include "PhotonAna.h" 
+#include "timeVsAmpliCorrector.h"
 
 using namespace std; 
 
-int main() { 
+int main( int argc, const char* argv[] ) { 
 
-  AnaInput        *Input = new AnaInput();
-  PhotonAna   *photonAna = new PhotonAna();
+  string datacardfile = ( argc > 1 ) ? argv[1] : "DataCard.txt";
+  AnaInput        *Input = new AnaInput( datacardfile );
+  PhotonAna   *photonAna = new PhotonAna( datacardfile );
   //vector<int> module;
   //Input->GetParameters( "Module", &module );
 

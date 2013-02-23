@@ -1,7 +1,8 @@
 #include "AnaInput.h"
 
-AnaInput::AnaInput() {
+AnaInput::AnaInput( string datacardInput ) {
 
+  datacardfile = datacardInput ;
 
 }
 
@@ -77,6 +78,8 @@ TTree* AnaInput::GetTree( string fName, TString treeName, TFile* file  ) {
 
 double AnaInput::NormalizeComponents(  string theChannel, string cfgFile ){
 
+  if ( cfgFile == "" ) cfgFile = datacardfile ;
+
   double lumi ;
   double Scal = 1 ;
   GetParameters("Lumi", &lumi, cfgFile );
@@ -110,6 +113,8 @@ double AnaInput::NormalizeComponents(  string theChannel, string cfgFile ){
 // Methods to read DataCard.txt
 void AnaInput::GetParameters(string paraName, int* thePara, string cfgFile ){
 
+     if ( cfgFile == "" ) cfgFile = datacardfile ;
+
      fstream paraFile( cfgFile.c_str() );
      if ( !paraFile.is_open() )  cout<<" file opened error => check file path and the folder "<<endl;
      string  line;
@@ -141,6 +146,8 @@ void AnaInput::GetParameters(string paraName, int* thePara, string cfgFile ){
 
 void AnaInput::GetParameters(string paraName, double* thePara, string cfgFile ){
 
+     if ( cfgFile == "" ) cfgFile = datacardfile ;
+
      fstream paraFile( cfgFile.c_str() );
      if ( !paraFile.is_open() )  cout<<" file opened error => check file path and the folder "<<endl;
      string  line;
@@ -171,6 +178,8 @@ void AnaInput::GetParameters(string paraName, double* thePara, string cfgFile ){
 }
 
 void AnaInput::GetParameters(string paraName, string* thePara, string cfgFile ){
+
+     if ( cfgFile == "" ) cfgFile = datacardfile ;
 
      fstream paraFile( cfgFile.c_str() );
      if ( !paraFile.is_open() )  cout<<" file opened error => check file path and the folder "<<endl;
@@ -206,6 +215,8 @@ void AnaInput::GetParameters(string paraName, string* thePara, string cfgFile ){
 }
 
 void AnaInput::GetParameters(string paraName, vector<double>* thePara, string cfgFile ){
+
+     if ( cfgFile == "" ) cfgFile = datacardfile ;
 
      fstream paraFile( cfgFile.c_str() );
      if ( !paraFile.is_open() )  cout<<" file opened error => check file path and the folder "<<endl;
@@ -246,6 +257,8 @@ void AnaInput::GetParameters(string paraName, vector<double>* thePara, string cf
 
 void AnaInput::GetParameters(string paraName, vector<string>* thePara, string cfgFile ){
 
+     if ( cfgFile == "" ) cfgFile = datacardfile ;
+
      fstream paraFile( cfgFile.c_str() );
 
      if ( !paraFile.is_open() )  cout<<" file opened error => check file path and the folder "<<endl;
@@ -285,6 +298,8 @@ void AnaInput::GetParameters(string paraName, vector<string>* thePara, string cf
 }
  
 void AnaInput::GetParameters(string paraName, vector<int>* thePara, string cfgFile ){
+
+     if ( cfgFile == "" ) cfgFile = datacardfile ;
 
      fstream paraFile( cfgFile.c_str() );
      if ( !paraFile.is_open() )  cout<<" file opened error => check file path and the folder "<<endl;

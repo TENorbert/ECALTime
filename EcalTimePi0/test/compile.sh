@@ -22,6 +22,7 @@ cxx="-m64"
 g++ MathFunctions.cc -c -o MathFunctions.o $libs $cflags $cxx $cxxflags
 g++ AnaInput.cc -c  -o AnaInput.o $libs $cflags $cxx $cxxflags
 g++ hJetTime.cc -c  -o hJetTime.o $libs $cflags $cxx $cxxflags
+g++ timeVsAmpliCorrector.cc -c  -o timeVsAmpliCorrector.o $libs $cflags $cxx $cxxflags
 g++ PhotonAna.cc -c  -o PhotonAna.o $libs $cflags $cxx $cxxflags
 
-g++ $input -o $output MathFunctions.o AnaInput.o hJetTime.o PhotonAna.o $libs $cflags $cxx $cxxflags $glibs -lMinuit
+g++ $input -o $output MathFunctions.o AnaInput.o hJetTime.o PhotonAna.o timeVsAmpliCorrector.o $libs $cflags $cxx $cxxflags $glibs -lMinuit

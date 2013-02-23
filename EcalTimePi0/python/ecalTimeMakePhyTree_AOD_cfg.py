@@ -17,7 +17,10 @@ process.load("Geometry.MuonNumbering.muonNumberingInitialization_cfi") # gfwork:
 # Global Tag
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 #process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_noesprefer_cff")
-process.GlobalTag.globaltag = 'GR_R_42_V19::All'
+# global tag for 42x
+#process.GlobalTag.globaltag = 'GR_P_V22::All'
+# global tag for 44x
+process.GlobalTag.globaltag = 'GR_R_44_V13::All'
 
 
 # Trigger
@@ -26,8 +29,6 @@ process.load("L1TriggerConfig.L1ScalesProducers.L1MuTriggerPtScaleConfig_cff")
 process.load("L1TriggerConfig.L1GtConfigProducers.L1GtBoardMapsConfig_cff")
 process.load("L1TriggerConfig.L1GtConfigProducers.L1GtConfig_cff")
 process.load("L1TriggerConfig.L1GtConfigProducers.Luminosity.startup.L1Menu_startup2_v2_Unprescaled_cff")
-import FWCore.Modules.printContent_cfi
-process.dumpEv = FWCore.Modules.printContent_cfi.printContent.clone()
 
 import EventFilter.L1GlobalTriggerRawToDigi.l1GtUnpack_cfi
 process.gtDigis = EventFilter.L1GlobalTriggerRawToDigi.l1GtUnpack_cfi.l1GtUnpack.clone()
@@ -38,83 +39,98 @@ process.load("ECALTime.EcalTimePi0.ecalTimePhyTree_cfi")
 process.ecalTimePhyTree.fileName = 'EcalTimeTree'
 process.ecalTimePhyTree.barrelEcalRecHitCollection = cms.InputTag("reducedEcalRecHitsEB","")
 process.ecalTimePhyTree.endcapEcalRecHitCollection = cms.InputTag("reducedEcalRecHitsEE","")
-process.ecalTimePhyTree.barrelBasicClusterCollection = cms.InputTag("hybridSuperClusters","hybridBarrelBasicClusters")
+process.ecalTimePhyTree.barrelBasicClusterCollection = cms.InputTag("uncleanSCRecovered","uncleanHybridBarrelBasicClusters")
+#process.ecalTimePhyTree.barrelBasicClusterCollection = cms.InputTag("hybridSuperClusters","hybridBarrelBasicClusters")
 process.ecalTimePhyTree.endcapBasicClusterCollection = cms.InputTag("multi5x5BasicClusters","multi5x5EndcapBasicClusters")
-process.ecalTimePhyTree.barrelSuperClusterCollection = cms.InputTag("correctedHybridSuperClusters","")
+process.ecalTimePhyTree.barrelSuperClusterCollection = cms.InputTag("uncleanSCRecovered","uncleanHybridSuperClusters")
+#process.ecalTimePhyTree.barrelSuperClusterCollection = cms.InputTag("correctedHybridSuperClusters","")
 process.ecalTimePhyTree.endcapSuperClusterCollection = cms.InputTag("correctedMulti5x5SuperClustersWithPreshower","")
 process.ecalTimePhyTree.PhotonSource = cms.InputTag("myphotons")
+#process.ecalTimePhyTree.PhotonSource = cms.InputTag("photons")
 process.ecalTimePhyTree.muonCollection = cms.InputTag("muons")
+# switch on or off Tambe's analysis level corrections
+process.ecalTimePhyTree.doTimeVSAmpliCorrection = cms.bool(True)
 process.ecalTimePhyTree.runNum = 999999
+process.ecalTimePhyTree.triggerHeader  = cms.untracked.string('HLT_Photon')
+process.ecalTimePhyTree.triggerBody    = cms.untracked.string('EBOnly_CaloIdVL_IsoL_TriPFJet25')
+#process.ecalTimePhyTree.triggerBody    = cms.untracked.string('_CaloIdVL_IsoL')
+process.ecalTimePhyTree.trigSource     = cms.InputTag("TriggerResults","","HLT")
+process.ecalTimePhyTree.L1GlobalReadoutRecord = cms.string('gtDigis')
+
+# Set up cuts for physics objects;
+# nJets and nPhoton constitute event-based selections 
+
+###################### signal preselection cuts ##########################
+## jet cuts                                           pt   |eta|  nJets
+#process.ecalTimePhyTree.jetCuts       = cms.vdouble( 25. , 2.4, 3 )
+## met cuts                                           Et
+#process.ecalTimePhyTree.metCuts       = cms.vdouble( 20  )
+## photon cuts                                        pt |eta|  dR   nPhoton
+#process.ecalTimePhyTree.photonCuts    = cms.vdouble( 30, 2.4, 0.3, 1 )
+# photon Isolation                                  trk,  ecalEt, ecalR, hcalEt, hcalR
+#process.ecalTimePhyTree.photonIso     = cms.vdouble( 0.2,    4.5,   0.1,    4.0,   0.1 )
+## electron cuts                                      pt |eta| relIso dR
+#process.ecalTimePhyTree.electronCuts  = cms.vdouble( 25, 2.4, 0.15, 0.3 )
+## muon cuts                                          pt |eta| relIso dR
+#process.ecalTimePhyTree.muonCuts      = cms.vdouble( 25, 2.1, 0.2, 0.3 )
+
+##################### loose selection for studies ##########################
+# jet cuts                                           pt  |eta|  NJet  MaxNJet MET  
+process.ecalTimePhyTree.jetCuts       = cms.vdouble( 25,  2.4,    0,      99,    0 )
+# photon cuts                                        Pt  eta  hcal   dR  nPho sMinMin sMinMax                                 
+process.ecalTimePhyTree.photonCuts    = cms.vdouble( 60, 9.9,   99,   0.,   1,    0.,    1.0 )
+# photon Isolation                                  trk,  ecalEt, ecalR, hcalEt, hcalR
+process.ecalTimePhyTree.photonIso     = cms.vdouble( 0.5,    99.,   1.,    99.,     1. )
+# electron cuts                                      pt |eta| relIso dR
+process.ecalTimePhyTree.electronCuts  = cms.vdouble( 25, 2.4, 0.5,  0.5 )
+# muon cuts                                          pt |eta| relIso dR
+process.ecalTimePhyTree.muonCuts      = cms.vdouble( 25, 2.1, 0.5,  0.5 )
 
 
-
-# Set up cuts for physics objects
-# jet cuts                                           pt    eta  nJets
-process.ecalTimePhyTree.jetCuts       = cms.vdouble( 25. , 2.4, 3 )
-process.ecalTimePhyTree.metCuts       = cms.vdouble( 20  )
-# photon cuts                                        pt  eta  dR   nPhoton
-process.ecalTimePhyTree.photonCuts    = cms.vdouble( 30, 2.4, 0.3, 1 )
-process.ecalTimePhyTree.electronCuts  = cms.vdouble( 25, 2.4, 0.15, 0.3 )
-process.ecalTimePhyTree.muonCuts      = cms.vdouble( 25, 2.1, 0.2, 0.3 )
-
-process.dumpEvContent = cms.EDAnalyzer("EventContentAnalyzer")
-
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(1000))
-
-
-
-
-#################### ala romans ####################################
-process.load("RecoEgamma.EgammaPhotonProducers.photonSequence_cff")
-process.load("RecoEgamma.PhotonIdentification.photonId_cff")
-process.load("RecoLocalCalo.EcalRecAlgos.EcalSeverityLevelESProducer_cfi")
 ###########  USE UNCLEANED SUPERCLUSTERS  ######################### MS
 
 process.load("RecoEcal.EgammaClusterProducers.uncleanSCRecovery_cfi") 
 process.uncleanSCRecovered.cleanScCollection=cms.InputTag ("correctedHybridSuperClusters")	
-process.photonCore.scHybridBarrelProducer=cms.InputTag ("uncleanSCRecovered:uncleanHybridSuperClusters")	
-
-process.photons.barrelEcalHits=cms.InputTag("reducedEcalRecHitsEB")	
-process.photons.endcapEcalHits=cms.InputTag("reducedEcalRecHitsEE")	
-
    
+################################################################################# gf
+
+process.load("RecoEgamma.PhotonIdentification.photonId_cff")
+process.load("RecoLocalCalo.EcalRecAlgos.EcalSeverityLevelESProducer_cfi")
+
+import RecoEgamma.EgammaPhotonProducers.photonCore_cfi
+import RecoEgamma.EgammaPhotonProducers.photons_cfi
+
+process.myphotonCores=RecoEgamma.EgammaPhotonProducers.photonCore_cfi.photonCore.clone()
+process.myphotonCores.scHybridBarrelProducer=cms.InputTag ("uncleanSCRecovered:uncleanHybridSuperClusters")
+
 from RecoEgamma.PhotonIdentification.isolationCalculator_cfi import*	
 newisolationSumsCalculator = isolationSumsCalculator.clone()	  
 newisolationSumsCalculator.barrelEcalRecHitCollection = cms.InputTag('reducedEcalRecHitsEB')	
-newisolationSumsCalculator.endcapEcalRecHitCollection = cms.InputTag('reducedEcalRecHitsEE')	
-process.photons.isolationSumsCalculatorSet=newisolationSumsCalculator	
-
-
-
-
-################################################################################# gf
-import RecoEgamma.EgammaPhotonProducers.photonCore_cfi
-import RecoEgamma.EgammaPhotonProducers.photons_cfi
+newisolationSumsCalculator.endcapEcalRecHitCollection = cms.InputTag('reducedEcalRecHitsEE')
 
 process.myphotons=RecoEgamma.EgammaPhotonProducers.photons_cfi.photons.clone()
 process.myphotons.barrelEcalHits=cms.InputTag("reducedEcalRecHitsEB")	
 process.myphotons.endcapEcalHits=cms.InputTag("reducedEcalRecHitsEE")
 process.myphotons.isolationSumsCalculatorSet=newisolationSumsCalculator	
+process.myphotons.photonCoreProducer=cms.InputTag("myphotonCores")
 
-process.myphotonCore=RecoEgamma.EgammaPhotonProducers.photonCore_cfi.photonCore.clone()
-process.myphotonCore.scHybridBarrelProducer=cms.InputTag ("uncleanSCRecovered:uncleanHybridSuperClusters")
-
-process.myPhotonSequence = cms.Sequence(process.myphotonCore+process.myphotons)
+process.myPhotonSequence = cms.Sequence(process.myphotonCores+
+                                        process.myphotons)
 
 from RecoEgamma.PhotonIdentification.photonId_cfi import *
 # photonID sequence
 process.myPhotonIDSequence = cms.Sequence(PhotonIDProd)
-
+process.PhotonIDProd.photonProducer=cms.string("myphotons")
 
 ###########  USE UNCLEANED SUPERCLUSTERS  ################ MS
 process.uncleanPhotons = cms.Sequence(
-               process.uncleanSCRecovered*
-               #process.photonSequence *      # romans
-               process.myPhotonSequence *    # gf
-               #process.photonIDSequence *
+                process.uncleanSCRecovered *
+                process.myPhotonSequence *
                process.myPhotonIDSequence
                )
 
+process.dumpEvContent = cms.EDAnalyzer("EventContentAnalyzer")
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(2))
 
 process.p = cms.Path(
     process.uncleanPhotons * 
@@ -137,8 +153,7 @@ process.MessageLogger = cms.Service("MessageLogger",
     destinations = cms.untracked.vstring('cout')
 )
 process.load("FWCore.MessageService.MessageLogger_cfi")
-process.MessageLogger.cerr.FwkReport.reportEvery = cms.untracked.int32(1)
-
+process.MessageLogger.cerr.FwkReport.reportEvery = cms.untracked.int32(100)
 
 # dbs search --query "find file where dataset=/ExpressPhysics/BeamCommissioning09-Express-v2/FEVT and run=124020" | grep store | awk '{printf "\"%s\",\n", $1}'
 process.source = cms.Source(
@@ -147,7 +162,7 @@ process.source = cms.Source(
     
     # a few files from:    /MinimumBias/Commissioning10-GR_R_35X_V7A_SD_EG-v2/RECO
     fileNames = (cms.untracked.vstring(
-    'file:/data/franzoni/data/Run2011A_DoubleElectron_AOD_PromptReco-v4_000_166_946_CE9FBCFF-4B98-E011-A6C3-003048F11C58.root'
+    'file:/data/franzoni/data/Run2011B-PhotonHad-AOD-PromptReco-v1-000-179-558-5CDAF51F-A800-E111-ADD4-BCAEC518FF52.root'
     )
                  ),
     # explicitly drop photons resident in AOD/RECO, to make sure only those locally re-made (uncleaned photons) are used
