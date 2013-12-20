@@ -20,7 +20,11 @@ process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 # global tag for 42x
 #process.GlobalTag.globaltag = 'GR_P_V22::All'
 # global tag for 44x
-process.GlobalTag.globaltag = 'GR_R_44_V13::All'
+#process.GlobalTag.globaltag = 'GR_R_44_V13::All'
+#process.GlobalTag.globaltag = 'GR_R_53_V18::All'
+
+from Configuration.AlCa.GlobalTag import GlobalTag
+process.GlobalTag = GlobalTag( process.GlobalTag, 'GR_R_53_V18::All' )
 
 
 # Trigger
@@ -41,7 +45,8 @@ process.ecalTimePhyTree.barrelEcalRecHitCollection = cms.InputTag("reducedEcalRe
 process.ecalTimePhyTree.endcapEcalRecHitCollection = cms.InputTag("reducedEcalRecHitsEE","")
 process.ecalTimePhyTree.barrelBasicClusterCollection = cms.InputTag("uncleanSCRecovered","uncleanHybridBarrelBasicClusters")
 #process.ecalTimePhyTree.barrelBasicClusterCollection = cms.InputTag("hybridSuperClusters","hybridBarrelBasicClusters")
-process.ecalTimePhyTree.endcapBasicClusterCollection = cms.InputTag("multi5x5BasicClusters","multi5x5EndcapBasicClusters")
+#process.ecalTimePhyTree.endcapBasicClusterCollection = cms.InputTag("multi5x5BasicClusters","multi5x5EndcapBasicClusters")
+process.ecalTimePhyTree.endcapBasicClusterCollection = cms.InputTag("multi5x5SuperClusters","multi5x5EndcapBasicClusters")
 process.ecalTimePhyTree.barrelSuperClusterCollection = cms.InputTag("uncleanSCRecovered","uncleanHybridSuperClusters")
 #process.ecalTimePhyTree.barrelSuperClusterCollection = cms.InputTag("correctedHybridSuperClusters","")
 process.ecalTimePhyTree.endcapSuperClusterCollection = cms.InputTag("correctedMulti5x5SuperClustersWithPreshower","")
@@ -49,7 +54,7 @@ process.ecalTimePhyTree.PhotonSource = cms.InputTag("myphotons")
 #process.ecalTimePhyTree.PhotonSource = cms.InputTag("photons")
 process.ecalTimePhyTree.muonCollection = cms.InputTag("muons")
 # switch on or off Tambe's analysis level corrections
-process.ecalTimePhyTree.doTimeVSAmpliCorrection = cms.bool(True)
+process.ecalTimePhyTree.doTimeVSAmpliCorrection = cms.bool(False) # True if in CMSSW4XY
 process.ecalTimePhyTree.runNum = 999999
 process.ecalTimePhyTree.triggerHeader  = cms.untracked.string('HLT_Photon')
 process.ecalTimePhyTree.triggerBody    = cms.untracked.string('EBOnly_CaloIdVL_IsoL_TriPFJet25')
@@ -91,7 +96,20 @@ process.ecalTimePhyTree.muonCuts      = cms.vdouble( 25, 2.1, 0.5,  0.5 )
 
 process.load("RecoEcal.EgammaClusterProducers.uncleanSCRecovery_cfi") 
 process.uncleanSCRecovered.cleanScCollection=cms.InputTag ("correctedHybridSuperClusters")	
-   
+# to get clustering 
+process.load("Configuration.Geometry.GeometryIdeal_cff")
+#process.load("Configuration.StandardSequences.Geometry_cff")
+process.load('Configuration/StandardSequences/GeometryExtended_cff')
+
+# Geometry
+process.load("Geometry.CaloEventSetup.CaloTopology_cfi")
+process.load("Geometry.CaloEventSetup.CaloGeometry_cff")
+process.load("Geometry.CaloEventSetup.CaloGeometry_cfi")
+process.load("Geometry.EcalMapping.EcalMapping_cfi")
+process.load("Geometry.EcalMapping.EcalMappingRecord_cfi")
+process.load("Geometry.MuonNumbering.muonNumberingInitialization_cfi") # gfwork: need this?
+process.CaloTowerConstituentsMapBuilder = cms.ESProducer("CaloTowerConstituentsMapBuilder")
+
 ################################################################################# gf
 
 process.load("RecoEgamma.PhotonIdentification.photonId_cff")
@@ -130,7 +148,7 @@ process.uncleanPhotons = cms.Sequence(
                )
 
 process.dumpEvContent = cms.EDAnalyzer("EventContentAnalyzer")
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(2))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(5))
 
 process.p = cms.Path(
     process.uncleanPhotons * 
@@ -162,7 +180,8 @@ process.source = cms.Source(
     
     # a few files from:    /MinimumBias/Commissioning10-GR_R_35X_V7A_SD_EG-v2/RECO
     fileNames = (cms.untracked.vstring(
-    'file:/data/franzoni/data/Run2011B-PhotonHad-AOD-PromptReco-v1-000-179-558-5CDAF51F-A800-E111-ADD4-BCAEC518FF52.root'
+    #'file:/data/franzoni/data/Run2011B-PhotonHad-AOD-PromptReco-v1-000-179-558-5CDAF51F-A800-E111-ADD4-BCAEC518FF52.root'
+    'file:/hdfs/cms/phedex/store/data/Run2012C/SinglePhoton/RECO/EXODisplacedPhoton-PromptSkim-v3/000/198/941/00000/0EA7C91A-B8CF-E111-9766-002481E150EA.root'
     )
                  ),
     # explicitly drop photons resident in AOD/RECO, to make sure only those locally re-made (uncleaned photons) are used
