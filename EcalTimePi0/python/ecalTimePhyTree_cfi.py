@@ -20,13 +20,16 @@ ecalTimePhyTree = cms.EDAnalyzer("EcalTimePhyTreeMaker",
     ElectronSource = cms.InputTag("gsfElectrons"),
     PhotonSource   = cms.InputTag("photons"),
     triggerSource    = cms.InputTag("TriggerResults","","HLT"),
-    triggerHeader  = cms.untracked.string('HLT_Photon'),
-    triggerBody    = cms.untracked.string('_CaloIdVL_IsoL'),
+   # triggerHeader  = cms.untracked.string('HLT_Photon'),
+   # triggerBody    = cms.untracked.string('_CaloIdVL_IsoL'),
 
+    triggerHeader  = cms.untracked.string('HLT_DisplacedPhoton65'),
+    triggerBody    = cms.untracked.string('_CaloIdVL_IsoL_PFMET25'),
+    
     # jet/MET cuts                  Pt  eta  NJet  MaxNJet, MET          
     jetCuts          = cms.vdouble( 30, 2.4,    3,      99,  20 ),
     # photon cuts                   Pt  eta  hcal   dR  nPho sMinMin sMinMax                                 
-    photonCuts       = cms.vdouble( 70, 2.4,    6, 0.3,   1,    0.1,    0.53 ),
+    photonCuts       = cms.vdouble( 60, 2.4,    6, 0.3,   1,    0.1,    0.53 ),
     # photon Isolation              trk,  ecalEt, ecalR, hcalEt, hcalR
     photonIso        = cms.vdouble( 0.2,     4.5,   0.1,    4.0,   0.1 ),
     # electron cuts                 Pt  eta  iso   dR(photon, jets)                                 

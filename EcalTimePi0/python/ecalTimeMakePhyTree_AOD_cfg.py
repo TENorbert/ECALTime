@@ -56,8 +56,12 @@ process.ecalTimePhyTree.muonCollection = cms.InputTag("muons")
 # switch on or off Tambe's analysis level corrections
 process.ecalTimePhyTree.doTimeVSAmpliCorrection = cms.bool(False) # True if in CMSSW4XY
 process.ecalTimePhyTree.runNum = 999999
-process.ecalTimePhyTree.triggerHeader  = cms.untracked.string('HLT_Photon')
-process.ecalTimePhyTree.triggerBody    = cms.untracked.string('EBOnly_CaloIdVL_IsoL_TriPFJet25')
+#process.ecalTimePhyTree.triggerHeader  = cms.untracked.string('HLT_Photon')
+#process.ecalTimePhyTree.triggerBody    = cms.untracked.string('EBOnly_CaloIdVL_IsoL_TriPFJet25')
+process.ecalTimePhyTree.triggerHeader  = cms.untracked.string('HLT_DisplacedPhoton65')
+process.ecalTimePhyTree.triggerBody    = cms.untracked.string('_CaloIdVL_IsoL_PFMET25')
+#process.ecalTimePhyTree.triggerBody    = cms.untracked.string('HLT_Photon50_CaloIdVL_IsoL','HLT_DisplacedPhoton65_CaloIdVL_IsoL_PFMET25'),
+
 #process.ecalTimePhyTree.triggerBody    = cms.untracked.string('_CaloIdVL_IsoL')
 process.ecalTimePhyTree.trigSource     = cms.InputTag("TriggerResults","","HLT")
 process.ecalTimePhyTree.L1GlobalReadoutRecord = cms.string('gtDigis')
@@ -148,7 +152,7 @@ process.uncleanPhotons = cms.Sequence(
                )
 
 process.dumpEvContent = cms.EDAnalyzer("EventContentAnalyzer")
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(5))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(100))
 
 process.p = cms.Path(
     process.uncleanPhotons * 
