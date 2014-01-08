@@ -100,7 +100,8 @@ std::vector<std::vector<double> > trigExcludeVector;
 std::vector<std::vector<double> > ttrigIncludeVector;
 std::vector<std::vector<double> > ttrigExcludeVector;
 // expected standard path for datacard when running e.g. on pcminn03
-std::string   datacardfile_=std::string("/data/franzoni/cmssw/44x/CMSSW_4_4_2_forTimeHardware/src/ECALTime/EcalTimePi0/data/DataCard.txt");
+//std::string   datacardfile_=std::string("/data/franzoni/cmssw/44x/CMSSW_4_4_2_forTimeHardware/src/ECALTime/EcalTimePi0/data/DataCard.txt");
+std::string   datacardfile_=std::string("/local/cms/user/norbert/EcalTiming/DataSet/DataCard.txt");
 
 int  minEntriesForFit_ = 7;
 int  flagOneVertex_ = 0;

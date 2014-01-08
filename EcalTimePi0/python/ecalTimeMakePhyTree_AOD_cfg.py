@@ -2,31 +2,6 @@ import FWCore.ParameterSet.Config as cms
 
 process = cms.Process("displacedPhotonsNtuplizer")
 
-# to get clustering 
-process.load('Configuration/StandardSequences/GeometryExtended_cff')
-
-# Geometry
-process.load("Geometry.CaloEventSetup.CaloTopology_cfi")
-process.load("Geometry.CaloEventSetup.CaloGeometry_cff")
-process.load("Geometry.CaloEventSetup.CaloGeometry_cfi")
-process.load("Geometry.EcalMapping.EcalMapping_cfi")
-process.load("Geometry.EcalMapping.EcalMappingRecord_cfi")
-process.load("Geometry.MuonNumbering.muonNumberingInitialization_cfi") # gfwork: need this?
-
-
-# Global Tag
-process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
-#process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_noesprefer_cff")
-# global tag for 42x
-#process.GlobalTag.globaltag = 'GR_P_V22::All'
-# global tag for 44x
-#process.GlobalTag.globaltag = 'GR_R_44_V13::All'
-#process.GlobalTag.globaltag = 'GR_R_53_V18::All'
-
-from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag( process.GlobalTag, 'GR_R_53_V18::All' )
-
-
 # Trigger
 process.load("L1TriggerConfig.L1ScalesProducers.L1MuTriggerScalesConfig_cff")
 process.load("L1TriggerConfig.L1ScalesProducers.L1MuTriggerPtScaleConfig_cff")
@@ -37,7 +12,7 @@ process.load("L1TriggerConfig.L1GtConfigProducers.Luminosity.startup.L1Menu_star
 import EventFilter.L1GlobalTriggerRawToDigi.l1GtUnpack_cfi
 process.gtDigis = EventFilter.L1GlobalTriggerRawToDigi.l1GtUnpack_cfi.l1GtUnpack.clone()
 
-
+######################  NTUPLE PRODUCER  ####################################################################
 # this is the ntuple producer
 process.load("ECALTime.EcalTimePi0.ecalTimePhyTree_cfi")
 process.ecalTimePhyTree.fileName = 'EcalTimeTree'
@@ -61,10 +36,12 @@ process.ecalTimePhyTree.runNum = 999999
 process.ecalTimePhyTree.triggerHeader  = cms.untracked.string('HLT_DisplacedPhoton65')
 process.ecalTimePhyTree.triggerBody    = cms.untracked.string('_CaloIdVL_IsoL_PFMET25')
 #process.ecalTimePhyTree.triggerBody    = cms.untracked.string('HLT_Photon50_CaloIdVL_IsoL','HLT_DisplacedPhoton65_CaloIdVL_IsoL_PFMET25'),
-
 #process.ecalTimePhyTree.triggerBody    = cms.untracked.string('_CaloIdVL_IsoL')
 process.ecalTimePhyTree.trigSource     = cms.InputTag("TriggerResults","","HLT")
 process.ecalTimePhyTree.L1GlobalReadoutRecord = cms.string('gtDigis')
+
+
+#################### PRE-SELECTION-CUTS ##################################
 
 # Set up cuts for physics objects;
 # nJets and nPhoton constitute event-based selections 
@@ -96,16 +73,40 @@ process.ecalTimePhyTree.electronCuts  = cms.vdouble( 25, 2.4, 0.5,  0.5 )
 process.ecalTimePhyTree.muonCuts      = cms.vdouble( 25, 2.1, 0.5,  0.5 )
 
 
-###########  USE UNCLEANED SUPERCLUSTERS  ######################### MS
+###########  USE UNCLEANED SUPERCLUSTERS  #############################################
 
-process.load("RecoEcal.EgammaClusterProducers.uncleanSCRecovery_cfi") 
-process.uncleanSCRecovered.cleanScCollection=cms.InputTag ("correctedHybridSuperClusters")	
+################# RECO ON THE FLY FROM AOD ###################################
+process.load('Configuration.StandardSequences.Services_cff')
+process.load('Configuration.StandardSequences.MagneticField_38T_cff')
+process.load('RecoEgamma.EgammaPhotonProducers.conversionTracks_cff')
+process.load("Configuration.StandardSequences.Reconstruction_cff")
+process.load("Configuration.StandardSequences.MagneticField_cff")
+process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
+process.load("RecoEcal.Configuration.RecoEcal_cff")
+from Configuration.StandardSequences.Reconstruction_cff import *
+from RecoEcal.Configuration.RecoEcal_cff import *
+from RecoEcal.EgammaClusterProducers.hybridSuperClusters_cfi import *
+
+
+
+# Global Tag
+process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
+#process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_noesprefer_cff")
+# global tag for 42x
+#process.GlobalTag.globaltag = 'GR_P_V22::All'
+# global tag for 44x
+#process.GlobalTag.globaltag = 'GR_R_44_V13::All'
+#process.GlobalTag.globaltag = 'GR_R_53_V18::All'
+from Configuration.AlCa.GlobalTag import GlobalTag
+process.GlobalTag = GlobalTag( process.GlobalTag, 'GR_R_53_V18::All' )
+
+
 # to get clustering 
+#Geometry
+
 process.load("Configuration.Geometry.GeometryIdeal_cff")
 #process.load("Configuration.StandardSequences.Geometry_cff")
 process.load('Configuration/StandardSequences/GeometryExtended_cff')
-
-# Geometry
 process.load("Geometry.CaloEventSetup.CaloTopology_cfi")
 process.load("Geometry.CaloEventSetup.CaloGeometry_cff")
 process.load("Geometry.CaloEventSetup.CaloGeometry_cfi")
@@ -114,7 +115,8 @@ process.load("Geometry.EcalMapping.EcalMappingRecord_cfi")
 process.load("Geometry.MuonNumbering.muonNumberingInitialization_cfi") # gfwork: need this?
 process.CaloTowerConstituentsMapBuilder = cms.ESProducer("CaloTowerConstituentsMapBuilder")
 
-################################################################################# gf
+
+##################### PHOTON PRODUCTION PROCESS ###############################################
 
 process.load("RecoEgamma.PhotonIdentification.photonId_cff")
 process.load("RecoLocalCalo.EcalRecAlgos.EcalSeverityLevelESProducer_cfi")
@@ -123,17 +125,27 @@ import RecoEgamma.EgammaPhotonProducers.photonCore_cfi
 import RecoEgamma.EgammaPhotonProducers.photons_cfi
 
 process.myphotonCores=RecoEgamma.EgammaPhotonProducers.photonCore_cfi.photonCore.clone()
+process.load("RecoEcal.EgammaClusterProducers.uncleanSCRecovery_cfi") 
+process.uncleanSCRecovered.cleanScCollection=cms.InputTag ("correctedHybridSuperClusters")	
 process.myphotonCores.scHybridBarrelProducer=cms.InputTag ("uncleanSCRecovered:uncleanHybridSuperClusters")
 
+from RecoEgamma.PhotonIdentification.mipVariable_cfi import *
+newMipVariable = mipVariable.clone()
+newMipVariable.barrelEcalRecHitCollection = cms.InputTag('reducedEcalRecHitsEB')
+newMipVariable.endcapEcalRecHitCollection = cms.InputTag('reducedEcalRecHitsEE')
+
 from RecoEgamma.PhotonIdentification.isolationCalculator_cfi import*	
-newisolationSumsCalculator = isolationSumsCalculator.clone()	  
+newisolationSumsCalculator = isolationSumsCalculator.clone()
+newisolationSumsCalculator.barrelEcalRecHitProducer = cms.string('reducedEcalRecHitsEB')
+newisolationSumsCalculator.endcapEcalRecHitProducer = cms.string('reducedEcalRecHitsEE')
 newisolationSumsCalculator.barrelEcalRecHitCollection = cms.InputTag('reducedEcalRecHitsEB')	
 newisolationSumsCalculator.endcapEcalRecHitCollection = cms.InputTag('reducedEcalRecHitsEE')
 
 process.myphotons=RecoEgamma.EgammaPhotonProducers.photons_cfi.photons.clone()
 process.myphotons.barrelEcalHits=cms.InputTag("reducedEcalRecHitsEB")	
 process.myphotons.endcapEcalHits=cms.InputTag("reducedEcalRecHitsEE")
-process.myphotons.isolationSumsCalculatorSet=newisolationSumsCalculator	
+process.myphotons.isolationSumsCalculatorSet=newisolationSumsCalculator
+process.myphotons.mipVariableSet = newMipVariable
 process.myphotons.photonCoreProducer=cms.InputTag("myphotonCores")
 
 process.myPhotonSequence = cms.Sequence(process.myphotonCores+
@@ -144,7 +156,7 @@ from RecoEgamma.PhotonIdentification.photonId_cfi import *
 process.myPhotonIDSequence = cms.Sequence(PhotonIDProd)
 process.PhotonIDProd.photonProducer=cms.string("myphotons")
 
-###########  USE UNCLEANED SUPERCLUSTERS  ################ MS
+##### Unclean Photon Process ############################################
 process.uncleanPhotons = cms.Sequence(
                 process.uncleanSCRecovered *
                 process.myPhotonSequence *
@@ -186,6 +198,7 @@ process.source = cms.Source(
     fileNames = (cms.untracked.vstring(
     #'file:/data/franzoni/data/Run2011B-PhotonHad-AOD-PromptReco-v1-000-179-558-5CDAF51F-A800-E111-ADD4-BCAEC518FF52.root'
     'file:/hdfs/cms/phedex/store/data/Run2012C/SinglePhoton/RECO/EXODisplacedPhoton-PromptSkim-v3/000/198/941/00000/0EA7C91A-B8CF-E111-9766-002481E150EA.root'
+#    'file:/hdfs/cms/phedex/store/data/Run2012A/DoubleElectron/AOD/22Jan2013-v1/30000/4A0C8B83-6470-E211-BBA0-003048679182.root'
     )
                  ),
     # explicitly drop photons resident in AOD/RECO, to make sure only those locally re-made (uncleaned photons) are used
