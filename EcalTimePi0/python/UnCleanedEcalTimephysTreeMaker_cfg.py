@@ -105,6 +105,7 @@ process.GlobalTag = GlobalTag( process.GlobalTag, 'GR_R_53_V18::All' )
 #Geometry
 
 process.load("Configuration.Geometry.GeometryIdeal_cff")
+process.load("Geometry.CMSCommonData.cmsIdealGeometryXML_cfi");
 #process.load("Configuration.StandardSequences.Geometry_cff")
 process.load('Configuration/StandardSequences/GeometryExtended_cff')
 process.load("Geometry.CaloEventSetup.CaloTopology_cfi")

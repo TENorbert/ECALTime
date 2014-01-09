@@ -68,7 +68,21 @@ Implementation:
 #include "DataFormats/EcalDetId/interface/EcalSubdetector.h"
 #include "DataFormats/EcalDetId/interface/EBDetId.h"
 #include "DataFormats/EcalDetId/interface/EEDetId.h"
+#include "DataFormats/DetId/interface/DetId.h"
 // ***
+
+
+#include "DataFormats/CaloRecHit/interface/CaloID.h"
+#include "DataFormats/EgammaReco/interface/SuperCluster.h"
+
+#include "FWCore/Framework/interface/Frameworkfwd.h"
+#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/Framework/interface/ESHandle.h"
+
+
+
 
 //for track length
 #include "Geometry/CaloGeometry/interface/CaloGeometry.h"
@@ -80,6 +94,7 @@ Implementation:
 #include "Geometry/CaloGeometry/interface/CaloSubdetectorGeometry.h"
 #include "RecoLocalCalo/EcalRecAlgos/interface/EcalSeverityLevelAlgo.h"
 
+#include "DataFormats/ParticleFlowCandidate/interface/PFCandidateFwd.h"
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
 #include "DataFormats/ParticleFlowReco/interface/PFBlock.h"
 #include "DataFormats/ParticleFlowReco/interface/PFBlockElement.h"
@@ -87,6 +102,10 @@ Implementation:
 
 #include "FWCore/Common/interface/TriggerNames.h"
 #include "DataFormats/Common/interface/TriggerResults.h"
+#include "DataFormats/HLTReco/interface/TriggerObject.h"
+#include "DataFormats/HLTReco/interface/TriggerEvent.h"
+#include "DataFormats/Math/interface/deltaR.h"
+
 
 #include "DataFormats/METReco/interface/PFMET.h"
 #include "DataFormats/METReco/interface/PFMETCollection.h"
@@ -103,8 +122,9 @@ Implementation:
 #include "RecoEcal/EgammaCoreTools/interface/EcalClusterTools.h"
 
 // containers for vertices
-#include <DataFormats/VertexReco/interface/VertexFwd.h>
-
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
+#include "DataFormats/VertexReco/interface/Vertex.h"
+#include "DataFormats/BeamSpot/interface/BeamSpot.h"
 #include <TMath.h>
 #include <Math/VectorUtil.h>
 
