@@ -35,7 +35,7 @@
 typedef std::set<std::pair<int,int> > SetOfIntPairs;
 
 // authors: S. Cooper and G. Franzoni (UMN)
-
+// Forked Author: Tambe E. Norbert (UMN)
 #define BarrelLimit  1.479
 #define EndcapLimit  3.0
 

@@ -568,7 +568,7 @@ int main (int argc, char** argv)
     
     // if evet being actually processed, increment counter of analyzed events
     eventCounter++;
-
+/*
     /////////////////// DP analysis events selection ////////////////////////
     bool passEvent = true ;
 
@@ -581,7 +581,7 @@ int main (int argc, char** argv)
     Selector_->ResetCuts() ;
 
     bool passPhoton = Selector_->PhotonFilter( false );
-    /* DEBUG */    //std::cout << "passPhoton Loose No Iso: " << passPhoton << std::endl; /* DEBUG */
+    // DEBUG //    //std::cout << "passPhoton Loose No Iso: " << passPhoton << std::endl; // DEBUG //
     passEvent = ( passPhoton && passEvent ) ? true : false ;
     if ( passEvent ) counter[1]++ ;   
 
@@ -614,7 +614,7 @@ int main (int argc, char** argv)
 
    
     // if selection according to datacard not passed, move on to next event 
-    if ( ! passEvent ) continue;
+    if ( ! passEvent ) continue;    
     
     // define samples here /////////////////////////////////// (to be updated/FIXED including SC's implementation )
     // control region
@@ -622,14 +622,16 @@ int main (int argc, char** argv)
     if( selectBackground==1 && (treeVars_.nJets<1 || treeVars_.nJets>2) ) continue;
     // 2: QCD background control sample - FIXME
     if( selectBackground==2 && (treeVars_.nJets<1 || treeVars_.nJets>2) ) continue;
-    // look only at half of the events 
+ */
+     // look only at half of the events 
     if ( (treeVars_.orbit % 2)==1 ) continue;
 
     bool verticesAreOnlyNextToNominalIP;
     int  count=0;
     
     for(int v=0; v<treeVars_.nVertices; v++  )
-	{        if (fabs(treeVars_.vtxZ[0])<15) count++; }
+	//{        if (fabs(treeVars_.vtxZ[0])<15) count++; }
+	{        if (fabs(treeVars_.vtxZ[0])<20) count++; }
     
     if ( treeVars_.nVertices >0 && count==treeVars_.nVertices ) verticesAreOnlyNextToNominalIP = true;
     else                                                        verticesAreOnlyNextToNominalIP = false;
@@ -654,7 +656,7 @@ int main (int argc, char** argv)
     for (int sc1=0; sc1<treeVars_.nSuperClusters; sc1++){
 
       // require object FIRST, since for jets there may not BE superClusterRawEnergy or superClusterEta 
-      if ( fabs ( treeVars_.SCPIdx[sc1] - 22) > 2) continue;
+  /*  if ( fabs ( treeVars_.SCPIdx[sc1] - 22) > 2) continue; */    
 
       float et1 = treeVars_.superClusterRawEnergy[sc1]/cosh( treeVars_.superClusterEta[sc1] );
       //std::cout << "gf1 num SC n SC" << treeVars_.nSuperClusters << "\t et: " << et1 << "\t" << treeVars_.superClusterRawEnergy[sc1] << "\t" << treeVars_.superClusterEta[sc1] << "\t" << treeVars_.SCPIdx[sc1] << std::endl; 
