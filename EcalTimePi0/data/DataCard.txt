@@ -1,7 +1,8 @@
 
-#This is the data card for the input of M2M3 analysis and TopMassFitter 
+#This is the data card for the input of z->ee timeAnalysis 
 # Auther : SCKao - UMN
 #
+## 2nd Author: Tambe E. Norbert -UMN
 
 # root files directory
 RootFiles = rootfiles/
