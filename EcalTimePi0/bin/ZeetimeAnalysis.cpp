@@ -22,7 +22,7 @@
 
 #include "CalibCalorimetry/EcalTiming/interface/EcalTimeTreeContent.h"
 #include "ECALTime/EcalTimePi0/interface/timeVsAmpliCorrector.h"
-#include "ECALTime/EcalTimePi0/interface/EcalObjectTime.h"
+#include "ECALTime/EcalTimePi0/interface/EcalObjectTimeCalibCalorimetryTree.h"
 
 #include "TChain.h"
 #include "TH1.h"
@@ -35,7 +35,7 @@
 typedef std::set<std::pair<int,int> > SetOfIntPairs;
 
 // authors: S. Cooper and G. Franzoni (UMN)
-// Forked Author: Tambe E. Norbert (UMN)
+// Maitained by Author: Tambe E. Norbert (UMN)
 #define BarrelLimit  1.479
 #define EndcapLimit  3.0
 
@@ -323,8 +323,10 @@ void parseArguments(int argc, char** argv)
       v++;
     }
     else if (argv[v] == stringminAmpliOverSigma) { // set min amplitude considered for time measurement
-      minAmpliOverSigma_  = atof(argv[v+1]);
-      v++;
+     /*
+      * minAmpliOverSigma_  = atof(argv[v+1]);
+     */
+      v++ ;
     }
     else if (argv[v] == vertex) { // collect requirement for one vertex only or not
       flagOneVertex_  = atof(argv[v+1]);

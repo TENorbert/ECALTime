@@ -1,5 +1,5 @@
 #include "CalibCalorimetry/EcalTiming/interface/EcalTimeTreeContent.h"
-#include "ECALTime/EcalTimePi0/interface/EcalTimePhyTreeContent.h"
+//#include "ECALTime/EcalTimePi0/interface/EcalTimePhyTreeContent.h"
 #include "ECALTime/EcalTimePi0/interface/timeVsAmpliCorrector.h"
 
 #define lightSpeed 299792458
@@ -28,7 +28,7 @@ struct ClusterTime {
   float otherstimeErr;
   float chi2;
 } ;
-
+/*
 //If Using Ntuples made from ECALTimePio Package
 ClusterTime timeAndUncertSingleCluster (int bClusterIndex, float phase, timeCorrector& theCorrector, EcalTimePhyTreeContent treeVars_);
 ClusterTime timeAndUncertSingleCluster (int bClusterIndex, float phase, EcalTimePhyTreeContent treeVars_);
@@ -38,6 +38,7 @@ ClusterTime timeAndUncertyJet          (int bClusterIndex, EcalTimePhyTreeConten
 float travelDistance(int sc_num, EcalTimePhyTreeContent treeVars_);
 float extraTravelTime(int sc_num, EcalTimePhyTreeContent & treeVars_);
 float extraTravelTime(int sc_num, int vtx_num, EcalTimePhyTreeContent & treeVars_);
+*/
 
 //If Using Ntuples Made from CalibCalorimetry Package
 ClusterTime timeAndUncertSingleCluster (int bClusterIndex, float phase, timeCorrector& theCorrector, EcalTimeTreeContent treeVars_);
