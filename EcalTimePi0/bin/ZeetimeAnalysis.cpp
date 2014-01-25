@@ -75,8 +75,8 @@ float eTPi0MinEE_     = 0.800;
 float swissCrossMaxEB_ = 0.95; // 1-E4/E1
 float swissCrossMaxEE_ = 0.95; // 1-E4/E1
 // based on range and bins, the bin width is 50 ps
-float rangeTDistro_ = 3; // 1-E4/E1
-int   binsTDistro_  = 120; // 1-E4/E1
+float rangeTDistro_ = 10; 
+int   binsTDistro_  = 120; 
 std::vector<std::vector<double> > trigIncludeVector;
 std::vector<std::vector<double> > trigExcludeVector;
 std::vector<std::vector<double> > ttrigIncludeVector;
@@ -401,7 +401,7 @@ struct HistSet{
   TH1F* clusTimeDiffHist_;
   TH1F* clusTimeDiffHistTOF_, *clusTimeDiffHistTOFwrongVertex_;
   TH1F* numCryBC1, *numCryBC2;
-  TH2F* timeVsEtaLead_, *timeVsEtaSub_, *timeVsEta_, *outliersVsEtaPhi_; 
+  TH2F* timeVsEtaLead_, *timeVsEtaSub_, *timeVsEta_, *outliersVsEtaPhi_,*timeVsPhi_; 
   TH1F* seedAmpli_;
   TH1F* secondAmpli_;
   TH1F* diffSeedOther_, *diffSeedOtherOverErr_;
@@ -451,10 +451,11 @@ void HistSet::book(TFileDirectory subDir, const std::string& post) {
 
   numCryBC1            =(TH1F*) subDir.make<TH1F>("num cry in bc1","num cry in bc1; num cry",25,0,25);
   numCryBC2            =(TH1F*) subDir.make<TH1F>("num cry in bc2","num cry in bc2; num cry",25,0,25);
-  timeVsEta_           =(TH2F*) subDir.make<TH2F>("timeVsEta","timeVsEta;; #eta t [ns]",50,-2.5,2.5,150,-1.5,1.5);
+  timeVsEta_           =(TH2F*) subDir.make<TH2F>("timeVsEta","timeVsEta;#eta; time [ns]",100,-3.5,3.5,100,-10.0,10.0);
   timeVsEtaLead_       =(TH2F*) subDir.make<TH2F>("timeVsEtaLead","timeVsEtaLead;#eta_{lead}; t [ns]",50,-2.5,2.5,150,-1.5,1.5);
   timeVsEtaSub_        =(TH2F*) subDir.make<TH2F>("timeVsEtaSub","timeVsEtaSub; #eta_{sublead}; t [ns]",50,-2.5,2.5,150,-1.5,1.5);
   outliersVsEtaPhi_    =(TH2F*) subDir.make<TH2F>("outliersVsEtaPhi","outliersVsEtaPhi; #eta; #phi",50,-2.5,2.5,72,-3.14,3.14);
+  timeVsPhi_           =(TH2F*) subDir.make<TH2F>("timeVsPhi","timeVsPhi; #phi; time [ns]",100,-3.5,3.5,100,-10.0,10.0);
   seedAmpli_           =(TH1F*) subDir.make<TH1F>("E(seed)  ","E(seed) ; E [GeV]",130,0,130);
   secondAmpli_         =(TH1F*) subDir.make<TH1F>("E(second)  ","E(second) ; E [GeV]",130,0,130);
   diffSeedOther_       =(TH1F*) subDir.make<TH1F>("t_{seed}-t_{others}","t_{seed}-t_{others}; t_{seed}-t_{others} [ns]; num./0.05ns",binsTDistro_,-rangeTDistro_,rangeTDistro_);
@@ -592,6 +593,9 @@ void HistSet::fill(int sc1, int sc2, int bc1, int bc2 ){
   numCryBC1->Fill(bcTime1.numCry);
   numCryBC2->Fill(bcTime2.numCry);
   timeVsEta_ -> Fill( treeVars_.superClusterEta[sc1] , (bcTime1.time - extraTravelTime(sc1,treeVars_) ) );
+  
+  timeVsPhi_ -> Fill( treeVars_.superClusterPhi[sc1] , (bcTime1.time - extraTravelTime(sc1,treeVars_) ) );
+  
   timeVsEtaLead_ -> Fill( treeVars_.superClusterEta[sc1] , (bcTime1.time - extraTravelTime(sc1,treeVars_) ) );
   timeVsEtaSub_  -> Fill( treeVars_.superClusterEta[sc2] , (bcTime2.time - extraTravelTime(sc2,treeVars_) ) ); 
   // catch location of time outliers
